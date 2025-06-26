@@ -12,7 +12,8 @@ import {
   Dimensions,
   Platform,
   StatusBar,
-  FlatList
+  FlatList,
+  TextInput,
   // Video
 } from 'react-native';
 import React, {
@@ -28,7 +29,11 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
 import Svg, {Path, SvgFromUri} from 'react-native-svg';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {HomeStackParamList, PortableToolData, SensorData} from '../../../HomeStack';
+import {
+  HomeStackParamList,
+  PortableToolData,
+  SensorData,
+} from '../../../HomeStack';
 import EllipsCloud from '../../../assets/svg/ellipsCloud';
 import CloudMin from '../../../assets/svg/cloudMin';
 import CloudOne from '../../../assets/svg/cloudOne';
@@ -60,10 +65,11 @@ import CloudMinTwo from '../../../assets/svg/cloudMinTwo';
 import CloudMinThree from '../../../assets/svg/cloudMinThree';
 import {AuthContext} from '../../../context/AuthContext';
 import {useControl, usePageControl} from '../../../context/ControlContext';
-import { useFocusEffect } from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
+import PowerOffIcon from '../../../assets/svg/PowerOffIcon';
+import PowerOnIcon from '../../../assets/svg/PowerOnIcon';
 
 const HomeFix: React.FC<Props> = ({navigation}) => {
-
   type WeatherData = {
     is_day: number;
     description: string;
@@ -71,27 +77,44 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
     humidity: number;
     wind_speed: number;
   };
-  
+
   const {logout} = useContext(AuthContext);
-  
+
   // Weather state - optimized
   const [weather, setWeather] = useState<WeatherData | null>(null);
-  
+
   // Modal states - unchanged
+  const [inputMinutes, setInputMinutes] = useState<string>('1');
+  const [inputSeconds, setInputSeconds] = useState<string>('0');
+
   const [selectedDuration, setSelectedDuration] = useState<number>(0);
   const [showDurationModal, setShowDurationModal] = useState(false);
-  const [currentProcess, setCurrentProcess] = useState<'water' | 'fertilizer' | null>(null);
+  const [currentProcess, setCurrentProcess] = useState<
+    'water' | 'fertilizer' | null
+  >(null);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [confirmType, setConfirmType] = useState<'water' | 'fertilizer' | null>(null);
-  
+  const [confirmType, setConfirmType] = useState<'water' | 'fertilizer' | null>(
+    null,
+  );
+
   // FIXED: Proper typing for animation refs
   const waterLottieRef = useRef<LottieView>(null);
   const fertLottieRef = useRef<LottieView>(null);
+  const minutesInputRef = useRef<TextInput>(null);
+  const secondsInputRef = useRef<TextInput>(null);
+
+  const focusMinutesInput = () => {
+    minutesInputRef.current?.focus();
+  };
+
+  const focusSecondsInput = () => {
+    secondsInputRef.current?.focus();
+  };
 
   // MQTT and control state
   const {isConnected, publish, homeControl} = useControl();
   const controlState = homeControl;
-  const { setActivePage } = usePageControl();
+  const {setActivePage} = usePageControl();
 
   // OPTIMIZED: Memoize focus effect callback
   const focusCallback = useCallback(() => {
@@ -118,17 +141,30 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
 
   // OPTIMIZED: Memoize CornerCut component to prevent recreations
   const CornerCutComponent = useMemo(() => {
-    return ({width = 300, height = 400, cutSize = 50, backgroundColor = '#ffffff', borderRadius = 16, children}: any) => {
+    return ({
+      width = 300,
+      height = 400,
+      cutSize = 50,
+      backgroundColor = '#ffffff',
+      borderRadius = 16,
+      children,
+    }: any) => {
       const createPath = () => `
         M ${borderRadius} 0
         L ${width - borderRadius} 0
         Q ${width} 0 ${width} ${borderRadius}
         L ${width} ${height - cutSize - borderRadius}
-        Q ${width} ${height - cutSize} ${width - borderRadius} ${height - cutSize}
+        Q ${width} ${height - cutSize} ${width - borderRadius} ${
+        height - cutSize
+      }
         L ${width - cutSize + borderRadius} ${height - cutSize}
-        Q ${width - cutSize} ${height - cutSize} ${width - cutSize} ${height - cutSize + borderRadius}
+        Q ${width - cutSize} ${height - cutSize} ${width - cutSize} ${
+        height - cutSize + borderRadius
+      }
         L ${width - cutSize} ${height - borderRadius}
-        Q ${width - cutSize} ${height} ${width - cutSize - borderRadius} ${height}
+        Q ${width - cutSize} ${height} ${
+        width - cutSize - borderRadius
+      } ${height}
         L ${borderRadius} ${height}
         Q 0 ${height} 0 ${height - borderRadius}
         L 0 ${borderRadius}
@@ -138,7 +174,10 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
 
       return (
         <View style={[styles.cornerCutContainer, {width, height}]}>
-          <Svg width={width} height={height} style={StyleSheet.absoluteFillObject}>
+          <Svg
+            width={width}
+            height={height}
+            style={StyleSheet.absoluteFillObject}>
             <Path d={createPath()} fill={backgroundColor} />
           </Svg>
           {children}
@@ -177,120 +216,165 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
     debounce(async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://10.0.2.2:4646/api/portable-tools?limit=5&sort=created_at&order=desc');
+        const response = await fetch(
+          'http://10.0.2.2:4646/api/portable-tools?limit=5&sort=created_at&order=desc',
+        );
         if (!response.ok) throw new Error('Failed to fetch data');
-        
+
         const data = await response.json();
         setPortableData(data);
       } catch (error) {
-        console.error('Error fetching portable data:', error);
+        // console.error('Error fetching portable data:', error);
       } finally {
         setLoading(false);
       }
-    }, 3000), 
-    [debounce]
+    }, 3000),
+    [debounce],
   );
 
   // OPTIMIZED: Memoize format functions
-  const formatFunctions = useMemo(() => ({
-    formatDateForAndroid: (date: Date) => {
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
-      const day = date.getDate().toString().padStart(2, '0');
-      const month = months[date.getMonth()];
-      const year = date.getFullYear();
-      return `${day} ${month} ${year}`;
-    },
+  const formatFunctions = useMemo(
+    () => ({
+      formatDateForAndroid: (date: Date) => {
+        const months = [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sept',
+          'Oct',
+          'Nov',
+          'Dec',
+        ];
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = months[date.getMonth()];
+        const year = date.getFullYear();
+        return `${day} ${month} ${year}`;
+      },
 
-    formatTimeForAndroid: (date: Date) => {
-      const hours = date.getHours().toString().padStart(2, '0');
-      const minutes = date.getMinutes().toString().padStart(2, '0');
-      return `${hours}:${minutes}`;
-    },
+      formatTimeForAndroid: (date: Date) => {
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
+      },
 
-    formatTime: (totalSeconds: number): string => {
-      const minutes = Math.floor(totalSeconds / 60);
-      const seconds = totalSeconds % 60;
-      return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    },
+      formatTime: (totalSeconds: number): string => {
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes.toString().padStart(2, '0')}:${seconds
+          .toString()
+          .padStart(2, '0')}`;
+      },
 
-    formatDate: (dateString: string): string => {
-      const date = new Date(dateString);
-      const datePart = date.toLocaleDateString('en-GB', {
-        weekday: 'long',
-        day: 'numeric', 
-        month: 'long',
-        year: 'numeric'
-      });
-      const timePart = date.toLocaleTimeString('en-GB', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      });
-      return `${datePart} at ${timePart}`;
-    }
-  }), []);
+      formatDate: (dateString: string): string => {
+        const date = new Date(dateString);
+        const datePart = date.toLocaleDateString('en-GB', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        });
+        const timePart = date.toLocaleTimeString('en-GB', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        });
+        return `${datePart} at ${timePart}`;
+      },
+    }),
+    [],
+  );
 
   // FIXED: Destructure format functions
-  const { formatDateForAndroid, formatTimeForAndroid, formatTime, formatDate } = formatFunctions;
+  const {formatDateForAndroid, formatTimeForAndroid, formatTime, formatDate} =
+    formatFunctions;
 
   // OPTIMIZED: Memoize portable item renderer
-  const renderPortableItem = useCallback(({ item }: { item: PortableToolData }) => {
-    const formatSensorValue = (sensor: SensorData | undefined, decimals: number = 1, unit: string = ''): string => {
-      if (!sensor || sensor.nilai_sensor == null) return 'N/A';
-      const value = Number(sensor.nilai_sensor);
-      return isNaN(value) ? 'N/A' : `${value.toFixed(decimals)}${unit}`;
-    };
+  const renderPortableItem = useCallback(
+    ({item}: {item: PortableToolData}) => {
+      const formatSensorValue = (
+        sensor: SensorData | undefined,
+        decimals: number = 1,
+        unit: string = '',
+      ): string => {
+        if (!sensor || sensor.nilai_sensor == null) return 'N/A';
+        const value = Number(sensor.nilai_sensor);
+        return isNaN(value) ? 'N/A' : `${value.toFixed(decimals)}${unit}`;
+      };
 
-    // Find sensors
-    const temperatureSensor = item.sensors?.find(s => s.keterangan_sensor?.toLowerCase() === 'temperature');
-    const humiditySensor = item.sensors?.find(s => s.keterangan_sensor?.toLowerCase() === 'humidity');
-    const phSensor = item.sensors?.find(s => s.keterangan_sensor?.toLowerCase() === 'ph');
-    const ecSensor = item.sensors?.find(s => s.keterangan_sensor?.toLowerCase() === 'ec');
+      // Find sensors
+      const temperatureSensor = item.sensors?.find(
+        s => s.keterangan_sensor?.toLowerCase() === 'temperature',
+      );
+      const humiditySensor = item.sensors?.find(
+        s => s.keterangan_sensor?.toLowerCase() === 'humidity',
+      );
+      const phSensor = item.sensors?.find(
+        s => s.keterangan_sensor?.toLowerCase() === 'ph',
+      );
+      const ecSensor = item.sensors?.find(
+        s => s.keterangan_sensor?.toLowerCase() === 'ec',
+      );
 
-    return (
-      <View style={[styles.containerBlockPortable, { marginRight: 23 }]}>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('ReadSoilDetail', { portableData: item })}>
-          <CornerCutComponent
-            width={254}
-            height={140}
-            cutSize={40.5}
-            backgroundColor="#ffffff"
-            borderRadius={22}>
-            <View style={styles.cardContentPortable}>
-              <View style={styles.containerInfoPortable}>
-                <Text style={styles.infoArea}>{item.keterangan_portable}</Text>
-                <Text style={styles.infoSensor}>
-                  Temperature: {formatSensorValue(temperatureSensor, 1, '°')}
-                </Text>
-                <Text style={styles.infoSensor}>
-                  Soil Humidity: {formatSensorValue(humiditySensor, 0, '%')}
-                </Text>
-                <Text style={styles.infoSensor}>
-                  PH: {formatSensorValue(phSensor, 1, '')}
-                </Text>
-                <Text style={styles.infoSensor}>
-                  EC: {formatSensorValue(ecSensor, 0, '')}
-                </Text>
-                <Text style={styles.infoDateSensor}>
-                  {formatDate(item.created_at)}
-                </Text>
-              </View>
-              <View style={styles.cutoutButton}>
-                <Svg width={36} height={36} viewBox="0 0 36 36">
-                  <Path
-                    d="M18 36C27.9411 36 36 27.9411 36 18C36 8.05888 27.9411 0 18 0C8.05888 0 0 8.05888 0 18C0 27.9411 8.05888 36 18 36Z"
-                    fill="#B4DC45"
+      return (
+        <View style={[styles.containerBlockPortable, {marginRight: 23}]}>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('ReadSoilDetail', {portableData: item})
+            }>
+            <CornerCutComponent
+              width={254}
+              height={140}
+              cutSize={40.5}
+              backgroundColor="#ffffff"
+              borderRadius={22}>
+              <View style={styles.cardContentPortable}>
+                <View style={styles.containerInfoPortable}>
+                  <Text style={styles.infoArea}>
+                    {item.keterangan_portable}
+                  </Text>
+                  <Text style={styles.infoSensor}>
+                    Temperature: {formatSensorValue(temperatureSensor, 0, '°')}
+                  </Text>
+                  <Text style={styles.infoSensor}>
+                    Soil Humidity: {formatSensorValue(humiditySensor, 0, '%')}
+                  </Text>
+                  <Text style={styles.infoSensor}>
+                    PH: {formatSensorValue(phSensor, 1, '')}
+                  </Text>
+                  <Text style={styles.infoSensor}>
+                    EC: {formatSensorValue(ecSensor, 0, '')}
+                  </Text>
+                  <Text style={styles.infoDateSensor}>
+                    {formatDate(item.created_at)}
+                  </Text>
+                </View>
+                <View style={styles.cutoutButton}>
+                  <Svg width={36} height={36} viewBox="0 0 36 36">
+                    <Path
+                      d="M18 36C27.9411 36 36 27.9411 36 18C36 8.05888 27.9411 0 18 0C8.05888 0 0 8.05888 0 18C0 27.9411 8.05888 36 18 36Z"
+                      fill="#B4DC45"
+                    />
+                  </Svg>
+                  <ArrowDown
+                    variant="Linear"
+                    size={26}
+                    color="white"
+                    style={styles.arrowIcon}
                   />
-                </Svg>
-                <ArrowDown variant="Linear" size={26} color="white" style={styles.arrowIcon} />
+                </View>
               </View>
-            </View>
-          </CornerCutComponent>
-        </TouchableOpacity>
-      </View>
-    );
-  }, [navigation, CornerCutComponent, formatDate]);
+            </CornerCutComponent>
+          </TouchableOpacity>
+        </View>
+      );
+    },
+    [navigation, CornerCutComponent, formatDate],
+  );
 
   useEffect(() => {
     fetchPortableData();
@@ -309,7 +393,7 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
           }
         }
 
-        // Fertilizer animation  
+        // Fertilizer animation
         if (fertLottieRef.current) {
           if (controlState.isFertilizerOn) {
             fertLottieRef.current.play();
@@ -327,49 +411,93 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
 
   // OPTIMIZED: Memoize weather icon logic
   const weatherInfo = useMemo(() => {
-    if (!weather) return { Icon: null, timeKey: 'Day', descKey: '' };
-    
+    if (!weather) return {Icon: null, timeKey: 'Day', descKey: ''};
+
     const timeKey = weather.is_day === 1 ? 'Day' : 'Night';
     const descKey = weather.description.toLowerCase();
-    const Icon = weatherImages[timeKey][descKey] || weatherImages[timeKey].other;
-    
-    return { Icon, timeKey, descKey };
+    const Icon =
+      weatherImages[timeKey][descKey] || weatherImages[timeKey].other;
+
+    return {Icon, timeKey, descKey};
   }, [weather]);
 
   // FIXED: Extract Icon properly
-  const { Icon } = weatherInfo;
+  const {Icon} = weatherInfo;
 
   // OPTIMIZED: Memoize colors
-  const colors = useMemo(() => ({
-    waterCircle: controlState.isWaterOn ? '#B4DC45' : '#BBC3CE',
-    fertCircle: controlState.isFertilizerOn ? '#B4DC45' : '#BBC3CE'
-  }), [controlState.isWaterOn, controlState.isFertilizerOn]);
+  const colors = useMemo(
+    () => ({
+      waterCircle: controlState.isWaterOn ? '#B4DC45' : '#BBC3CE',
+      fertCircle: controlState.isFertilizerOn ? '#B4DC45' : '#BBC3CE',
+    }),
+    [controlState.isWaterOn, controlState.isFertilizerOn],
+  );
 
   // FIXED: Extract colors properly
-  const { waterCircle: waterCircleColor, fertCircle: fertCircleColor } = colors;
+  const {waterCircle: waterCircleColor, fertCircle: fertCircleColor} = colors;
 
   // OPTIMIZED: Stable handlers with useCallback
-  const handleToggle = useCallback((type: 'water' | 'fertilizer') => {
-    if (type === 'water' && controlState.remainingWaterTime > 0) {
-      setConfirmType('water');
-      return setShowConfirm(true);
-    }
-    if (type === 'fertilizer' && controlState.remainingFertTime > 0) {
-      setConfirmType('fertilizer');
-      return setShowConfirm(true);
-    }
+  const handleToggle = useCallback(
+    (type: 'water' | 'fertilizer') => {
+      if (type === 'water' && controlState.remainingWaterTime > 0) {
+        setConfirmType('water');
+        return setShowConfirm(true);
+      }
+      if (type === 'fertilizer' && controlState.remainingFertTime > 0) {
+        setConfirmType('fertilizer');
+        return setShowConfirm(true);
+      }
 
-    setCurrentProcess(type);
-    setSelectedDuration(1);
-    setShowDurationModal(true);
-  }, [controlState.remainingWaterTime, controlState.remainingFertTime]);
+      setCurrentProcess(type);
+      setSelectedDuration(1);
+      setShowDurationModal(true);
+    },
+    [controlState.remainingWaterTime, controlState.remainingFertTime],
+  );
 
+  // Fungsi untuk validasi input
+  const validateTimeInput = (value: string, max: number): string => {
+    const numValue = parseInt(value);
+    if (isNaN(numValue) || numValue < 0) return '0';
+    if (numValue > max) return max.toString();
+    return numValue.toString();
+  };
+
+  // Handler untuk perubahan input
+  const handleMinutesChange = (text: string) => {
+    // Hanya izinkan angka
+    const numericValue = text.replace(/[^0-9]/g, '');
+    setInputMinutes(numericValue);
+  };
+
+  const handleSecondsChange = (text: string) => {
+    // Hanya izinkan angka
+    const numericValue = text.replace(/[^0-9]/g, '');
+    setInputSeconds(numericValue);
+  };
+
+  // Update handleStartProcess untuk menggunakan input values
   const handleStartProcess = useCallback(() => {
     if (!currentProcess) return;
-    const minutes = Math.min(Math.max(selectedDuration, 1), 120);
-    controlState.startProcess(currentProcess, minutes);
+
+    // Validasi input
+    const validatedMinutes = validateTimeInput(inputMinutes, 120);
+    const validatedSeconds = validateTimeInput(inputSeconds, 59);
+
+    // Update state dengan nilai yang valid
+    setInputMinutes(validatedMinutes);
+    setInputSeconds(validatedSeconds);
+
+    // Konversi ke total menit (termasuk detik)
+    const totalMinutes =
+      parseInt(validatedMinutes) + parseInt(validatedSeconds) / 60;
+    const finalMinutes = Math.min(Math.max(totalMinutes, 0.1), 120); // Minimum 6 detik
+
+    controlState.startProcess(currentProcess, finalMinutes);
     setShowDurationModal(false);
-  }, [currentProcess, selectedDuration, controlState]);
+    setInputMinutes('1');
+    setInputSeconds('0');
+  }, [currentProcess, inputMinutes, inputSeconds, controlState]);
 
   const handleConfirmStop = useCallback(() => {
     if (confirmType) {
@@ -379,7 +507,7 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
   }, [confirmType, controlState]);
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{flex: 1}}>
       <View style={styles.home}>
         <ScrollView contentContainerStyle={{paddingBottom: 50}}>
           <View style={styles.header}>
@@ -393,7 +521,10 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
               <Text style={styles.username}>Bapak Arik</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => { logout(); }}>
+            <TouchableOpacity
+              onPress={() => {
+                logout();
+              }}>
               <Logout
                 color="black"
                 variant="Outline"
@@ -425,7 +556,9 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
               </Text>
               <View style={styles.detailSectionTwo}>
                 <Text style={styles.detailSectionTwoText}>Humidity : 70% </Text>
-                <Text style={styles.detailSectionTwoText}>Light : 1800 Lux </Text>
+                <Text style={styles.detailSectionTwoText}>
+                  Light : 1800 Lux{' '}
+                </Text>
               </View>
               <View style={styles.cloud}>
                 {Icon ? <Icon width={80} height={80} /> : null}
@@ -440,7 +573,9 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
             />
             <View style={styles.detailSectionThree}>
               <View style={{flex: 1}}>
-                <Text style={styles.detailSectionThreeText}>Soil Temperature</Text>
+                <Text style={styles.detailSectionThreeText}>
+                  Soil Temperature
+                </Text>
                 <Text style={styles.detailSectionThreeText}>12°</Text>
               </View>
               <View style={{flex: 1}}>
@@ -499,7 +634,9 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
                 </View>
                 <View style={styles.statExtra}>
                   <Ionicons name="arrow-up" size={18} color="green" />
-                  <Text style={[styles.statStatus, {color: 'green'}]}>Good</Text>
+                  <Text style={[styles.statStatus, {color: 'green'}]}>
+                    Good
+                  </Text>
                 </View>
               </View>
             </View>
@@ -514,35 +651,11 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
                   <TouchableOpacity
                     style={styles.powerButtonContainer}
                     onPress={() => handleToggle('water')}>
-                    <View style={styles.circleLevel1}>
-                      <View style={styles.circleLevel2}>
-                        <View style={styles.circleLevel3}>
-                          <View
-                            style={[
-                              styles.circleLevel4,
-                              {borderColor: waterCircleColor},
-                            ]}>
-                            <View
-                              style={[
-                                styles.circleLevel5,
-                                {
-                                  shadowColor: '#a5a5c7',
-                                  shadowOffset: { width: 0, height: -1 },
-                                  shadowOpacity: 0.25,
-                                  shadowRadius: 0.75,
-                                },
-                              ]}>
-                              <Ionicons
-                                name="power-outline"
-                                size={24}
-                                color={waterCircleColor}
-                                style={styles.powerIcon}
-                              />
-                            </View>
-                          </View>
-                        </View>
-                      </View>
-                    </View>
+                    {controlState.isWaterOn ? (
+                      <PowerOnIcon />
+                    ) : (
+                      <PowerOffIcon />
+                    )}
                   </TouchableOpacity>
                 </View>
                 <View style={styles.frameVideoPlay}>
@@ -570,7 +683,9 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
                       </>
                     ) : controlState.lastWaterAction ? (
                       <>
-                        <Text style={styles.informationSprayerText}>Last action</Text>
+                        <Text style={styles.informationSprayerText}>
+                          Last action
+                        </Text>
                         <Text style={styles.informationSprayerText}>
                           {formatDateForAndroid(controlState.lastWaterAction)}
                         </Text>
@@ -593,35 +708,11 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
                   <TouchableOpacity
                     style={styles.powerButtonContainer}
                     onPress={() => handleToggle('fertilizer')}>
-                    <View style={styles.circleLevel1}>
-                      <View style={styles.circleLevel2}>
-                        <View style={styles.circleLevel3}>
-                          <View
-                            style={[
-                              styles.circleLevel4,
-                              {borderColor: fertCircleColor},
-                            ]}>
-                            <View
-                              style={[
-                                styles.circleLevel5,
-                                {
-                                  shadowColor: '#a5a5c7',
-                                  shadowOffset: { width: 0, height: -1 },
-                                  shadowOpacity: 0.25,
-                                  shadowRadius: 0.75,
-                                },
-                              ]}>
-                              <Ionicons
-                                name="power-outline"
-                                size={24}
-                                color={fertCircleColor}
-                                style={styles.powerIcon}
-                              />
-                            </View>
-                          </View>
-                        </View>
-                      </View>
-                    </View>
+                    {controlState.isFertilizerOn ? (
+                      <PowerOnIcon />
+                    ) : (
+                      <PowerOffIcon />
+                    )}
                   </TouchableOpacity>
                 </View>
                 <View style={styles.frameVideoPlay}>
@@ -649,7 +740,9 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
                       </>
                     ) : controlState.lastFertAction ? (
                       <>
-                        <Text style={styles.informationSprayerText}>Last action</Text>
+                        <Text style={styles.informationSprayerText}>
+                          Last action
+                        </Text>
                         <Text style={styles.informationSprayerText}>
                           {formatDateForAndroid(controlState.lastFertAction)}
                         </Text>
@@ -848,50 +941,53 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
             </View>
           </View>
           <View style={styles.fieldPortableList}>
-      <View style={styles.headerFieldPortable}>
-        <Text style={{ fontSize: 14, fontWeight: 600 }}>
-          Portable Tools Scanning History
-        </Text>
-        <TouchableOpacity onPress={() => {
-          // Handle show all action
-          console.log('Show all portable tools');
-        }}>
-          <View style={styles.showAll}>
-            <Text
-              style={{
-                fontSize: 14,
-                fontFamily: 'SpaceGrotesk-Regular',
-                fontWeight: 400,
-                color: '#B4DC45',
-              }}>
-              Show All
-            </Text>
-            <Maximize1 color="#B4DC45" variant="Broken" size={24} />
-          </View>
-        </TouchableOpacity>
-      </View>
+            <View style={styles.headerFieldPortable}>
+              <Text style={{fontSize: 14, fontWeight: 600}}>
+                Portable Tools Scanning History
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  // Handle show all action
+                  console.log('Show all portable tools');
+                }}>
+                <View style={styles.showAll}>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontFamily: 'SpaceGrotesk-Regular',
+                      fontWeight: 400,
+                      color: '#B4DC45',
+                    }}>
+                    Show All
+                  </Text>
+                  <Maximize1 color="#B4DC45" variant="Broken" size={24} />
+                </View>
+              </TouchableOpacity>
+            </View>
 
-      {loading ? (
-        <View style={styles.loadingPortable}>
-          <ActivityIndicator size="large" color="#B4DC45" />
-          <Text style={styles.loadingText}>Loading portable tools data...</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={portableData}
-          renderItem={renderPortableItem}
-          keyExtractor={(item) => item.id.toString()}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 16 }}
-          snapToInterval={270} // 254 + 16 margin
-          snapToAlignment="start"
-          decelerationRate="fast"
-          onRefresh={fetchPortableData}
-          refreshing={loading}
-        />
-      )}
-    </View>
+            {loading ? (
+              <View style={styles.loadingPortable}>
+                <ActivityIndicator size="large" color="#B4DC45" />
+                <Text style={styles.loadingText}>
+                  Loading portable tools data...
+                </Text>
+              </View>
+            ) : (
+              <FlatList
+                data={[...portableData].reverse()}
+                renderItem={renderPortableItem}
+                keyExtractor={item => item.id.toString()}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{paddingHorizontal: 16}}
+                snapToInterval={270} // 254 + 16 margin
+                snapToAlignment="start"
+                decelerationRate="fast"
+                onRefresh={fetchPortableData}
+                refreshing={loading}
+              />
+            )}
+          </View>
         </ScrollView>
       </View>
       <Modal
@@ -901,30 +997,112 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
         onRequestClose={() => setShowDurationModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={{fontSize: 24}}>Set Duration (minutes)</Text>
-            <View style={styles.durationInputContainer}>
-              <TouchableOpacity
-                onPress={() => setSelectedDuration(d => Math.max(1, d - 1))}
-                style={styles.durationButton}>
-                <Text style={styles.durationButtonText}>–</Text>
-              </TouchableOpacity>
-              <Text style={styles.durationText}>{selectedDuration}</Text>
-              <TouchableOpacity
-                onPress={() => setSelectedDuration(d => Math.min(120, d + 1))}
-                style={styles.durationButton}>
-                <Text style={styles.durationButtonText}>+</Text>
-              </TouchableOpacity>
+            <View style={{marginBottom: -10}}>
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontFamily: 'SpaceGrotesk-Medium',
+                  fontWeight: 500,
+                }}>
+                Set Time For Watering
+              </Text>
             </View>
+            <View style={styles.durationInputContainer}>
+              <View style={styles.durationMinutes}>
+                <Text
+                  style={{
+                    fontFamily: 'SpaceGrotesk-Regular',
+                    fontWeight: 400,
+                    fontSize: 12,
+                    color: '#919EB0',
+                    alignSelf: 'center',
+                  }}>
+                  Minutes
+                </Text>
+                <TouchableOpacity
+                  style={styles.boxDurationMinutes}
+                  onPress={focusMinutesInput}
+                  activeOpacity={0.7}>
+                  <TextInput
+                    ref={minutesInputRef}
+                    style={{
+                      alignSelf: 'center',
+                      fontFamily: 'SpaceGrotesk-Bold',
+                      fontSize: 32,
+                      bottom: 4,
+                      textAlign: 'center',
+                      color: '#000',
+                      backgroundColor: 'transparent',
+                      borderWidth: 0,
+                      padding: 0,
+                      margin: 0,
+                      width: '100%',
+                      height: '100%',
+                    }}
+                    value={inputMinutes}
+                    onChangeText={handleMinutesChange}
+                    keyboardType="numeric"
+                    maxLength={3}
+                    placeholder="1"
+                    placeholderTextColor="#BBC3CE"
+                    selectTextOnFocus={true}
+                  />
+                </TouchableOpacity>
+              </View>
+              <Text style={{alignSelf: 'center'}}>:</Text>
+              <View style={styles.durationMinutes}>
+                <Text
+                  style={{
+                    fontFamily: 'SpaceGrotesk-Regular',
+                    fontWeight: 400,
+                    fontSize: 12,
+                    color: '#919EB0',
+                    alignSelf: 'center',
+                  }}>
+                  Seconds
+                </Text>
+                <TouchableOpacity
+                  style={styles.boxDurationMinutes}
+                  onPress={focusSecondsInput}
+                  activeOpacity={0.7}>
+                  <TextInput
+                    ref={secondsInputRef}
+                    style={{
+                      alignSelf: 'center',
+                      fontFamily: 'SpaceGrotesk-Bold',
+                      fontSize: 32,
+                      bottom: 4,
+                      textAlign: 'center',
+                      color: '#000',
+                      backgroundColor: 'transparent',
+                      borderWidth: 0,
+                      padding: 0,
+                      margin: 0,
+                      width: '100%',
+                      height: '100%',
+                    }}
+                    value={inputSeconds}
+                    onChangeText={handleSecondsChange}
+                    keyboardType="numeric"
+                    maxLength={2}
+                    placeholder="0"
+                    placeholderTextColor="#BBC3CE"
+                    selectTextOnFocus={true}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
             <View style={styles.modalButtonContainer}>
-              <TouchableOpacity
-                onPress={handleStartProcess}
-                style={styles.confirmButton}>
-                <Text style={styles.confirmText}>Start</Text>
+              <TouchableOpacity onPress={() => setShowDurationModal(false)}>
+                <View style={styles.buttonCancelSpray}>
+                  <Text style={styles.cancelText}>Cancel</Text>
+                </View>
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setShowDurationModal(false)}
-                style={styles.cancelButton}>
-                <Text style={styles.cancelText}>Cancel</Text>
+              <TouchableOpacity onPress={handleStartProcess}>
+                <View style={styles.buttonStartSpray}>
+                  <Text style={styles.confirmText}>Start Watering</Text>
+                </View>
               </TouchableOpacity>
             </View>
           </View>
@@ -1467,15 +1645,16 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: 'white',
-    padding: 20,
+    padding: 16,
     borderRadius: 10,
-    width: '80%',
+    width: 343,
+    height: 168,
   },
   durationInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 20,
+    justifyContent: 'space-between',
+    marginVertical: 15,
   },
   durationButton: {
     padding: 15,
@@ -1490,6 +1669,7 @@ const styles = StyleSheet.create({
   modalButtonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    gap: 12,
   },
   confirmButton: {
     backgroundColor: '#B4DC45',
@@ -1506,11 +1686,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   confirmText: {
-    color: 'white',
+    color: '#353D48',
     fontWeight: '600',
+    alignSelf: 'center',
+    fontFamily: 'SpaceGrotesk-Regular',
+    padding: 5,
   },
   cancelText: {
-    color: '#333',
+    fontFamily: 'SpaceGrotesk-Regular',
+    fontWeight: 500,
+    fontSize: 14,
+    color: '#353D48',
+    alignSelf: 'center',
+    padding: 5,
   },
   cornerCutContainer: {
     overflow: 'hidden',
@@ -1554,14 +1742,14 @@ const styles = StyleSheet.create({
   infoSensor: {
     fontFamily: 'SpaceGrotesk-Regular',
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   infoDateSensor: {
     fontFamily: 'SpaceGrotesk-Regular',
     fontSize: 12,
-    fontWeight: "400",
+    fontWeight: '400',
     marginTop: 6,
-    color: "#919EB0"
+    color: '#919EB0',
   },
   loadingPortable: {
     flex: 1,
@@ -1578,6 +1766,30 @@ const styles = StyleSheet.create({
   loadingContainerHome: {
     paddingTop: 350,
     justifyContent: 'center',
+  },
+  durationMinutes: {
+    width: 143.5,
+    height: 60,
+  },
+  boxDurationMinutes: {
+    width: 143.5,
+    height: 44,
+    borderColor: '#919EB0',
+    borderWidth: 0.75,
+    borderRadius: 8,
+  },
+  buttonCancelSpray: {
+    width: 150.5,
+    height: 36,
+    borderColor: '#B4DC45',
+    borderWidth: 1,
+    borderRadius: 8,
+  },
+  buttonStartSpray: {
+    backgroundColor: '#B4DC45',
+    borderRadius: 8,
+    width: 150.5,
+    height: 36,
   },
 });
 

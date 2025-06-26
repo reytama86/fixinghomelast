@@ -9,6 +9,7 @@ import AppTest from './AppTest';
 import { AuthProvider } from './context/AuthContext';
 import { ControlProvider } from './context/ControlContext';
 import { name as appName } from './app.json';
+import DetailBlockTest from './components/Main/Home/DetailBlockTest';
 
 Ionicons.loadFont();
 
@@ -16,7 +17,7 @@ const App = () => (
   <SafeAreaProvider>
     <AuthProvider>
       <ControlProvider>
-      <AppTest />
+     <AppTest/>
       </ControlProvider>
     </AuthProvider>
   </SafeAreaProvider>

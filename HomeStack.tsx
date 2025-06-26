@@ -2,7 +2,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeFix from './components/Main/Home/Home';
-import DetailBlockOne from './components/Main/Home/DetailBlockOne';
+import DetailBlockOne from './components/Main/Home/DetailBlockTest';
 import DetailBlockTwo from './components/Main/Home/DetailBlockTwo';
 import ReadSoilDetail from './components/Main/ReadSoil/ReadSoilDetail';
 

@@ -2,7 +2,6 @@ import React, {useState, useMemo, useEffect} from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   Dimensions,
   StyleSheet,
 } from 'react-native';
@@ -18,7 +17,6 @@ type Sensor = {id_sensor: number; esp_id: string};
 type Blok = {id_detail_blok: number; nama_blok: string; kondisi_blok: string};
 type MetricType = 'Suhu Udara' | 'Kelembaban Udara' | 'Cahaya' | 'Kelembaban Tanah';
 type MyBarDataItem = barDataItem & { date: string };
-
 
 function formatLabel(date: Date, withTime = false): string {
   const day = date.getDate();
@@ -50,6 +48,10 @@ export default function Temperature() {
     'Kelembaban Tanah',
   ];
   const [sensorType, setSensorType] = useState<MetricType>(segments[0]);
+  
+  // Range options untuk SegmentedControl
+  const rangeOptions = ['7D', '1M', '1Y', 'Max'];
+  const selectedRangeIndex = rangeOptions.indexOf(range);
 
   useEffect(() => {
     fetch('http://10.0.2.2:4646/api/bloklist')
@@ -145,6 +147,7 @@ export default function Temperature() {
       .slice(0, 19)
       .replace('T', ' ');
   }
+  
   const xLabelsFromBar = useMemo<string[]>(() => {
     if (!barData.length) return [];
     
@@ -171,6 +174,7 @@ export default function Temperature() {
       return [allDates[idxFirst], allDates[idxMid], allDates[idxLast]];
     }
   }, [barData, range]);
+  
   const chartConfig = useMemo(() => {
     const dataLength = barData.length;
     switch (range) {
@@ -179,7 +183,7 @@ export default function Temperature() {
           spacing: CARD_WIDTH / (dataLength + 5.9),
           initialSpacing: 0,
           showVerticalLines: false,
-          rulesLength: 315.5,
+          rulesLength: 309,
           chartWidth: 350.5,
         };
       case '1M':
@@ -188,7 +192,7 @@ export default function Temperature() {
           initialSpacing: 0,
           showVerticalLines: false,
           chartWidth: 350.5,
-          rulesLength: 316.5,
+          rulesLength: 309,
         };
       case '1Y':
       case 'Max':
@@ -218,56 +222,84 @@ export default function Temperature() {
   return (
     <View style={styles.card}>
       <Text style={styles.title}>Temperature</Text>
+      
+      {/* Range Selector menggunakan SegmentedControl */}
       <View style={styles.rangeContainer}>
-        {['7D', '1M', '1Y', 'Max'].map(tab => (
-          <TouchableOpacity
-            key={tab}
-            style={[
-              styles.rangeButton,
-              range === tab && styles.rangeButtonActive,
-            ]}
-            onPress={() => setRange(tab as any)}>
-            <Text
-              style={[
-                styles.rangeText,
-                range === tab && styles.rangeTextActive,
-              ]}>
-              {tab}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        <SegmentedControl
+          values={rangeOptions}
+          selectedIndex={selectedRangeIndex}
+          onChange={(event) => {
+            const newIndex = event.nativeEvent.selectedSegmentIndex;
+            setRange(rangeOptions[newIndex] as '7D' | '1M' | '1Y' | 'Max');
+          }}
+          style={styles.rangeSegmentedControl}
+          fontStyle={{ 
+            fontFamily: 'SpaceGrotesk-Regular',
+            fontSize: 12,
+            fontWeight: '400',
+            color: '#666666'
+          }}
+          activeFontStyle={{
+            fontFamily: 'SpaceGrotesk-Regular',
+            fontSize: 12,
+            fontWeight: '400',
+            color: '#333333'
+          }}
+          backgroundColor="#f5f5f5"
+          tintColor="#B4DC45"
+        />
       </View>
+      
       <View style={styles.selectorRow}>
-      <View style={styles.selectorWrapper}>
-    {blokList.length > 0 ? (
-      <SegmentedControl
-        values={blokList.map(b => b.nama_blok)}
-        selectedIndex={selectedBlokIndex}
-        onChange={e =>
-          setSelectedBlokIndex(e.nativeEvent.selectedSegmentIndex)
-        }
-        style={styles.selectorControl}
-      />
-    ) : (
-      <Text style={{ color: 'gray', textAlign: 'center' }}>Memuat daftar blok…</Text>
-    )}
-  </View>
+        <View style={styles.selectorWrapper}>
+          {blokList.length > 0 ? (
+            <SegmentedControl
+              values={blokList.map(b => b.nama_blok)}
+              selectedIndex={selectedBlokIndex}
+              onChange={e =>
+                setSelectedBlokIndex(e.nativeEvent.selectedSegmentIndex)
+              }
+              style={styles.selectorControl}
+              fontStyle={{ 
+                fontFamily: 'SpaceGrotesk-Regular',
+                fontSize: 12
+              }}
+              activeFontStyle={{
+                fontFamily: 'SpaceGrotesk-Regular',
+                fontSize: 12,
+                fontWeight: '400', 
+              }}
+            />
+          ) : (
+            <Text style={{ color: 'gray', textAlign: 'center' }}>Memuat daftar blok…</Text>
+          )}
+        </View>
 
-  <View style={styles.selectorWrapper}>
-    {uniqueSensors.length > 0 ? (
-      <SegmentedControl
-        values={uniqueSensors.map(s => s.esp_id)}
-        selectedIndex={selectedSensorIndex}
-        onChange={e =>
-          setSelectedSensorIndex(e.nativeEvent.selectedSegmentIndex)
-        }
-        style={styles.selectorControl}
-      />
-    ) : (
-      <Text style={{ color: 'gray', textAlign: 'center' }}>Memuat sensor…</Text>
-    )}
-  </View>
+        <View style={styles.selectorWrapper}>
+          {uniqueSensors.length > 0 ? (
+            <SegmentedControl
+              values={uniqueSensors.map(s => s.esp_id)}
+              selectedIndex={selectedSensorIndex}
+              onChange={e =>
+                setSelectedSensorIndex(e.nativeEvent.selectedSegmentIndex)
+              }
+              style={styles.selectorControl}
+              fontStyle={{ 
+                fontFamily: 'SpaceGrotesk-Regular',
+                fontSize: 12 
+              }}
+              activeFontStyle={{
+                fontFamily: 'SpaceGrotesk-Regular',
+                fontSize: 12,
+                fontWeight: 'normal', 
+              }}
+            />
+          ) : (
+            <Text style={{ color: 'gray', textAlign: 'center' }}>Memuat sensor…</Text>
+          )}
+        </View>
       </View>
+      
       <View style={styles.chartWrapper}>
         <LineChart
           data={barData}
@@ -284,14 +316,10 @@ export default function Temperature() {
           xAxisColor="transparent"
           yAxisColor="transparent"
           noOfSections={4}
-          // minValue={0}
-          // maxValue={40}
           rulesType="solid"
           rulesLength={chartConfig.rulesLength}
           rulesColor="#eee"
-          // extraRules={[zeroRule]}
           showVerticalLines={chartConfig.showVerticalLines}
-          // useGradient
           startFillColor="#B4DC45"
           endFillColor="#B4DC45"
           startOpacity={0.5}
@@ -357,7 +385,6 @@ const styles = StyleSheet.create({
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 14,
-    elevation: 3,
     top: 56,
     marginBottom: -2.5,
   },
@@ -369,33 +396,18 @@ const styles = StyleSheet.create({
     fontFamily: 'Space Grotesk',
   },
   rangeContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#f0f0f0',
+    marginBottom: 12,
+    marginHorizontal: -6,
+  },
+  rangeSegmentedControl: {
+    height: 24,
+    backgroundColor: '#f5f5f5',
     borderRadius: 8,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  rangeButton: {
-    flex: 1,
-    paddingVertical: 6,
-    alignItems: 'center',
-  },
-  rangeButtonActive: {
-    backgroundColor: '#B4DC45',
-  },
-  rangeText: {
-    color: '#555',
-    fontSize: 12,
-    fontWeight: '400',
-    fontFamily: 'Space Grotesk',
-  },
-  rangeTextActive: {
-    color: '#fff',
-    fontWeight: '600',
   },
   selectorRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginHorizontal: -10,
   },
   selectorWrapper: {
     flex: 1,
@@ -403,9 +415,10 @@ const styles = StyleSheet.create({
   },
   selectorControl: {
     width: '100%',
-    height: 32,
+    height: 25,
     backgroundColor: '#f0f0f0',
-    borderRadius: 6,
+    borderRadius: 7,
+    fontFamily:'Space Grotesk',
   },
   chartWrapper: {
     marginLeft: -10,

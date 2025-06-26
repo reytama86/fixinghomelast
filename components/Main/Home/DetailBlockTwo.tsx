@@ -8,6 +8,7 @@ import {
   Modal,
   Platform,
   StatusBar,
+  TextInput,
 } from 'react-native';
 import React, {useCallback, useState} from 'react';
 import {ArrowLeft2} from 'iconsax-react-native';
@@ -26,7 +27,9 @@ import ConfirmModal from './Modal/ConfirmModal';
 import {useControlState} from './Services/useControlState';
 import {useControl, usePageControl} from '../../../context/ControlContext';
 import LottieView from 'lottie-react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
+import PowerOffIcon from '../../../assets/svg/PowerOffIcon';
+import PowerOnIcon from '../../../assets/svg/PowerOnIcon';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'DetailBlockTwo'>;
 // import Gauge from "../assets/images/Gauge.png";
@@ -48,6 +51,18 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
   // Modal states
   const [selectedDuration, setSelectedDuration] = useState<number>(0);
   const [showDurationModal, setShowDurationModal] = useState(false);
+  // Modal states - unchanged
+    const [inputMinutes, setInputMinutes] = useState<string>('1');
+    const [inputSeconds, setInputSeconds] = useState<string>('0');
+     const minutesInputRef = useRef<TextInput>(null);
+      const secondsInputRef = useRef<TextInput>(null);
+      const focusMinutesInput = () => {
+        minutesInputRef.current?.focus();
+      };
+    
+      const focusSecondsInput = () => {
+        secondsInputRef.current?.focus();
+      };
   const [currentProcess, setCurrentProcess] = useState<
     'water' | 'fertilizer' | null
   >(null);
@@ -63,18 +78,18 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
   // MQTT and control state
   const {block2Control} = useControl();
   const controlState = block2Control;
-  const { setActivePage } = usePageControl();
-  
-    // Set this page active on focus
-    useFocusEffect(
-      React.useCallback(() => {
-        setActivePage('block2');
-        return () => {
-          // optional: reset to home or leave empty set
-          // setActivePage('home');
-        };
-      }, [setActivePage])
-    );
+  const {setActivePage} = usePageControl();
+
+  // Set this page active on focus
+  useFocusEffect(
+    React.useCallback(() => {
+      setActivePage('block2');
+      return () => {
+        // optional: reset to home or leave empty set
+        // setActivePage('home');
+      };
+    }, [setActivePage]),
+  );
 
   // MQTT message handler
   const handleMqttMessage = useCallback(
@@ -121,7 +136,7 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
       }
     }
   }, [controlState.isWaterOn]);
-  
+
   useEffect(() => {
     if (fertLottieRef.current) {
       try {
@@ -198,13 +213,49 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
     [controlState.remainingWaterTime, controlState.remainingFertTime],
   );
 
-  const handleStartProcess = useCallback(() => {
-    if (!currentProcess) return;
-
-    const minutes = Math.min(Math.max(selectedDuration, 1), 120);
-    controlState.startProcess(currentProcess, minutes);
-    setShowDurationModal(false);
-  }, [currentProcess, selectedDuration, controlState]);
+  // Fungsi untuk validasi input
+    const validateTimeInput = (value: string, max: number): string => {
+      const numValue = parseInt(value);
+      if (isNaN(numValue) || numValue < 0) return '0';
+      if (numValue > max) return max.toString();
+      return numValue.toString();
+    };
+  
+    // Handler untuk perubahan input
+    const handleMinutesChange = (text: string) => {
+      // Hanya izinkan angka
+      const numericValue = text.replace(/[^0-9]/g, '');
+      setInputMinutes(numericValue);
+    };
+  
+    const handleSecondsChange = (text: string) => {
+      // Hanya izinkan angka
+      const numericValue = text.replace(/[^0-9]/g, '');
+      setInputSeconds(numericValue);
+    };
+  
+    // Update handleStartProcess untuk menggunakan input values
+    const handleStartProcess = useCallback(() => {
+      if (!currentProcess) return;
+  
+      // Validasi input
+      const validatedMinutes = validateTimeInput(inputMinutes, 120);
+      const validatedSeconds = validateTimeInput(inputSeconds, 59);
+  
+      // Update state dengan nilai yang valid
+      setInputMinutes(validatedMinutes);
+      setInputSeconds(validatedSeconds);
+  
+      // Konversi ke total menit (termasuk detik)
+      const totalMinutes =
+        parseInt(validatedMinutes) + parseInt(validatedSeconds) / 60;
+      const finalMinutes = Math.min(Math.max(totalMinutes, 0.1), 120); // Minimum 6 detik
+  
+      controlState.startProcess(currentProcess, finalMinutes);
+      setShowDurationModal(false);
+      setInputMinutes('1');
+      setInputSeconds('0');
+    }, [currentProcess, inputMinutes, inputSeconds, controlState]);
 
   const handleConfirmStop = useCallback(() => {
     if (confirmType) {
@@ -237,7 +288,7 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
               fontWeight: 600,
               fontFamily: 'SpaceGrotesk-Regular',
               right: 5,
-              textAlign: "center",
+              textAlign: 'center',
             }}>
             Block 2
           </Text>
@@ -365,41 +416,7 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
                 <TouchableOpacity
                   style={styles.powerButtonContainer}
                   onPress={() => handleToggle('water')}>
-                  <View style={styles.circleLevel1}>
-                    <View style={styles.circleLevel2}>
-                      <View style={styles.circleLevel3}>
-                        <View
-                          style={[
-                            styles.circleLevel4,
-                            {borderColor: waterCircleColor},
-                          ]}>
-                          <View
-                            style={[
-                              styles.circleLevel5,
-                              {
-                                boxShadow: [
-                                  {
-                                    offsetX: 0,
-                                    offsetY: -1,
-                                    blurRadius: 0.75,
-                                    spreadDistance: 0.25,
-                                    color: '#a5a5c7',
-                                    inset: true,
-                                  },
-                                ] as any,
-                              },
-                            ]}>
-                            <Ionicons
-                              name="power-outline"
-                              size={24}
-                              color={waterCircleColor}
-                              style={styles.powerIcon}
-                            />
-                          </View>
-                        </View>
-                      </View>
-                    </View>
-                  </View>
+                  {controlState.isWaterOn ? <PowerOnIcon /> : <PowerOffIcon />}
                 </TouchableOpacity>
               </View>
               <View style={styles.frameVideoPlay}>
@@ -457,41 +474,11 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
                 <TouchableOpacity
                   style={styles.powerButtonContainer}
                   onPress={() => handleToggle('fertilizer')}>
-                  <View style={styles.circleLevel1}>
-                    <View style={styles.circleLevel2}>
-                      <View style={styles.circleLevel3}>
-                        <View
-                          style={[
-                            styles.circleLevel4,
-                            {borderColor: fertCircleColor},
-                          ]}>
-                          <View
-                            style={[
-                              styles.circleLevel5,
-                              {
-                                boxShadow: [
-                                  {
-                                    offsetX: 0,
-                                    offsetY: -1,
-                                    blurRadius: 0.75,
-                                    spreadDistance: 0.25,
-                                    color: '#a5a5c7',
-                                    inset: true,
-                                  },
-                                ] as any,
-                              },
-                            ]}>
-                            <Ionicons
-                              name="power-outline"
-                              size={24}
-                              color={fertCircleColor}
-                              style={styles.powerIcon}
-                            />
-                          </View>
-                        </View>
-                      </View>
-                    </View>
-                  </View>
+                  {controlState.isFertilizerOn ? (
+                    <PowerOnIcon />
+                  ) : (
+                    <PowerOffIcon />
+                  )}
                 </TouchableOpacity>
               </View>
               <View style={styles.frameVideoPlay}>
@@ -542,41 +529,123 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
         </View>
 
         <Modal
-          visible={showDurationModal}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowDurationModal(false)}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={{fontSize: 24}}>Set Duration (minutes)</Text>
-              <View style={styles.durationInputContainer}>
-                <TouchableOpacity
-                  onPress={() => setSelectedDuration(d => Math.max(1, d - 1))}
-                  style={styles.durationButton}>
-                  <Text style={styles.durationButtonText}>–</Text>
-                </TouchableOpacity>
-                <Text style={styles.durationText}>{selectedDuration}</Text>
-                <TouchableOpacity
-                  onPress={() => setSelectedDuration(d => Math.min(120, d + 1))}
-                  style={styles.durationButton}>
-                  <Text style={styles.durationButtonText}>+</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.modalButtonContainer}>
-                <TouchableOpacity
-                  onPress={handleStartProcess}
-                  style={styles.confirmButton}>
-                  <Text style={styles.confirmText}>Start</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setShowDurationModal(false)}
-                  style={styles.cancelButton}>
-                  <Text style={styles.cancelText}>Cancel</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+                visible={showDurationModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowDurationModal(false)}>
+                <View style={styles.modalOverlay}>
+                  <View style={styles.modalContent}>
+                    <View style={{marginBottom: -10}}>
+                      <Text
+                        style={{
+                          fontSize: 16,
+                          fontFamily: 'SpaceGrotesk-Medium',
+                          fontWeight: 500,
+                        }}>
+                        Set Time For Watering
+                      </Text>
+                    </View>
+                    <View style={styles.durationInputContainer}>
+                      <View style={styles.durationMinutes}>
+                        <Text
+                          style={{
+                            fontFamily: 'SpaceGrotesk-Regular',
+                            fontWeight: 400,
+                            fontSize: 12,
+                            color: '#919EB0',
+                            alignSelf: 'center',
+                          }}>
+                          Minutes
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.boxDurationMinutes}
+                          onPress={focusMinutesInput}
+                          activeOpacity={0.7}>
+                          <TextInput
+                            ref={minutesInputRef}
+                            style={{
+                              alignSelf: 'center',
+                              fontFamily: 'SpaceGrotesk-Bold',
+                              fontSize: 32,
+                              bottom: 4,
+                              textAlign: 'center',
+                              color: '#000',
+                              backgroundColor: 'transparent',
+                              borderWidth: 0,
+                              padding: 0,
+                              margin: 0,
+                              width: '100%',
+                              height: '100%',
+                            }}
+                            value={inputMinutes}
+                            onChangeText={handleMinutesChange}
+                            keyboardType="numeric"
+                            maxLength={3}
+                            placeholder="1"
+                            placeholderTextColor="#BBC3CE"
+                            selectTextOnFocus={true}
+                          />
+                        </TouchableOpacity>
+                      </View>
+                      <Text style={{alignSelf: 'center'}}>:</Text>
+                      <View style={styles.durationMinutes}>
+                        <Text
+                          style={{
+                            fontFamily: 'SpaceGrotesk-Regular',
+                            fontWeight: 400,
+                            fontSize: 12,
+                            color: '#919EB0',
+                            alignSelf: 'center',
+                          }}>
+                          Seconds
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.boxDurationMinutes}
+                          onPress={focusSecondsInput}
+                          activeOpacity={0.7}>
+                          <TextInput
+                            ref={secondsInputRef}
+                            style={{
+                              alignSelf: 'center',
+                              fontFamily: 'SpaceGrotesk-Bold',
+                              fontSize: 32,
+                              bottom: 4,
+                              textAlign: 'center',
+                              color: '#000',
+                              backgroundColor: 'transparent',
+                              borderWidth: 0,
+                              padding: 0,
+                              margin: 0,
+                              width: '100%',
+                              height: '100%',
+                            }}
+                            value={inputSeconds}
+                            onChangeText={handleSecondsChange}
+                            keyboardType="numeric"
+                            maxLength={2}
+                            placeholder="0"
+                            placeholderTextColor="#BBC3CE"
+                            selectTextOnFocus={true}
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+        
+                    <View style={styles.modalButtonContainer}>
+                      <TouchableOpacity onPress={() => setShowDurationModal(false)}>
+                        <View style={styles.buttonCancelSpray}>
+                          <Text style={styles.cancelText}>Cancel</Text>
+                        </View>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={handleStartProcess}>
+                        <View style={styles.buttonStartSpray}>
+                          <Text style={styles.confirmText}>Start Watering</Text>
+                        </View>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              </Modal>
         <ConfirmModal
           visible={showConfirm}
           type={confirmType === 'water' ? 'water' : 'fertilizer'}
@@ -878,15 +947,16 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: 'white',
-    padding: 20,
+    padding: 16,
     borderRadius: 10,
-    width: '80%',
+    width: 343,
+    height: 168,
   },
   durationInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 20,
+    justifyContent: 'space-between',
+    marginVertical: 15,
   },
   durationButton: {
     padding: 15,
@@ -901,6 +971,7 @@ const styles = StyleSheet.create({
   modalButtonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    gap: 12,
   },
   confirmButton: {
     backgroundColor: '#B4DC45',
@@ -917,11 +988,43 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   confirmText: {
-    color: 'white',
+    color: '#353D48',
     fontWeight: '600',
+    alignSelf: 'center',
+    fontFamily: 'SpaceGrotesk-Regular',
+    padding: 5,
   },
   cancelText: {
-    color: '#333',
+    fontFamily: 'SpaceGrotesk-Regular',
+    fontWeight: 500,
+    fontSize: 14,
+    color: '#353D48',
+    alignSelf: 'center',
+    padding: 5,
+  },
+  durationMinutes: {
+    width: 143.5,
+    height: 60,
+  },
+  boxDurationMinutes: {
+    width: 143.5,
+    height: 44,
+    borderColor: '#919EB0',
+    borderWidth: 0.75,
+    borderRadius: 8,
+  },
+  buttonCancelSpray: {
+    width: 150.5,
+    height: 36,
+    borderColor: '#B4DC45',
+    borderWidth: 1,
+    borderRadius: 8,
+  },
+  buttonStartSpray: {
+    backgroundColor: '#B4DC45',
+    borderRadius: 8,
+    width: 150.5,
+    height: 36,
   },
 
   // ... styles lainnya

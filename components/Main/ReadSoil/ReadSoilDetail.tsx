@@ -54,7 +54,7 @@ const ReadSoilDetail: React.FC<Props> = ({ navigation, route }) => {
     
     switch (sensorType.toLowerCase()) {
       case 'temperature':
-        return value.toFixed(1); 
+        return value.toFixed(0); 
       case 'humidity':
         return value.toFixed(0); 
       case 'ph':

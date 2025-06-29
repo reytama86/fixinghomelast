@@ -59,7 +59,6 @@ interface DeviceProps {
   sensorData: SensorData | null;
 }
 
-// Memoized SensorItem component untuk mencegah re-render yang tidak perlu
 const SensorItem = React.memo<{
   label: string;
   value: number;
@@ -131,6 +130,7 @@ const getSensorStatus = (value: number, sensorType: string) => {
     'Soil Temperature': {good: [20, 30], unit: '°C'},
     Temperature: {good: [25, 35], unit: '°C'},
     Humidity: {good: [60, 80], unit: '%'},
+    Light: {good: [10000, 15000], unit: 'Lux'},
   };
 
   const threshold = thresholds[sensorType];
@@ -149,7 +149,6 @@ const getSensorStatus = (value: number, sensorType: string) => {
 };
 
 const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
-  // State management
   const [sensorData, setSensorData] = useState<SensorData | null>(null);
   const [loading, setLoading] = useState<boolean>(false); // Changed to false initially
   const [selectedDuration, setSelectedDuration] = useState<number>(0);
@@ -160,7 +159,6 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmType, setConfirmType] = useState<'water' | 'fertilizer' | null>(null);
 
-  // Refs
   const minutesInputRef = useRef<TextInput>(null);
   const secondsInputRef = useRef<TextInput>(null);
   const waterLottieRef = useRef<LottieView>(null);
@@ -168,12 +166,10 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
   const rotation = useRef(new Animated.Value(0)).current;
   const isMountedRef = useRef(true);
 
-  // Custom hooks
   const { block2Control } = useControl();
   const controlState = block2Control;
   const { setActivePage } = usePageControl();
 
-  // Optimized fetch function with error handling and cancellation
   const fetchSensorData = useCallback(async (): Promise<void> => {
       try {
         setLoading(true);
@@ -200,15 +196,13 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
       }
     }, []);
 
-  // Set page active on focus
   useFocusEffect(
     useCallback(() => {
       setActivePage('block2');
-      // Fetch data when screen comes into focus
       fetchSensorData();
       
       return () => {
-        // Don't reset page here to avoid unnecessary re-renders
+        // Don't reset page 
       };
     }, [setActivePage, fetchSensorData])
   );
@@ -220,7 +214,6 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
     };
   }, []);
 
-  // Optimized Lottie controls
   useEffect(() => {
     if (waterLottieRef.current && isMountedRef.current) {
       try {
@@ -249,7 +242,6 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
     }
   }, [controlState.isFertilizerOn]);
 
-  // Memoized Device components
   const Device1 = React.memo<DeviceProps>(({ sensorData }) => {
     const getSensorValue = useCallback((sensorArray: SensorInfo[], keterangan: string): number => {
       const sensor = sensorArray?.find(
@@ -324,7 +316,6 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
     );
   });
   
-  // Similar optimization untuk Device2 dan Device3...
   const Device2 = React.memo<DeviceProps>(({ sensorData }) => {
     const getSensorValue = useCallback((sensorArray: SensorInfo[], keterangan: string): number => {
       const sensor = sensorArray?.find(
@@ -337,7 +328,6 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
   
     const sensor2Data = sensorData.sensor_2;
   
-    // Memoize temperature and humidity values untuk performa
     const temperatureValue = useMemo(() => 
       getSensorValue(sensor2Data, 'Temperature') || 0, 
       [getSensorValue, sensor2Data]
@@ -435,7 +425,12 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
                 sensorType="Kalium"
                 unit=" mg/L"
               />
-              <View style={styles.gridItemEmpty} />
+              <SensorItem
+              label="Light"
+              value={getSensorValue(sensor2Data, 'Light')}
+              sensorType="Light"
+              unit=" Lux"
+            />
             </View>
           </View>
         </View>
@@ -443,7 +438,6 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
     );
   });
   
-  // Optimized Device3 component dengan lazy loading dan memoization
   const Device3 = React.memo<DeviceProps>(({ sensorData }) => {
     const getSensorValue = useCallback((sensorArray: SensorInfo[], keterangan: string): number => {
       const sensor = sensorArray?.find(
@@ -463,7 +457,6 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.soilSubTitle}>Soil Statistic</Text>
   
           <View style={styles.gridContainer}>
-            {/* Row 1 */}
             <View style={styles.gridRow}>
               <SensorItem
                 label="Soil Temperature"
@@ -478,7 +471,6 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
                 unit="%"
               />
             </View>
-            {/* Row 2 */}
             <View style={styles.gridRow}>
               <SensorItem
                 label="Conductivity"
@@ -491,7 +483,6 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
                 sensorType="PH"
               />
             </View>
-            {/* Row 3 */}
             <View style={styles.gridRow}>
               <SensorItem
                 label="Nitrogen"
@@ -506,7 +497,6 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
                 unit=" mg/L"
               />
             </View>
-            {/* Row 4 */}
             <View style={styles.gridRow}>
               <SensorItem
                 label="Kalium"
@@ -530,7 +520,6 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
       </>
     ), [sensorData]);
 
-  // Optimized handlers
   const handleToggle = useCallback(
     (type: 'water' | 'fertilizer') => {
       if (type === 'water' && controlState.remainingWaterTime > 0) {
@@ -627,7 +616,6 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
     secondsInputRef.current?.focus();
   }, []);
 
-  // Show loading only when actually loading
   if (loading && !sensorData) {
     return (
       <View style={styles.loadingContainer}>

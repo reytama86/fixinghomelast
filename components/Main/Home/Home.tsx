@@ -49,9 +49,21 @@ import {weatherImages} from '../../../constants/index';
 import ConfirmModal from './Modal/ConfirmModal';
 import LottieView from 'lottie-react-native'; // Pastikan Dimensions sudah diimpor
 import ReadSoilDetail from '../ReadSoil/ReadSoilDetail';
-// ... import lainnya
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'HomeFix'>;
+
+type SensorMedianData = {
+  median: number;
+  count: number;
+};
+
+type MedianSensorResponse = {
+  success: boolean;
+  data: {
+    [key: string]: SensorMedianData;
+  };
+  timestamp: string;
+};
 
 import {
   Logout,
@@ -80,10 +92,8 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
 
   const {logout} = useContext(AuthContext);
 
-  // Weather state - optimized
   const [weather, setWeather] = useState<WeatherData | null>(null);
 
-  // Modal states - unchanged
   const [inputMinutes, setInputMinutes] = useState<string>('1');
   const [inputSeconds, setInputSeconds] = useState<string>('0');
 
@@ -97,7 +107,15 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
     null,
   );
 
-  // FIXED: Proper typing for animation refs
+  const [sensorData, setSensorData] = useState<
+    MedianSensorResponse['data'] | null
+  >(null);
+
+  const [sensorDataBlock, setSensorDataBlock] = useState({
+    block1: { temp: '--', humidity: '--' },
+    block2: { temp: '--', humidity: '--' }
+  });
+
   const waterLottieRef = useRef<LottieView>(null);
   const fertLottieRef = useRef<LottieView>(null);
   const minutesInputRef = useRef<TextInput>(null);
@@ -111,22 +129,196 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
     secondsInputRef.current?.focus();
   };
 
-  // MQTT and control state
   const {isConnected, publish, homeControl} = useControl();
   const controlState = homeControl;
   const {setActivePage} = usePageControl();
 
-  // OPTIMIZED: Memoize focus effect callback
+  const fetchSensorData = useCallback(async () => {
+    try {
+      const response = await fetch(
+        'http://10.0.2.2:4646/api/median-sensor-data',
+      );
+      if (!response.ok) throw new Error('Failed to fetch sensor data');
+
+      const data: MedianSensorResponse = await response.json();
+      if (data.success) {
+        setSensorData(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching sensor data:', error);
+    }
+  }, []);
+
+  const fetchDataBlock = async () => {
+    try {
+      const response = await fetch('http://10.0.2.2:4646/api/temp-humidity');
+      const result = await response.json();
+      
+      if (result.success) {
+        const data = result.data;
+        
+        // Filter data untuk block 1 (id_sensor: 2)
+        const block1Temp = data.find(item => item.id_sensor === 2 && item.keterangan_sensor === 'Temperature');
+        const block1Humidity = data.find(item => item.id_sensor === 2 && item.keterangan_sensor === 'Humidity');
+        
+        // Filter data untuk block 2 (id_sensor: 5)
+        const block2Temp = data.find(item => item.id_sensor === 5 && item.keterangan_sensor === 'Temperature');
+        const block2Humidity = data.find(item => item.id_sensor === 5 && item.keterangan_sensor === 'Humidity');
+        
+        setSensorDataBlock({
+          block1: {
+            temp: block1Temp ? block1Temp.nilai_sensor : '--',
+            humidity: block1Humidity ? block1Humidity.nilai_sensor : '--'
+          },
+          block2: {
+            temp: block2Temp ? block2Temp.nilai_sensor : '--',
+            humidity: block2Humidity ? block2Humidity.nilai_sensor : '--'
+          }
+        });
+      }
+    } catch (error) {
+      console.log('Error fetching data:', error);
+    }
+  };
+
+
+  const getSensorValue = useCallback(
+    (sensorName: string): string => {
+      if (!sensorData || !sensorData[sensorName]) return 'N/A';
+      return sensorData[sensorName].median.toFixed(1);
+    },
+    [sensorData],
+  );
+
+  const getSoilStatus = useCallback((sensorName: string, value: number) => {
+    const ranges = {
+      PH: {
+        low: {
+          min: 0,
+          max: 6.0,
+          color: 'red',
+          icon: 'arrow-down',
+          status: 'Low',
+        },
+        good: {
+          min: 6.1,
+          max: 7.5,
+          color: 'green',
+          icon: 'arrow-up',
+          status: 'Good',
+        },
+        high: {
+          min: 7.6,
+          max: 14,
+          color: 'red',
+          icon: 'arrow-up',
+          status: 'High',
+        },
+      },
+      Nitrogen: {
+        low: {min: 0, max: 20, color: 'red', icon: 'arrow-down', status: 'Low'},
+        good: {
+          min: 21,
+          max: 50,
+          color: 'green',
+          icon: 'arrow-up',
+          status: 'Good',
+        },
+        high: {
+          min: 51,
+          max: 1000,
+          color: 'red',
+          icon: 'arrow-up',
+          status: 'High',
+        },
+      },
+      Phosphor: {
+        low: {min: 0, max: 10, color: 'red', icon: 'arrow-down', status: 'Low'},
+        good: {
+          min: 11,
+          max: 30,
+          color: 'green',
+          icon: 'arrow-up',
+          status: 'Good',
+        },
+        high: {
+          min: 31,
+          max: 1000,
+          color: 'red',
+          icon: 'arrow-up',
+          status: 'High',
+        },
+      },
+      Kalium: {
+        low: {min: 0, max: 60, color: 'red', icon: 'arrow-down', status: 'Low'},
+        good: {
+          min: 61,
+          max: 200,
+          color: 'green',
+          icon: 'arrow-up',
+          status: 'Good',
+        },
+        high: {
+          min: 201,
+          max: 1000,
+          color: 'red',
+          icon: 'arrow-up',
+          status: 'High',
+        },
+      },
+    };
+
+    const sensorRanges = ranges[sensorName];
+    if (!sensorRanges) {
+      return {color: 'gray', icon: 'remove', status: 'N/A'};
+    }
+
+    if (value >= sensorRanges.low.min && value <= sensorRanges.low.max) {
+      return sensorRanges.low;
+    } else if (
+      value >= sensorRanges.good.min &&
+      value <= sensorRanges.good.max
+    ) {
+      return sensorRanges.good;
+    } else if (
+      value >= sensorRanges.high.min &&
+      value <= sensorRanges.high.max
+    ) {
+      return sensorRanges.high;
+    }
+
+    return {color: 'gray', icon: 'remove', status: 'N/A'};
+  }, []);
+
+  const renderSoilIndicator = useCallback(
+    (sensorName: string) => {
+      const rawValue = getSensorValue(sensorName);
+      const numericValue = parseFloat(rawValue);
+
+      if (isNaN(numericValue) || rawValue === 'N/A') {
+        return {
+          color: 'gray',
+          icon: 'remove',
+          status: 'N/A',
+        };
+      }
+
+      return getSoilStatus(sensorName, numericValue);
+    },
+    [getSensorValue, getSoilStatus],
+  );
+
   const focusCallback = useCallback(() => {
     setActivePage('home');
-  }, [setActivePage]);
+    fetchSensorData(); // Tambahkan ini
+    fetchDataBlock();
+  }, [setActivePage, fetchSensorData]);
 
   useFocusEffect(focusCallback);
 
   const [portableData, setPortableData] = useState<PortableToolData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Helper function for debouncing - MOVED TO TOP
   const debounce = useCallback((func: Function, wait: number) => {
     let timeout: ReturnType<typeof setTimeout>;
     return function executedFunction(...args: any[]) {
@@ -139,7 +331,6 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
     };
   }, []);
 
-  // OPTIMIZED: Memoize CornerCut component to prevent recreations
   const CornerCutComponent = useMemo(() => {
     return ({
       width = 300,
@@ -186,7 +377,6 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
     };
   }, []);
 
-  // OPTIMIZED: Reduce weather fetching frequency and add error handling
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
     let isComponentMounted = true;
@@ -211,7 +401,6 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
     };
   }, []);
 
-  // OPTIMIZED: Debounced portable data fetch
   const fetchPortableData = useCallback(
     debounce(async () => {
       try {
@@ -232,7 +421,6 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
     [debounce],
   );
 
-  // OPTIMIZED: Memoize format functions
   const formatFunctions = useMemo(
     () => ({
       formatDateForAndroid: (date: Date) => {
@@ -289,11 +477,9 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
     [],
   );
 
-  // FIXED: Destructure format functions
   const {formatDateForAndroid, formatTimeForAndroid, formatTime, formatDate} =
     formatFunctions;
 
-  // OPTIMIZED: Memoize portable item renderer
   const renderPortableItem = useCallback(
     ({item}: {item: PortableToolData}) => {
       const formatSensorValue = (
@@ -306,7 +492,6 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
         return isNaN(value) ? 'N/A' : `${value.toFixed(decimals)}${unit}`;
       };
 
-      // Find sensors
       const temperatureSensor = item.sensors?.find(
         s => s.keterangan_sensor?.toLowerCase() === 'temperature',
       );
@@ -380,11 +565,9 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
     fetchPortableData();
   }, [fetchPortableData]);
 
-  // FIXED: Animation effect with proper refs
   useEffect(() => {
     const updateAnimations = () => {
       try {
-        // Water animation
         if (waterLottieRef.current) {
           if (controlState.isWaterOn) {
             waterLottieRef.current.play();
@@ -393,7 +576,6 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
           }
         }
 
-        // Fertilizer animation
         if (fertLottieRef.current) {
           if (controlState.isFertilizerOn) {
             fertLottieRef.current.play();
@@ -409,7 +591,6 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
     updateAnimations();
   }, [controlState.isWaterOn, controlState.isFertilizerOn]);
 
-  // OPTIMIZED: Memoize weather icon logic
   const weatherInfo = useMemo(() => {
     if (!weather) return {Icon: null, timeKey: 'Day', descKey: ''};
 
@@ -421,10 +602,8 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
     return {Icon, timeKey, descKey};
   }, [weather]);
 
-  // FIXED: Extract Icon properly
   const {Icon} = weatherInfo;
 
-  // OPTIMIZED: Memoize colors
   const colors = useMemo(
     () => ({
       waterCircle: controlState.isWaterOn ? '#B4DC45' : '#BBC3CE',
@@ -433,10 +612,8 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
     [controlState.isWaterOn, controlState.isFertilizerOn],
   );
 
-  // FIXED: Extract colors properly
   const {waterCircle: waterCircleColor, fertCircle: fertCircleColor} = colors;
 
-  // OPTIMIZED: Stable handlers with useCallback
   const handleToggle = useCallback(
     (type: 'water' | 'fertilizer') => {
       if (type === 'water' && controlState.remainingWaterTime > 0) {
@@ -455,7 +632,6 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
     [controlState.remainingWaterTime, controlState.remainingFertTime],
   );
 
-  // Fungsi untuk validasi input
   const validateTimeInput = (value: string, max: number): string => {
     const numValue = parseInt(value);
     if (isNaN(numValue) || numValue < 0) return '0';
@@ -463,35 +639,28 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
     return numValue.toString();
   };
 
-  // Handler untuk perubahan input
   const handleMinutesChange = (text: string) => {
-    // Hanya izinkan angka
     const numericValue = text.replace(/[^0-9]/g, '');
     setInputMinutes(numericValue);
   };
 
   const handleSecondsChange = (text: string) => {
-    // Hanya izinkan angka
     const numericValue = text.replace(/[^0-9]/g, '');
     setInputSeconds(numericValue);
   };
 
-  // Update handleStartProcess untuk menggunakan input values
   const handleStartProcess = useCallback(() => {
     if (!currentProcess) return;
 
-    // Validasi input
     const validatedMinutes = validateTimeInput(inputMinutes, 120);
     const validatedSeconds = validateTimeInput(inputSeconds, 59);
 
-    // Update state dengan nilai yang valid
     setInputMinutes(validatedMinutes);
     setInputSeconds(validatedSeconds);
 
-    // Konversi ke total menit (termasuk detik)
     const totalMinutes =
       parseInt(validatedMinutes) + parseInt(validatedSeconds) / 60;
-    const finalMinutes = Math.min(Math.max(totalMinutes, 0.1), 120); // Minimum 6 detik
+    const finalMinutes = Math.min(Math.max(totalMinutes, 0.1), 120); 
 
     controlState.startProcess(currentProcess, finalMinutes);
     setShowDurationModal(false);
@@ -509,8 +678,7 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
   return (
     <SafeAreaView style={{flex: 1}}>
       <View style={styles.home}>
-        <ScrollView showsVerticalScrollIndicator={false}
-        bounces={true}>
+        <ScrollView showsVerticalScrollIndicator={false} bounces={true}>
           <View style={styles.header}>
             <TouchableOpacity onPress={() => {}} style={styles.userInfo}>
               <Image
@@ -553,12 +721,14 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
                   textAlign: 'center',
                   top: -6,
                 }}>
-                18°
+                {Math.round(Number(getSensorValue('Temperature')))}°
               </Text>
               <View style={styles.detailSectionTwo}>
-                <Text style={styles.detailSectionTwoText}>Humidity : 70% </Text>
                 <Text style={styles.detailSectionTwoText}>
-                  Light : 1800 Lux{' '}
+                  Humidity : {Math.round(Number(getSensorValue('Humidity')))}%
+                </Text>
+                <Text style={styles.detailSectionTwoText}>
+                  {Math.round(Number(getSensorValue('Light')))} Lux{' '}
                 </Text>
               </View>
               <View style={styles.cloud}>
@@ -577,15 +747,21 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
                 <Text style={styles.detailSectionThreeText}>
                   Soil Temperature
                 </Text>
-                <Text style={styles.detailSectionThreeText}>12°</Text>
+                <Text style={styles.detailSectionThreeText}>
+                  {getSensorValue('Soil Temperature')}°
+                </Text>
               </View>
               <View style={{flex: 1}}>
                 <Text style={styles.detailSectionThreeText}>Soil Moisture</Text>
-                <Text style={styles.detailSectionThreeText}>45%</Text>
+                <Text style={styles.detailSectionThreeText}>
+                  {getSensorValue('Soil Humidity')}%
+                </Text>
               </View>
               <View style={{flex: 1}}>
                 <Text style={styles.detailSectionThreeText}>Conductivity</Text>
-                <Text style={styles.detailSectionThreeText}>18 S/cm</Text>
+                <Text style={styles.detailSectionThreeText}>
+                  {getSensorValue('EC')} S/cm
+                </Text>
               </View>
             </View>
           </ImageBackground>
@@ -596,22 +772,52 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
               <View style={styles.detailStatisticOne}>
                 <View style={styles.statContent}>
                   <Text style={styles.statLabel}>PH</Text>
-                  <Text style={styles.statValue}>34</Text>
+                  <Text style={styles.statValue}>{getSensorValue('PH')}</Text>
                 </View>
                 <View style={styles.statExtra}>
-                  <Ionicons name="arrow-down" size={18} color="red" />
-                  <Text style={styles.statStatus}>Low</Text>
+                  {(() => {
+                    const indicator = renderSoilIndicator('PH');
+                    return (
+                      <>
+                        <Ionicons
+                          name={indicator.icon}
+                          size={18}
+                          color={indicator.color}
+                        />
+                        <Text
+                          style={[styles.statStatus, {color: indicator.color}]}>
+                          {indicator.status}
+                        </Text>
+                      </>
+                    );
+                  })()}
                 </View>
               </View>
 
               <View style={styles.detailStatisticOne}>
                 <View style={styles.statContent}>
                   <Text style={styles.statLabel}>Nitrogen</Text>
-                  <Text style={styles.statValue}>12 mg/L</Text>
+                  <Text style={styles.statValue}>
+                    {getSensorValue('Nitrogen')} mg/L
+                  </Text>
                 </View>
                 <View style={styles.statExtra}>
-                  <Ionicons name="arrow-down" size={18} color="red" />
-                  <Text style={styles.statStatus}>Low</Text>
+                  {(() => {
+                    const indicator = renderSoilIndicator('Nitrogen');
+                    return (
+                      <>
+                        <Ionicons
+                          name={indicator.icon}
+                          size={18}
+                          color={indicator.color}
+                        />
+                        <Text
+                          style={[styles.statStatus, {color: indicator.color}]}>
+                          {indicator.status}
+                        </Text>
+                      </>
+                    );
+                  })()}
                 </View>
               </View>
             </View>
@@ -620,24 +826,54 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
               <View style={styles.detailStatisticOne}>
                 <View style={styles.statContent}>
                   <Text style={styles.statLabel}>Phosphor</Text>
-                  <Text style={styles.statValue}>12 mg/L</Text>
+                  <Text style={styles.statValue}>
+                    {getSensorValue('Phosphor')} mg/L
+                  </Text>
                 </View>
                 <View style={styles.statExtra}>
-                  <Ionicons name="arrow-down" size={18} color="red" />
-                  <Text style={styles.statStatus}>Low</Text>
+                  {(() => {
+                    const indicator = renderSoilIndicator('Phosphor');
+                    return (
+                      <>
+                        <Ionicons
+                          name={indicator.icon}
+                          size={18}
+                          color={indicator.color}
+                        />
+                        <Text
+                          style={[styles.statStatus, {color: indicator.color}]}>
+                          {indicator.status}
+                        </Text>
+                      </>
+                    );
+                  })()}
                 </View>
               </View>
 
               <View style={styles.detailStatisticOne}>
                 <View style={styles.statContent}>
                   <Text style={styles.statLabel}>Kalium</Text>
-                  <Text style={styles.statValue}>12 mg/L</Text>
+                  <Text style={styles.statValue}>
+                    {getSensorValue('Kalium')} mg/L
+                  </Text>
                 </View>
                 <View style={styles.statExtra}>
-                  <Ionicons name="arrow-up" size={18} color="green" />
-                  <Text style={[styles.statStatus, {color: 'green'}]}>
-                    Good
-                  </Text>
+                  {(() => {
+                    const indicator = renderSoilIndicator('Kalium');
+                    return (
+                      <>
+                        <Ionicons
+                          name={indicator.icon}
+                          size={18}
+                          color={indicator.color}
+                        />
+                        <Text
+                          style={[styles.statStatus, {color: indicator.color}]}>
+                          {indicator.status}
+                        </Text>
+                      </>
+                    );
+                  })()}
                 </View>
               </View>
             </View>
@@ -763,7 +999,14 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
           </View>
           <View style={styles.fieldList}>
             <View style={styles.headerFieldList}>
-              <Text style={{fontSize: 14, fontWeight: 600, fontFamily:"SpaceGrotesk-Medium"}}>Field List</Text>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  fontFamily: 'SpaceGrotesk-Medium',
+                }}>
+                Field List
+              </Text>
               <TouchableOpacity>
                 <View style={styles.showAll}>
                   <Text
@@ -837,19 +1080,16 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
                     </View>
                     <View style={styles.containerTextBlock}>
                       <Text style={styles.textBlockHeader}>Block 1</Text>
-                      <Text style={styles.textBlock}>Temperature: 32°</Text>
-                      <Text style={styles.textBlock}>Humidity : 78%</Text>
+                      <Text style={styles.textBlock}>Temperature: {sensorDataBlock.block1.temp}°</Text>
+                      <Text style={styles.textBlock}>Humidity: {sensorDataBlock.block1.humidity}%</Text>
                     </View>
-                    {/* Tombol panah dengan Iconsax */}
                     <View style={styles.cutoutButton}>
-                      {/* Background lingkaran hijau */}
                       <Svg width={36} height={36} viewBox="0 0 36 36">
                         <Path
                           d="M18 36C27.9411 36 36 27.9411 36 18C36 8.05888 27.9411 0 18 0C8.05888 0 0 8.05888 0 18C0 27.9411 8.05888 36 18 36Z"
                           fill="#B4DC45"
                         />
                       </Svg>
-                      {/* Ikon panah dari Iconsax */}
                       <ArrowDown
                         variant="Linear"
                         size={26}
@@ -916,19 +1156,16 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
                     </View>
                     <View style={styles.containerTextBlock}>
                       <Text style={styles.textBlockHeader}>Block 2</Text>
-                      <Text style={styles.textBlock}>Temperature: 32°</Text>
-                      <Text style={styles.textBlock}>Humidity : 70%</Text>
+                      <Text style={styles.textBlock}>Temperature: {sensorDataBlock.block2.temp}°</Text>
+                      <Text style={styles.textBlock}>Humidity: {sensorDataBlock.block2.humidity}%</Text>
                     </View>
-                    {/* Tombol panah dengan Iconsax */}
                     <View style={styles.cutoutButton}>
-                      {/* Background lingkaran hijau */}
                       <Svg width={36} height={36} viewBox="0 0 36 36">
                         <Path
                           d="M18 36C27.9411 36 36 27.9411 36 18C36 8.05888 27.9411 0 18 0C8.05888 0 0 8.05888 0 18C0 27.9411 8.05888 36 18 36Z"
                           fill="#B4DC45"
                         />
                       </Svg>
-                      {/* Ikon panah dari Iconsax */}
                       <ArrowDown
                         variant="Linear"
                         size={26}
@@ -943,7 +1180,12 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
           </View>
           <View style={styles.fieldPortableList}>
             <View style={styles.headerFieldPortable}>
-              <Text style={{fontSize: 14, fontWeight: 600, fontFamily:"SpaceGrotesk-Medium"}}>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  fontFamily: 'SpaceGrotesk-Medium',
+                }}>
                 Portable Tools Scanning History
               </Text>
               <TouchableOpacity
@@ -1376,7 +1618,7 @@ const styles = StyleSheet.create({
   titleControl: {
     fontSize: 16,
     fontWeight: 500,
-    fontFamily: "SpaceGrotesk-Medium"
+    fontFamily: 'SpaceGrotesk-Medium',
   },
   frameVideo: {
     backgroundColor: 'white',

@@ -64,7 +64,6 @@ const PowerButton = React.memo<{isActive: boolean; onPress: () => void}>(({
   </TouchableOpacity>
 ));
 
-// Memoized SensorItem component
 const SensorItem = React.memo<{
   label: string;
   value: number;
@@ -97,7 +96,6 @@ const SensorItem = React.memo<{
   );
 });
 
-// Optimized ExpandableBlock with better performance
 const ExpandableBlock = React.memo<{
   title: string;
   animationSource: any;
@@ -322,7 +320,6 @@ const ExpandableBlock = React.memo<{
               style={styles.lottie}
               loop
               autoPlay={mainState.isActive}
-              // Optimasi Lottie
               renderMode="HARDWARE"
               cacheComposition={true}
             />
@@ -504,7 +501,6 @@ const ExpandableBlock = React.memo<{
   );
 });
 
-// Optimized sensor status function dengan memoization
 const getSensorStatus = (value: number, sensorType: string) => {
   const thresholds = {
     Kalium: {good: [10, 15], unit: 'mg/L'},
@@ -516,6 +512,7 @@ const getSensorStatus = (value: number, sensorType: string) => {
     'Soil Temperature': {good: [20, 30], unit: '°C'},
     Temperature: {good: [25, 35], unit: '°C'},
     Humidity: {good: [60, 80], unit: '%'},
+    Light: {good: [10000, 15000], unit: 'Lux'},
   };
 
   const threshold = thresholds[sensorType];
@@ -533,7 +530,6 @@ const getSensorStatus = (value: number, sensorType: string) => {
   }
 };
 
-// Optimized Device components dengan lazy loading
 const Device1 = React.memo<DeviceProps>(({ sensorData }) => {
   const getSensorValue = useCallback((sensorArray: SensorInfo[], keterangan: string): number => {
     const sensor = sensorArray?.find(
@@ -608,7 +604,6 @@ const Device1 = React.memo<DeviceProps>(({ sensorData }) => {
   );
 });
 
-// Similar optimization untuk Device2 dan Device3...
 const Device2 = React.memo<DeviceProps>(({ sensorData }) => {
   const getSensorValue = useCallback((sensorArray: SensorInfo[], keterangan: string): number => {
     const sensor = sensorArray?.find(
@@ -621,7 +616,6 @@ const Device2 = React.memo<DeviceProps>(({ sensorData }) => {
 
   const sensor2Data = sensorData.sensor_2;
 
-  // Memoize temperature and humidity values untuk performa
   const temperatureValue = useMemo(() => 
     getSensorValue(sensor2Data, 'Temperature') || 0, 
     [getSensorValue, sensor2Data]
@@ -668,7 +662,6 @@ const Device2 = React.memo<DeviceProps>(({ sensorData }) => {
         <Text style={styles.soilSubTitle}>Soil Statistic</Text>
 
         <View style={styles.gridContainer}>
-          {/* Row 1 */}
           <View style={styles.gridRow}>
             <SensorItem
               label="Soil Temperature"
@@ -683,7 +676,6 @@ const Device2 = React.memo<DeviceProps>(({ sensorData }) => {
               unit="%"
             />
           </View>
-          {/* Row 2 */}
           <View style={styles.gridRow}>
             <SensorItem
               label="Conductivity"
@@ -696,7 +688,6 @@ const Device2 = React.memo<DeviceProps>(({ sensorData }) => {
               sensorType="PH"
             />
           </View>
-          {/* Row 3 */}
           <View style={styles.gridRow}>
             <SensorItem
               label="Nitrogen"
@@ -711,7 +702,6 @@ const Device2 = React.memo<DeviceProps>(({ sensorData }) => {
               unit=" mg/L"
             />
           </View>
-          {/* Row 4 */}
           <View style={styles.gridRow}>
             <SensorItem
               label="Kalium"
@@ -719,7 +709,12 @@ const Device2 = React.memo<DeviceProps>(({ sensorData }) => {
               sensorType="Kalium"
               unit=" mg/L"
             />
-            <View style={styles.gridItemEmpty} />
+            <SensorItem
+              label="Light"
+              value={getSensorValue(sensor2Data, 'Light')}
+              sensorType="Light"
+              unit=" Lux"
+            />
           </View>
         </View>
       </View>
@@ -727,7 +722,6 @@ const Device2 = React.memo<DeviceProps>(({ sensorData }) => {
   );
 });
 
-// Optimized Device3 component dengan lazy loading dan memoization
 const Device3 = React.memo<DeviceProps>(({ sensorData }) => {
   const getSensorValue = useCallback((sensorArray: SensorInfo[], keterangan: string): number => {
     const sensor = sensorArray?.find(
@@ -747,7 +741,6 @@ const Device3 = React.memo<DeviceProps>(({ sensorData }) => {
         <Text style={styles.soilSubTitle}>Soil Statistic</Text>
 
         <View style={styles.gridContainer}>
-          {/* Row 1 */}
           <View style={styles.gridRow}>
             <SensorItem
               label="Soil Temperature"
@@ -762,7 +755,6 @@ const Device3 = React.memo<DeviceProps>(({ sensorData }) => {
               unit="%"
             />
           </View>
-          {/* Row 2 */}
           <View style={styles.gridRow}>
             <SensorItem
               label="Conductivity"
@@ -775,7 +767,6 @@ const Device3 = React.memo<DeviceProps>(({ sensorData }) => {
               sensorType="PH"
             />
           </View>
-          {/* Row 3 */}
           <View style={styles.gridRow}>
             <SensorItem
               label="Nitrogen"
@@ -790,7 +781,6 @@ const Device3 = React.memo<DeviceProps>(({ sensorData }) => {
               unit=" mg/L"
             />
           </View>
-          {/* Row 4 */}
           <View style={styles.gridRow}>
             <SensorItem
               label="Kalium"
@@ -806,7 +796,6 @@ const Device3 = React.memo<DeviceProps>(({ sensorData }) => {
   );
 });
 
-// Main component dengan lazy loading
 const DetailBlockOne: React.FC<Props> = ({navigation}) => {
   const {
     block1Control,
@@ -844,7 +833,6 @@ const DetailBlockOne: React.FC<Props> = ({navigation}) => {
     }
   }, []);
 
-  // Optimized focus effect
   useFocusEffect(
     useCallback(() => {
       console.log('[DetailBlockOne] Setting active page to block1');
@@ -856,7 +844,6 @@ const DetailBlockOne: React.FC<Props> = ({navigation}) => {
   const [sensorData, setSensorData] = useState<SensorData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   
-  // Memoized components untuk menghindari re-render
   const memoizedExpandableBlocks = useMemo(() => (
     <>
       <ExpandableBlock

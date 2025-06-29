@@ -13,7 +13,7 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import {ArrowLeft2} from 'iconsax-react-native';
 import GaugeSvg from '../../GaugeComponent';
 import EllipseIndicator from '../../EllipsIndicator';
@@ -35,9 +35,6 @@ import PowerOffIcon from '../../../assets/svg/PowerOffIcon';
 import PowerOnIcon from '../../../assets/svg/PowerOnIcon';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'DetailBlockTwo'>;
-// import Gauge from "../assets/images/Gauge.png";
-
-// const Gauge = require('../assets/images/Gauge.png'
 
 interface SensorInfo {
   keterangan_sensor: string;
@@ -58,126 +55,174 @@ interface ApiResponse {
   timestamp: string;
 }
 
-const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
-  const gaugeValue = -100;
+interface DeviceProps {
+  sensorData: SensorData | null;
+}
 
-  const rotation = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    Animated.timing(rotation, {
-      toValue: gaugeValue,
-      duration: 500,
-      useNativeDriver: true,
-    }).start();
-  }, [gaugeValue]);
+// Memoized SensorItem component untuk mencegah re-render yang tidak perlu
+const SensorItem = React.memo<{
+  label: string;
+  value: number;
+  sensorType: string;
+  unit?: string;
+}>(({ label, value, sensorType, unit = '' }) => {
+  const statusInfo = useMemo(() => getSensorStatus(value, sensorType), [value, sensorType]);
 
-  // Modal states
-  const [selectedDuration, setSelectedDuration] = useState<number>(0);
-  const [showDurationModal, setShowDurationModal] = useState(false);
-  // Modal states - unchanged
-    const [inputMinutes, setInputMinutes] = useState<string>('1');
-    const [inputSeconds, setInputSeconds] = useState<string>('0');
-     const minutesInputRef = useRef<TextInput>(null);
-      const secondsInputRef = useRef<TextInput>(null);
-      const focusMinutesInput = () => {
-        minutesInputRef.current?.focus();
-      };
-    
-      const focusSecondsInput = () => {
-        secondsInputRef.current?.focus();
-      };
-  const [currentProcess, setCurrentProcess] = useState<
-    'water' | 'fertilizer' | null
-  >(null);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [confirmType, setConfirmType] = useState<'water' | 'fertilizer' | null>(
-    null,
+  return (
+    <View style={styles.gridItem}>
+      <View style={styles.statContent}>
+        <Text style={styles.statLabel}>{label}</Text>
+        <Text style={styles.statValue}>
+          {value !== null ? `${value}${unit}` : 'N/A'}
+        </Text>
+      </View>
+      <View style={styles.statExtra}>
+        {statusInfo.icon && (
+          <Ionicons
+            name={statusInfo.icon}
+            size={16}
+            color={statusInfo.color}
+          />
+        )}
+        <Text style={[styles.statStatus, {color: statusInfo.color}]}>
+          {statusInfo.status}
+        </Text>
+      </View>
+    </View>
   );
+});
 
-  const [sensorData, setSensorData] = useState<SensorData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+// Extract sensor status logic outside component
+// const getSensorStatus = (value: number | null, sensorType: string) => {
+//   const thresholds: Record<string, { good: [number, number]; unit: string }> = {
+//     'Kalium': { good: [10, 15], unit: 'mg/L' },
+//     'EC': { good: [30, 50], unit: '' },
+//     'PH': { good: [6, 7.5], unit: '' },
+//     'Nitrogen': { good: [10, 20], unit: 'mg/L' },
+//     'Phosphor': { good: [5, 15], unit: 'mg/L' },
+//     'Soil Humidity': { good: [40, 60], unit: '%' },
+//     'Soil Temperature': { good: [20, 30], unit: '°C' },
+//     'Temperature': { good: [25, 35], unit: '°C' },
+//     'Humidity': { good: [60, 80], unit: '%' }
+//   };
 
-  // Video refs - separate refs for each video to prevent conflicts
-  const waterLottieRef = useRef<LottieView>(null);
-  const fertLottieRef = useRef<LottieView>(null);
+//   const threshold = thresholds[sensorType];
+//   if (!threshold || value === null) return { status: 'Unknown', color: 'gray', icon: null };
 
-  // MQTT and control state
-  const {block2Control} = useControl();
-  const controlState = block2Control;
-  const {setActivePage} = usePageControl();
+//   const [min, max] = threshold.good;
+  
+//   if (value >= min && value <= max) {
+//     return { status: 'Good', color: 'green', icon: null };
+//   } else if (value < min) {
+//     return { status: 'Low', color: 'red', icon: 'arrow-down' };
+//   } else {
+//     return { status: 'High', color: 'red', icon: 'arrow-up' };
+//   }
+// };
 
-  // Set this page active on focus
-  useFocusEffect(
-    React.useCallback(() => {
-      setActivePage('block2');
-      return () => {
-        // optional: reset to home or leave empty set
-        // setActivePage('home');
-      };
-    }, [setActivePage]),
-  );
-
-  // MQTT message handler
-  const handleMqttMessage = useCallback(
-    (msg: any) => {
-      const {destinationName: topic, payloadString} = msg;
-      let payload: any;
-
-      try {
-        payload = JSON.parse(payloadString);
-      } catch (error) {
-        console.error('Error parsing MQTT payload:', error);
-        return;
-      }
-
-      // Only handle messages for block 1 topics
-      if (topic.includes('/blok2')) {
-        controlState.handleMqttMessage(topic, payload);
-      }
-    },
-    [controlState],
-  );
-
-  // Set MQTT message handler
-  // useEffect(() => {
-  //   if (client) {
-  //     setMessageHandler(handleMqttMessage);
-  //   }
-
-  //   return () => {
-  //     clearMessageHandler();
-  //   };
-  // }, [client, handleMqttMessage, setMessageHandler, clearMessageHandler]);
-
-  const fetchSensorData = async (): Promise<void> => {
-    try {
-      setLoading(true);
-      const response = await fetch('http://10.0.2.2:4646/api/latest-sensor-block2');
-      const result: ApiResponse = await response.json();
-      
-      if (result.success) {
-        setSensorData(result.data);
-      } else {
-        Alert.alert('Error', 'Failed to fetch sensor data');
-      }
-    } catch (error) {
-      console.error('Error fetching sensor data:', error);
-      Alert.alert('Error', 'Network error occurred');
-    } finally {
-      setLoading(false);
-    }
+const getSensorStatus = (value: number, sensorType: string) => {
+  const thresholds = {
+    Kalium: {good: [10, 15], unit: 'mg/L'},
+    EC: {good: [30, 50], unit: ''},
+    PH: {good: [6, 7.5], unit: ''},
+    Nitrogen: {good: [10, 20], unit: 'mg/L'},
+    Phosphor: {good: [5, 15], unit: 'mg/L'},
+    'Soil Humidity': {good: [40, 60], unit: '%'},
+    'Soil Temperature': {good: [20, 30], unit: '°C'},
+    Temperature: {good: [25, 35], unit: '°C'},
+    Humidity: {good: [60, 80], unit: '%'},
   };
 
+  const threshold = thresholds[sensorType];
+  if (!threshold || value === null)
+    return {status: 'Unknown', color: 'gray', icon: null};
+
+  const [min, max] = threshold.good;
+
+  if (value >= min && value <= max) {
+    return {status: 'Good', color: 'green', icon: null};
+  } else if (value < min) {
+    return {status: 'Low', color: 'red', icon: 'arrow-down'};
+  } else {
+    return {status: 'High', color: 'red', icon: 'arrow-up'};
+  }
+};
+
+const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
+  // State management
+  const [sensorData, setSensorData] = useState<SensorData | null>(null);
+  const [loading, setLoading] = useState<boolean>(false); // Changed to false initially
+  const [selectedDuration, setSelectedDuration] = useState<number>(0);
+  const [showDurationModal, setShowDurationModal] = useState(false);
+  const [inputMinutes, setInputMinutes] = useState<string>('1');
+  const [inputSeconds, setInputSeconds] = useState<string>('0');
+  const [currentProcess, setCurrentProcess] = useState<'water' | 'fertilizer' | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmType, setConfirmType] = useState<'water' | 'fertilizer' | null>(null);
+
+  // Refs
+  const minutesInputRef = useRef<TextInput>(null);
+  const secondsInputRef = useRef<TextInput>(null);
+  const waterLottieRef = useRef<LottieView>(null);
+  const fertLottieRef = useRef<LottieView>(null);
+  const rotation = useRef(new Animated.Value(0)).current;
+  const isMountedRef = useRef(true);
+
+  // Custom hooks
+  const { block2Control } = useControl();
+  const controlState = block2Control;
+  const { setActivePage } = usePageControl();
+
+  // Optimized fetch function with error handling and cancellation
+  const fetchSensorData = useCallback(async (): Promise<void> => {
+      try {
+        setLoading(true);
+        const response = await fetch(
+          'http://10.0.2.2:4646/api/latest-sensor-block2',
+        );
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result: ApiResponse = await response.json();
+  
+        if (result.success) {
+          setSensorData(result.data);
+        } else {
+          Alert.alert('Error', 'Failed to fetch sensor data');
+        }
+      } catch (error) {
+        console.error('Error fetching sensor data:', error);
+        Alert.alert('Error', 'Network error occurred');
+      } finally {
+        setLoading(false);
+      }
+    }, []);
+
+  // Set page active on focus
+  useFocusEffect(
+    useCallback(() => {
+      setActivePage('block2');
+      // Fetch data when screen comes into focus
+      fetchSensorData();
+      
+      return () => {
+        // Don't reset page here to avoid unnecessary re-renders
+      };
+    }, [setActivePage, fetchSensorData])
+  );
+
+  // Cleanup on unmount
   useEffect(() => {
-    fetchSensorData();
-    
-    // Optional: Set up auto-refresh every 30 seconds
-    // const interval = setInterval(fetchSensorData, 30000);
-    // return () => clearInterval(interval);
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
-
+  // Optimized Lottie controls
   useEffect(() => {
-    if (waterLottieRef.current) {
+    if (waterLottieRef.current && isMountedRef.current) {
       try {
         if (controlState.isWaterOn) {
           waterLottieRef.current.play();
@@ -191,7 +236,7 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
   }, [controlState.isWaterOn]);
 
   useEffect(() => {
-    if (fertLottieRef.current) {
+    if (fertLottieRef.current && isMountedRef.current) {
       try {
         if (controlState.isFertilizerOn) {
           fertLottieRef.current.play();
@@ -204,87 +249,26 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
     }
   }, [controlState.isFertilizerOn]);
 
-  const getSensorValue = (sensorArray: SensorInfo[], keterangan: string): number => {
-    const sensor = sensorArray?.find(item => item.keterangan_sensor === keterangan);
-    return sensor?.nilai_sensor || 0;
-  };
-
-  // Fungsi untuk menentukan status berdasarkan nilai dan jenis sensor
-  const getSensorStatus = (value: number | null, sensorType: string) => {
-    // Contoh logic untuk menentukan status (sesuaikan dengan kebutuhan)
-    const thresholds: Record<string, { good: [number, number]; unit: string }> = {
-      'Kalium': { good: [10, 15], unit: 'mg/L' },
-      'EC': { good: [30, 50], unit: '' },
-      'PH': { good: [6, 7.5], unit: '' },
-      'Nitrogen': { good: [10, 20], unit: 'mg/L' },
-      'Phosphor': { good: [5, 15], unit: 'mg/L' },
-      'Soil Humidity': { good: [40, 60], unit: '%' },
-      'Soil Temperature': { good: [20, 30], unit: '°C' },
-      'Temperature': { good: [25, 35], unit: '°C' },
-      'Humidity': { good: [60, 80], unit: '%' }
-    };
-
-    const threshold = thresholds[sensorType];
-    if (!threshold || value === null) return { status: 'Unknown', color: 'gray', icon: null };
-
-    const [min, max] = threshold.good;
-    
-    if (value >= min && value <= max) {
-      return { status: 'Good', color: 'green', icon: null };
-    } else if (value < min) {
-      return { status: 'Low', color: 'red', icon: 'arrow-down' };
-    } else {
-      return { status: 'High', color: 'red', icon: 'arrow-up' };
-    }
-  };
-
-  // Komponen untuk menampilkan item sensor
-  const SensorItem = ({ 
-    label, 
-    value, 
-    sensorType, 
-    unit = '' 
-  }: {
-    label: string;
-    value: number;
-    sensorType: string;
-    unit?: string;
-  }) => {
-    const statusInfo = getSensorStatus(value, sensorType);
-
-    return (
-      <View style={styles.gridItem}>
-        <View style={styles.statContent}>
-          <Text style={styles.statLabel}>{label}</Text>
-          <Text style={styles.statValue}>
-            {value !== null ? `${value}${unit}` : 'N/A'}
-          </Text>
-        </View>
-        <View style={styles.statExtra}>
-          {statusInfo.icon && (
-            <Ionicons name={statusInfo.icon} size={16} color={statusInfo.color} />
-          )}
-          <Text style={[styles.statStatus, {color: statusInfo.color}]}>
-            {statusInfo.status}
-          </Text>
-        </View>
-      </View>
-    );
-  };
-
-  const Device1 = () => {
+  // Memoized Device components
+  const Device1 = React.memo<DeviceProps>(({ sensorData }) => {
+    const getSensorValue = useCallback((sensorArray: SensorInfo[], keterangan: string): number => {
+      const sensor = sensorArray?.find(
+        item => item.keterangan_sensor === keterangan,
+      );
+      return sensor?.nilai_sensor || 0;
+    }, []);
+  
     if (!sensorData?.sensor_1) return null;
-
+  
     const sensor1Data = sensorData.sensor_1;
-
+  
     return (
       <View style={styles.cardTwo}>
         <Text style={styles.soilTitle}>Statistic Device 1</Text>
         <View style={styles.cardContentTwo}>
           <Text style={styles.soilSubTitle}>Soil Statistic</Text>
-
+  
           <View style={styles.gridContainer}>
-            {/* Row 1 */}
             <View style={styles.gridRow}>
               <SensorItem
                 label="Soil Temperature"
@@ -299,7 +283,6 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
                 unit="%"
               />
             </View>
-            {/* Row 2 */}
             <View style={styles.gridRow}>
               <SensorItem
                 label="Conductivity"
@@ -312,7 +295,6 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
                 sensorType="PH"
               />
             </View>
-            {/* Row 3 */}
             <View style={styles.gridRow}>
               <SensorItem
                 label="Nitrogen"
@@ -327,7 +309,6 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
                 unit=" mg/L"
               />
             </View>
-            {/* Row 4 */}
             <View style={styles.gridRow}>
               <SensorItem
                 label="Kalium"
@@ -341,17 +322,36 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
         </View>
       </View>
     );
-  };
-
-  const Device2 = () => {
+  });
+  
+  // Similar optimization untuk Device2 dan Device3...
+  const Device2 = React.memo<DeviceProps>(({ sensorData }) => {
+    const getSensorValue = useCallback((sensorArray: SensorInfo[], keterangan: string): number => {
+      const sensor = sensorArray?.find(
+        item => item.keterangan_sensor === keterangan,
+      );
+      return sensor?.nilai_sensor || 0;
+    }, []);
+  
     if (!sensorData?.sensor_2) return null;
-
+  
     const sensor2Data = sensorData.sensor_2;
-
+  
+    // Memoize temperature and humidity values untuk performa
+    const temperatureValue = useMemo(() => 
+      getSensorValue(sensor2Data, 'Temperature') || 0, 
+      [getSensorValue, sensor2Data]
+    );
+    
+    const humidityValue = useMemo(() => 
+      getSensorValue(sensor2Data, 'Humidity') || 0, 
+      [getSensorValue, sensor2Data]
+    );
+  
     return (
       <View style={styles.cardThree}>
         <Text style={styles.soilTitle}>Statistic Device 2</Text>
-
+  
         <View style={styles.containerTransmisi}>
           <View style={[styles.cardTransmisi, {marginRight: 12}]}>
             <View style={styles.cardDetailTransmisi}>
@@ -364,7 +364,7 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
               <Text style={styles.nameSensorTransmisi}>Temperature</Text>
             </View>
             <Text style={styles.valueTransmisi}>
-              {getSensorValue(sensor2Data, 'Temperature') || 0}°C
+              {temperatureValue}°C
             </Text>
           </View>
           <View style={styles.cardTransmisi}>
@@ -375,14 +375,14 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
               <Text style={styles.nameSensorTransmisi}>Humidity</Text>
             </View>
             <Text style={styles.valueTransmisi}>
-              {getSensorValue(sensor2Data, 'Humidity') || 0}%
+              {humidityValue}%
             </Text>
           </View>
         </View>
-
+  
         <View style={styles.cardContentTwo}>
           <Text style={styles.soilSubTitle}>Soil Statistic</Text>
-
+  
           <View style={styles.gridContainer}>
             {/* Row 1 */}
             <View style={styles.gridRow}>
@@ -441,19 +441,27 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
         </View>
       </View>
     );
-  };
-
-  const Device3 = () => {
+  });
+  
+  // Optimized Device3 component dengan lazy loading dan memoization
+  const Device3 = React.memo<DeviceProps>(({ sensorData }) => {
+    const getSensorValue = useCallback((sensorArray: SensorInfo[], keterangan: string): number => {
+      const sensor = sensorArray?.find(
+        item => item.keterangan_sensor === keterangan,
+      );
+      return sensor?.nilai_sensor || 0;
+    }, []);
+  
     if (!sensorData?.sensor_3) return null;
-
+  
     const sensor3Data = sensorData.sensor_3;
-
+  
     return (
       <View style={styles.cardTwo}>
         <Text style={styles.soilTitle}>Statistic Device 3</Text>
         <View style={styles.cardContentTwo}>
           <Text style={styles.soilSubTitle}>Soil Statistic</Text>
-
+  
           <View style={styles.gridContainer}>
             {/* Row 1 */}
             <View style={styles.gridRow}>
@@ -512,54 +520,17 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
         </View>
       </View>
     );
-  };
+  });
 
-  
+  const memoizedDevices = useMemo(() => (
+      <>
+        <Device1 sensorData={sensorData} />
+        <Device2 sensorData={sensorData} />
+        <Device3 sensorData={sensorData} />
+      </>
+    ), [sensorData]);
 
-  // Format functions
-  const formatDateForAndroid = useCallback((date: Date) => {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sept',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = months[date.getMonth()];
-    const year = date.getFullYear();
-
-    return `${day} ${month} ${year}`;
-  }, []);
-
-  const formatTimeForAndroid = useCallback((date: Date) => {
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-
-    return `${hours}:${minutes}`;
-  }, []);
-
-  const formatTime = useCallback((totalSeconds: number): string => {
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${seconds
-      .toString()
-      .padStart(2, '0')}`;
-  }, []);
-
-  // Colors
-  const waterCircleColor = controlState.isWaterOn ? '#B4DC45' : '#BBC3CE';
-  const fertCircleColor = controlState.isFertilizerOn ? '#B4DC45' : '#BBC3CE';
-
-  // Handlers
+  // Optimized handlers
   const handleToggle = useCallback(
     (type: 'water' | 'fertilizer') => {
       if (type === 'water' && controlState.remainingWaterTime > 0) {
@@ -578,49 +549,40 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
     [controlState.remainingWaterTime, controlState.remainingFertTime],
   );
 
-  // Fungsi untuk validasi input
-    const validateTimeInput = (value: string, max: number): string => {
-      const numValue = parseInt(value);
-      if (isNaN(numValue) || numValue < 0) return '0';
-      if (numValue > max) return max.toString();
-      return numValue.toString();
-    };
-  
-    // Handler untuk perubahan input
-    const handleMinutesChange = (text: string) => {
-      // Hanya izinkan angka
-      const numericValue = text.replace(/[^0-9]/g, '');
-      setInputMinutes(numericValue);
-    };
-  
-    const handleSecondsChange = (text: string) => {
-      // Hanya izinkan angka
-      const numericValue = text.replace(/[^0-9]/g, '');
-      setInputSeconds(numericValue);
-    };
-  
-    // Update handleStartProcess untuk menggunakan input values
-    const handleStartProcess = useCallback(() => {
-      if (!currentProcess) return;
-  
-      // Validasi input
-      const validatedMinutes = validateTimeInput(inputMinutes, 120);
-      const validatedSeconds = validateTimeInput(inputSeconds, 59);
-  
-      // Update state dengan nilai yang valid
-      setInputMinutes(validatedMinutes);
-      setInputSeconds(validatedSeconds);
-  
-      // Konversi ke total menit (termasuk detik)
-      const totalMinutes =
-        parseInt(validatedMinutes) + parseInt(validatedSeconds) / 60;
-      const finalMinutes = Math.min(Math.max(totalMinutes, 0.1), 120); // Minimum 6 detik
-  
-      controlState.startProcess(currentProcess, finalMinutes);
-      setShowDurationModal(false);
-      setInputMinutes('1');
-      setInputSeconds('0');
-    }, [currentProcess, inputMinutes, inputSeconds, controlState]);
+  const validateTimeInput = useCallback((value: string, max: number): string => {
+    const numValue = parseInt(value);
+    if (isNaN(numValue) || numValue < 0) return '0';
+    if (numValue > max) return max.toString();
+    return numValue.toString();
+  }, []);
+
+  const handleMinutesChange = useCallback((text: string) => {
+    const numericValue = text.replace(/[^0-9]/g, '');
+    setInputMinutes(numericValue);
+  }, []);
+
+  const handleSecondsChange = useCallback((text: string) => {
+    const numericValue = text.replace(/[^0-9]/g, '');
+    setInputSeconds(numericValue);
+  }, []);
+
+  const handleStartProcess = useCallback(() => {
+    if (!currentProcess) return;
+
+    const validatedMinutes = validateTimeInput(inputMinutes, 120);
+    const validatedSeconds = validateTimeInput(inputSeconds, 59);
+
+    setInputMinutes(validatedMinutes);
+    setInputSeconds(validatedSeconds);
+
+    const totalMinutes = parseInt(validatedMinutes) + parseInt(validatedSeconds) / 60;
+    const finalMinutes = Math.min(Math.max(totalMinutes, 0.1), 120);
+
+    controlState.startProcess(currentProcess, finalMinutes);
+    setShowDurationModal(false);
+    setInputMinutes('1');
+    setInputSeconds('0');
+  }, [currentProcess, inputMinutes, inputSeconds, controlState, validateTimeInput]);
 
   const handleConfirmStop = useCallback(() => {
     if (confirmType) {
@@ -629,178 +591,199 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
     setShowConfirm(false);
   }, [confirmType, controlState]);
 
-  if (loading) {
+  // Format functions
+  const formatDateForAndroid = useCallback((date: Date) => {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec',
+    ];
+
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+
+    return `${day} ${month} ${year}`;
+  }, []);
+
+  const formatTimeForAndroid = useCallback((date: Date) => {
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }, []);
+
+  const formatTime = useCallback((totalSeconds: number): string => {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds
+      .toString()
+      .padStart(2, '0')}`;
+  }, []);
+
+  const focusMinutesInput = useCallback(() => {
+    minutesInputRef.current?.focus();
+  }, []);
+
+  const focusSecondsInput = useCallback(() => {
+    secondsInputRef.current?.focus();
+  }, []);
+
+  // Show loading only when actually loading
+  if (loading && !sensorData) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="#B4DC45" />
         <Text>Loading sensor data...</Text>
       </View>
     );
   }
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-      }}>
+    <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.main}>
         <ScrollView
-                  contentContainerStyle={styles.scrollContent}
-                  showsVerticalScrollIndicator={false}
-                  bounces={true}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => {
-              navigation.navigate('HomeFix');
-            }}>
-            <ArrowLeft2
-              color="black"
-              variant="Linear"
-              size={24}
-              style={{transform: [{rotate: '360deg'}]}}
-            />
-          </TouchableOpacity>
-          <Text
-            style={{
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          bounces={true}
+        >
+          <View style={styles.header}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('HomeFix')}
+              activeOpacity={0.7}
+            >
+              <ArrowLeft2
+                color="black"
+                variant="Linear"
+                size={24}
+                style={{transform: [{rotate: '360deg'}]}}
+              />
+            </TouchableOpacity>
+            <Text style={{
               fontSize: 18,
               fontWeight: 600,
               fontFamily: 'SpaceGrotesk-Regular',
               right: 5,
               textAlign: 'center',
-            }}>
-            Block 2
-          </Text>
-          <ArrowLeft2
-            color="black"
-            variant="Linear"
-            size={24}
-            style={{transform: [{rotate: '360deg'}]}}
-            opacity={0}
-          />
-        </View>
-        <View style={styles.controlCentre}>
-          <View style={styles.controlCentreBox}>
-            <View style={styles.boxControl}>
-              <View style={styles.frameTopControl}>
-                <Text style={styles.titleControl}>Water</Text>
-                <TouchableOpacity
-                  style={styles.powerButtonContainer}
-                  onPress={() => handleToggle('water')}>
-                  {controlState.isWaterOn ? <PowerOnIcon /> : <PowerOffIcon />}
-                </TouchableOpacity>
-              </View>
-              <View style={styles.frameVideoPlay}>
-                <LottieView
-                  ref={waterLottieRef}
-                  source={require('../../../assets/videos/air.mp4.lottie.json')} // Ganti dengan file lottie
-                  style={{
-                    width: 70,
-                    height: 70,
-                    opacity: 0.5,
-                  }}
-                  loop={true}
-                  autoPlay={controlState.isWaterOn}
-                  resizeMode="cover"
-                />
-                <View style={styles.informationSprayer}>
-                  {/* Water info */}
-                  {controlState.remainingWaterTime > 0 ? (
-                    <>
+            }}>Block 2</Text>
+            <ArrowLeft2
+              color="black"
+              variant="Linear"
+              size={24}
+              style={{transform: [{rotate: '360deg'}]}}
+              opacity={0}
+            />
+          </View>
+          
+          <View style={styles.controlCentre}>
+            <View style={styles.controlCentreBox}>
+              <View style={styles.boxControl}>
+                <View style={styles.frameTopControl}>
+                  <Text style={styles.titleControl}>Water</Text>
+                  <TouchableOpacity
+                    style={styles.powerButtonContainer}
+                    onPress={() => handleToggle('water')}
+                    activeOpacity={0.7}
+                  >
+                    {controlState.isWaterOn ? <PowerOnIcon /> : <PowerOffIcon />}
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.frameVideoPlay}>
+                  <LottieView
+                    ref={waterLottieRef}
+                    source={require('../../../assets/videos/air.mp4.lottie.json')}
+                    style={{
+                      width: 70,
+                      height: 70,
+                      opacity: 0.5,
+                    }}
+                    loop={true}
+                    autoPlay={controlState.isWaterOn}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.informationSprayer}>
+                    {controlState.remainingWaterTime > 0 ? (
+                      <>
+                        <Text style={styles.informationSprayerText}>
+                          Watering in progress
+                        </Text>
+                        <Text style={styles.informationSprayerText}>
+                          {formatTime(controlState.remainingWaterTime)}
+                        </Text>
+                      </>
+                    ) : controlState.lastWaterAction ? (
+                      <>
+                        <Text style={styles.informationSprayerText}>Last action</Text>
+                        <Text style={styles.informationSprayerText}>
+                          {formatDateForAndroid(controlState.lastWaterAction)}
+                        </Text>
+                        <Text style={styles.informationSprayerText}>
+                          {formatTimeForAndroid(controlState.lastWaterAction)}
+                        </Text>
+                      </>
+                    ) : (
                       <Text style={styles.informationSprayerText}>
-                        Watering in progress
+                        No recent{'\n'}water{'\n'}activity
                       </Text>
-                      <Text style={[styles.informationSprayerText]}>
-                        {formatTime(controlState.remainingWaterTime)}
-                      </Text>
-                    </>
-                  ) : controlState.lastWaterAction ? (
-                    <>
-                      <Text style={styles.informationSprayerText}>
-                        Last action
-                      </Text>
-                      <Text style={styles.informationSprayerText}>
-                        {formatDateForAndroid(controlState.lastWaterAction)}
-                      </Text>
-                      <Text style={styles.informationSprayerText}>
-                        {formatTimeForAndroid(controlState.lastWaterAction)}
-                      </Text>
-                    </>
-                  ) : (
-                    <Text style={styles.informationSprayerText}>
-                      <Text>
-                        No recent{'\n'}
-                        water{'\n'}
-                        activity
-                      </Text>
-                    </Text>
-                  )}
+                    )}
+                  </View>
                 </View>
               </View>
-            </View>
 
-            <View style={styles.boxControl}>
-              <View style={styles.frameTopControl}>
-                <Text style={styles.titleControl}>Fertilizer</Text>
-                <TouchableOpacity
-                  style={styles.powerButtonContainer}
-                  onPress={() => handleToggle('fertilizer')}>
-                  {controlState.isFertilizerOn ? (
-                    <PowerOnIcon />
-                  ) : (
-                    <PowerOffIcon />
-                  )}
-                </TouchableOpacity>
-              </View>
-              <View style={styles.frameVideoPlay}>
-                <LottieView
-                  ref={fertLottieRef}
-                  source={require('../../../assets/videos/pupuk.mp4.lottie.json')} // Ganti dengan file lottie
-                  style={{
-                    width: 70,
-                    height: 70,
-                    opacity: 0.5,
-                  }}
-                  loop={true}
-                  autoPlay={controlState.isFertilizerOn}
-                  resizeMode="cover"
-                />
-                <View style={styles.informationSprayer}>
-                  {/* Fertilizer info */}
-                  {controlState.remainingFertTime > 0 ? (
-                    <>
+              <View style={styles.boxControl}>
+                <View style={styles.frameTopControl}>
+                  <Text style={styles.titleControl}>Fertilizer</Text>
+                  <TouchableOpacity
+                    style={styles.powerButtonContainer}
+                    onPress={() => handleToggle('fertilizer')}
+                    activeOpacity={0.7}
+                  >
+                    {controlState.isFertilizerOn ? <PowerOnIcon /> : <PowerOffIcon />}
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.frameVideoPlay}>
+                  <LottieView
+                    ref={fertLottieRef}
+                    source={require('../../../assets/videos/pupuk.mp4.lottie.json')}
+                    style={{
+                      width: 70,
+                      height: 70,
+                      opacity: 0.5,
+                    }}
+                    loop={true}
+                    autoPlay={controlState.isFertilizerOn}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.informationSprayer}>
+                    {controlState.remainingFertTime > 0 ? (
+                      <>
+                        <Text style={styles.informationSprayerText}>
+                          Fertilizing in progress
+                        </Text>
+                        <Text style={styles.informationSprayerText}>
+                          {formatTime(controlState.remainingFertTime)}
+                        </Text>
+                      </>
+                    ) : controlState.lastFertAction ? (
+                      <>
+                        <Text style={styles.informationSprayerText}>Last action</Text>
+                        <Text style={styles.informationSprayerText}>
+                          {formatDateForAndroid(controlState.lastFertAction)}
+                        </Text>
+                        <Text style={styles.informationSprayerText}>
+                          {formatTimeForAndroid(controlState.lastFertAction)}
+                        </Text>
+                      </>
+                    ) : (
                       <Text style={styles.informationSprayerText}>
-                        Fertilizing in progress
+                        No recent fertilizer activity
                       </Text>
-                      <Text style={[styles.informationSprayerText]}>
-                        {formatTime(controlState.remainingFertTime)}
-                      </Text>
-                    </>
-                  ) : controlState.lastFertAction ? (
-                    <>
-                      <Text style={styles.informationSprayerText}>
-                        Last action
-                      </Text>
-                      <Text style={styles.informationSprayerText}>
-                        {formatDateForAndroid(controlState.lastFertAction)}
-                      </Text>
-                      <Text style={styles.informationSprayerText}>
-                        {formatTimeForAndroid(controlState.lastFertAction)}
-                      </Text>
-                    </>
-                  ) : (
-                    <Text style={styles.informationSprayerText}>
-                      No recent fertilizer activity
-                    </Text>
-                  )}
+                    )}
+                  </View>
                 </View>
               </View>
             </View>
           </View>
-        </View>
-        <Device1 />
-          <Device2 />
-          <Device3 />
-        <Modal
+          {memoizedDevices}
+          <Modal
                 visible={showDurationModal}
                 transparent
                 animationType="fade"

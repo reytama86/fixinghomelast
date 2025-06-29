@@ -1,4 +1,4 @@
-import React, {useState, useRef, useCallback, useEffect} from 'react';
+import React, {useState, useRef, useCallback, useEffect, useMemo} from 'react';
 import {
   View,
   Text,
@@ -47,7 +47,11 @@ interface ApiResponse {
   timestamp: string;
 }
 
-const PowerButton: React.FC<{isActive: boolean; onPress: () => void}> = ({
+interface DeviceProps {
+  sensorData: SensorData | null;
+}
+
+const PowerButton = React.memo<{isActive: boolean; onPress: () => void}>(({
   isActive,
   onPress,
 }) => (
@@ -58,9 +62,43 @@ const PowerButton: React.FC<{isActive: boolean; onPress: () => void}> = ({
       <PowerOffIcon width={42} height={42} />
     )}
   </TouchableOpacity>
-);
+));
 
-const ExpandableBlock: React.FC<{
+// Memoized SensorItem component
+const SensorItem = React.memo<{
+  label: string;
+  value: number;
+  sensorType: string;
+  unit?: string;
+}>(({ label, value, sensorType, unit = '' }) => {
+  const statusInfo = useMemo(() => getSensorStatus(value, sensorType), [value, sensorType]);
+
+  return (
+    <View style={styles.gridItem}>
+      <View style={styles.statContent}>
+        <Text style={styles.statLabel}>{label}</Text>
+        <Text style={styles.statValue}>
+          {value !== null ? `${value}${unit}` : 'N/A'}
+        </Text>
+      </View>
+      <View style={styles.statExtra}>
+        {statusInfo.icon && (
+          <Ionicons
+            name={statusInfo.icon}
+            size={16}
+            color={statusInfo.color}
+          />
+        )}
+        <Text style={[styles.statStatus, {color: statusInfo.color}]}>
+          {statusInfo.status}
+        </Text>
+      </View>
+    </View>
+  );
+});
+
+// Optimized ExpandableBlock with better performance
+const ExpandableBlock = React.memo<{
   title: string;
   animationSource: any;
   blockCount: number;
@@ -68,7 +106,7 @@ const ExpandableBlock: React.FC<{
   mainControl: any;
   row1Control: any;
   row2Control: any;
-}> = ({
+}>(({
   title,
   animationSource,
   blockCount,
@@ -92,87 +130,81 @@ const ExpandableBlock: React.FC<{
 
   const heightAnim = useRef(new Animated.Value(88)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
-  const rotateInterpolate = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['270deg', '90deg'],
-  });
+  
+  const rotateInterpolate = useMemo(() => 
+    rotateAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['270deg', '90deg'],
+    }), [rotateAnim]);
 
   const [inputMinutes, setInputMinutes] = useState<string>('1');
   const [inputSeconds, setInputSeconds] = useState<string>('0');
 
-  const validateTimeInput = (value: string, max: number): string => {
+  const validateTimeInput = useCallback((value: string, max: number): string => {
     const numValue = parseInt(value);
     if (isNaN(numValue) || numValue < 0) return '0';
     if (numValue > max) return max.toString();
     return numValue.toString();
-  };
+  }, []);
 
-  const handleMinutesChange = (text: string) => {
+  const handleMinutesChange = useCallback((text: string) => {
     const numericValue = text.replace(/[^0-9]/g, '');
     setInputMinutes(numericValue);
-  };
+  }, []);
 
-  const handleSecondsChange = (text: string) => {
+  const handleSecondsChange = useCallback((text: string) => {
     const numericValue = text.replace(/[^0-9]/g, '');
     setInputSeconds(numericValue);
-  };
+  }, []);
 
   const minutesInputRef = useRef<TextInput>(null);
   const secondsInputRef = useRef<TextInput>(null);
 
-  const focusMinutesInput = () => {
+  const focusMinutesInput = useCallback(() => {
     minutesInputRef.current?.focus();
-  };
+  }, []);
 
-  const focusSecondsInput = () => {
+  const focusSecondsInput = useCallback(() => {
     secondsInputRef.current?.focus();
-  };
+  }, []);
 
-  // Format helpers
-  const formatDate = (d: Date) => {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sept',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return `${d.getDate().toString().padStart(2, '0')} ${
-      months[d.getMonth()]
-    } ${d.getFullYear()}`;
-  };
-  const formatTime = (d: Date) =>
-    `${d.getHours().toString().padStart(2, '0')}:${d
-      .getMinutes()
-      .toString()
-      .padStart(2, '0')}`;
-  const formatDuration = (sec: number) => {
-    const m = Math.floor(sec / 60)
-      .toString()
-      .padStart(2, '0');
-    const s = (sec % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
+  // Memoized format helpers
+  const formatHelpers = useMemo(() => ({
+    formatDate: (d: Date) => {
+      const months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec',
+      ];
+      return `${d.getDate().toString().padStart(2, '0')} ${
+        months[d.getMonth()]
+      } ${d.getFullYear()}`;
+    },
+    formatTime: (d: Date) =>
+      `${d.getHours().toString().padStart(2, '0')}:${d
+        .getMinutes()
+        .toString()
+        .padStart(2, '0')}`,
+    formatDuration: (sec: number) => {
+      const m = Math.floor(sec / 60)
+        .toString()
+        .padStart(2, '0');
+      const s = (sec % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    },
+  }), []);
 
-  const deriveState = (ctrl: any) => ({
+  const deriveState = useCallback((ctrl: any) => ({
     isActive: blockType === 'water' ? ctrl.isWaterOn : ctrl.isFertilizerOn,
     remaining:
       blockType === 'water' ? ctrl.remainingWaterTime : ctrl.remainingFertTime,
     last: blockType === 'water' ? ctrl.lastWaterAction : ctrl.lastFertAction,
-  });
+  }), [blockType]);
 
-  const mainState = deriveState(mainControl);
-  const row1State = deriveState(row1Control);
-  const row2State = deriveState(row2Control);
+  const mainState = useMemo(() => deriveState(mainControl), [deriveState, mainControl]);
+  const row1State = useMemo(() => deriveState(row1Control), [deriveState, row1Control]);
+  const row2State = useMemo(() => deriveState(row2Control), [deriveState, row2Control]);
 
-  const toggleExpand = () => {
+  const toggleExpand = useCallback(() => {
     Animated.parallel([
       Animated.timing(heightAnim, {
         toValue: expanded ? 88 : 190,
@@ -188,7 +220,7 @@ const ExpandableBlock: React.FC<{
       }),
     ]).start();
     setExpanded(prev => !prev);
-  };
+  }, [expanded, heightAnim, rotateAnim]);
 
   const handleToggle = useCallback(
     (target: 'main' | 'row1' | 'row2') => {
@@ -204,11 +236,9 @@ const ExpandableBlock: React.FC<{
           : targetControl.isFertilizerOn;
 
       if (isCurrentlyActive) {
-        // If currently active, show confirm modal to stop
         setConfirmProcess({type: blockType, target});
         setShowConfirm(true);
       } else {
-        // If not active, show duration modal to start
         setCurrentProcess({type: blockType, target});
         setSelectedDuration(1);
         setShowDurationModal(true);
@@ -217,7 +247,7 @@ const ExpandableBlock: React.FC<{
     [mainControl, row1Control, row2Control, blockType],
   );
 
-  const handleStart = () => {
+  const handleStart = useCallback(() => {
     if (!currentProcess) return;
 
     const validatedMinutes = validateTimeInput(inputMinutes, 120);
@@ -243,9 +273,9 @@ const ExpandableBlock: React.FC<{
     setInputMinutes('1');
     setInputSeconds('0');
     setCurrentProcess(null);
-  };
+  }, [currentProcess, inputMinutes, inputSeconds, validateTimeInput, mainControl, row1Control, row2Control]);
 
-  const handleStop = () => {
+  const handleStop = useCallback(() => {
     if (!confirmProcess) return;
 
     const ctrl =
@@ -259,28 +289,28 @@ const ExpandableBlock: React.FC<{
 
     setShowConfirm(false);
     setConfirmProcess(null);
-  };
+  }, [confirmProcess, mainControl, row1Control, row2Control]);
 
-  const getInfo = (key: 'main' | 'row1' | 'row2'): [string, string] => {
+  const getInfo = useCallback((key: 'main' | 'row1' | 'row2'): [string, string] => {
     const state =
       key === 'main' ? mainState : key === 'row1' ? row1State : row2State;
 
     if (state.remaining > 0) {
-      return ['Progress', formatDuration(state.remaining)];
+      return ['Progress', formatHelpers.formatDuration(state.remaining)];
     }
 
     if (state.last) {
       const d = new Date(state.last);
-      return [formatDate(d), formatTime(d)];
+      return [formatHelpers.formatDate(d), formatHelpers.formatTime(d)];
     }
 
     return ['No recent', blockType];
-  };
+  }, [mainState, row1State, row2State, blockType, formatHelpers]);
 
-  const rows = [
+  const rows = useMemo(() => [
     {key: 'row1' as const, label: 'Baris 1'},
     {key: 'row2' as const, label: 'Baris 2'},
-  ];
+  ], []);
 
   return (
     <>
@@ -292,6 +322,9 @@ const ExpandableBlock: React.FC<{
               style={styles.lottie}
               loop
               autoPlay={mainState.isActive}
+              // Optimasi Lottie
+              renderMode="HARDWARE"
+              cacheComposition={true}
             />
             <View style={styles.infoDetails}>
               <Text style={styles.waterText}>{title}</Text>
@@ -469,9 +502,311 @@ const ExpandableBlock: React.FC<{
       />
     </>
   );
+});
+
+// Optimized sensor status function dengan memoization
+const getSensorStatus = (value: number, sensorType: string) => {
+  const thresholds = {
+    Kalium: {good: [10, 15], unit: 'mg/L'},
+    EC: {good: [30, 50], unit: ''},
+    PH: {good: [6, 7.5], unit: ''},
+    Nitrogen: {good: [10, 20], unit: 'mg/L'},
+    Phosphor: {good: [5, 15], unit: 'mg/L'},
+    'Soil Humidity': {good: [40, 60], unit: '%'},
+    'Soil Temperature': {good: [20, 30], unit: '°C'},
+    Temperature: {good: [25, 35], unit: '°C'},
+    Humidity: {good: [60, 80], unit: '%'},
+  };
+
+  const threshold = thresholds[sensorType];
+  if (!threshold || value === null)
+    return {status: 'Unknown', color: 'gray', icon: null};
+
+  const [min, max] = threshold.good;
+
+  if (value >= min && value <= max) {
+    return {status: 'Good', color: 'green', icon: null};
+  } else if (value < min) {
+    return {status: 'Low', color: 'red', icon: 'arrow-down'};
+  } else {
+    return {status: 'High', color: 'red', icon: 'arrow-up'};
+  }
 };
 
-// Main screen component
+// Optimized Device components dengan lazy loading
+const Device1 = React.memo<DeviceProps>(({ sensorData }) => {
+  const getSensorValue = useCallback((sensorArray: SensorInfo[], keterangan: string): number => {
+    const sensor = sensorArray?.find(
+      item => item.keterangan_sensor === keterangan,
+    );
+    return sensor?.nilai_sensor || 0;
+  }, []);
+
+  if (!sensorData?.sensor_1) return null;
+
+  const sensor1Data = sensorData.sensor_1;
+
+  return (
+    <View style={styles.cardTwo}>
+      <Text style={styles.soilTitle}>Statistic Device 1</Text>
+      <View style={styles.cardContentTwo}>
+        <Text style={styles.soilSubTitle}>Soil Statistic</Text>
+
+        <View style={styles.gridContainer}>
+          <View style={styles.gridRow}>
+            <SensorItem
+              label="Soil Temperature"
+              value={getSensorValue(sensor1Data, 'Soil Temperature')}
+              sensorType="Soil Temperature"
+              unit="°C"
+            />
+            <SensorItem
+              label="Soil Humidity"
+              value={getSensorValue(sensor1Data, 'Soil Humidity')}
+              sensorType="Soil Humidity"
+              unit="%"
+            />
+          </View>
+          <View style={styles.gridRow}>
+            <SensorItem
+              label="Conductivity"
+              value={getSensorValue(sensor1Data, 'EC')}
+              sensorType="EC"
+            />
+            <SensorItem
+              label="PH"
+              value={getSensorValue(sensor1Data, 'PH')}
+              sensorType="PH"
+            />
+          </View>
+          <View style={styles.gridRow}>
+            <SensorItem
+              label="Nitrogen"
+              value={getSensorValue(sensor1Data, 'Nitrogen')}
+              sensorType="Nitrogen"
+              unit=" mg/L"
+            />
+            <SensorItem
+              label="Phosphor"
+              value={getSensorValue(sensor1Data, 'Phosphor')}
+              sensorType="Phosphor"
+              unit=" mg/L"
+            />
+          </View>
+          <View style={styles.gridRow}>
+            <SensorItem
+              label="Kalium"
+              value={getSensorValue(sensor1Data, 'Kalium')}
+              sensorType="Kalium"
+              unit=" mg/L"
+            />
+            <View style={styles.gridItemEmpty} />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+});
+
+// Similar optimization untuk Device2 dan Device3...
+const Device2 = React.memo<DeviceProps>(({ sensorData }) => {
+  const getSensorValue = useCallback((sensorArray: SensorInfo[], keterangan: string): number => {
+    const sensor = sensorArray?.find(
+      item => item.keterangan_sensor === keterangan,
+    );
+    return sensor?.nilai_sensor || 0;
+  }, []);
+
+  if (!sensorData?.sensor_2) return null;
+
+  const sensor2Data = sensorData.sensor_2;
+
+  // Memoize temperature and humidity values untuk performa
+  const temperatureValue = useMemo(() => 
+    getSensorValue(sensor2Data, 'Temperature') || 0, 
+    [getSensorValue, sensor2Data]
+  );
+  
+  const humidityValue = useMemo(() => 
+    getSensorValue(sensor2Data, 'Humidity') || 0, 
+    [getSensorValue, sensor2Data]
+  );
+
+  return (
+    <View style={styles.cardThree}>
+      <Text style={styles.soilTitle}>Statistic Device 2</Text>
+
+      <View style={styles.containerTransmisi}>
+        <View style={[styles.cardTransmisi, {marginRight: 12}]}>
+          <View style={styles.cardDetailTransmisi}>
+            <View style={styles.Transmisi}>
+              <GaugeSvg />
+              <View style={{top: -100, right: -105}}>
+                <Ellips />
+              </View>
+            </View>
+            <Text style={styles.nameSensorTransmisi}>Temperature</Text>
+          </View>
+          <Text style={styles.valueTransmisi}>
+            {temperatureValue}°C
+          </Text>
+        </View>
+        <View style={styles.cardTransmisi}>
+          <View style={styles.cardDetailTransmisi}>
+            <View style={styles.Transmisi}>
+              <GaugeSvg />
+            </View>
+            <Text style={styles.nameSensorTransmisi}>Humidity</Text>
+          </View>
+          <Text style={styles.valueTransmisi}>
+            {humidityValue}%
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.cardContentTwo}>
+        <Text style={styles.soilSubTitle}>Soil Statistic</Text>
+
+        <View style={styles.gridContainer}>
+          {/* Row 1 */}
+          <View style={styles.gridRow}>
+            <SensorItem
+              label="Soil Temperature"
+              value={getSensorValue(sensor2Data, 'Soil Temperature')}
+              sensorType="Soil Temperature"
+              unit="°C"
+            />
+            <SensorItem
+              label="Soil Humidity"
+              value={getSensorValue(sensor2Data, 'Soil Humidity')}
+              sensorType="Soil Humidity"
+              unit="%"
+            />
+          </View>
+          {/* Row 2 */}
+          <View style={styles.gridRow}>
+            <SensorItem
+              label="Conductivity"
+              value={getSensorValue(sensor2Data, 'EC')}
+              sensorType="EC"
+            />
+            <SensorItem
+              label="PH"
+              value={getSensorValue(sensor2Data, 'PH')}
+              sensorType="PH"
+            />
+          </View>
+          {/* Row 3 */}
+          <View style={styles.gridRow}>
+            <SensorItem
+              label="Nitrogen"
+              value={getSensorValue(sensor2Data, 'Nitrogen')}
+              sensorType="Nitrogen"
+              unit=" mg/L"
+            />
+            <SensorItem
+              label="Phosphor"
+              value={getSensorValue(sensor2Data, 'Phosphor')}
+              sensorType="Phosphor"
+              unit=" mg/L"
+            />
+          </View>
+          {/* Row 4 */}
+          <View style={styles.gridRow}>
+            <SensorItem
+              label="Kalium"
+              value={getSensorValue(sensor2Data, 'Kalium')}
+              sensorType="Kalium"
+              unit=" mg/L"
+            />
+            <View style={styles.gridItemEmpty} />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+});
+
+// Optimized Device3 component dengan lazy loading dan memoization
+const Device3 = React.memo<DeviceProps>(({ sensorData }) => {
+  const getSensorValue = useCallback((sensorArray: SensorInfo[], keterangan: string): number => {
+    const sensor = sensorArray?.find(
+      item => item.keterangan_sensor === keterangan,
+    );
+    return sensor?.nilai_sensor || 0;
+  }, []);
+
+  if (!sensorData?.sensor_3) return null;
+
+  const sensor3Data = sensorData.sensor_3;
+
+  return (
+    <View style={styles.cardTwo}>
+      <Text style={styles.soilTitle}>Statistic Device 3</Text>
+      <View style={styles.cardContentTwo}>
+        <Text style={styles.soilSubTitle}>Soil Statistic</Text>
+
+        <View style={styles.gridContainer}>
+          {/* Row 1 */}
+          <View style={styles.gridRow}>
+            <SensorItem
+              label="Soil Temperature"
+              value={getSensorValue(sensor3Data, 'Soil Temperature')}
+              sensorType="Soil Temperature"
+              unit="°C"
+            />
+            <SensorItem
+              label="Soil Humidity"
+              value={getSensorValue(sensor3Data, 'Soil Humidity')}
+              sensorType="Soil Humidity"
+              unit="%"
+            />
+          </View>
+          {/* Row 2 */}
+          <View style={styles.gridRow}>
+            <SensorItem
+              label="Conductivity"
+              value={getSensorValue(sensor3Data, 'EC')}
+              sensorType="EC"
+            />
+            <SensorItem
+              label="PH"
+              value={getSensorValue(sensor3Data, 'PH')}
+              sensorType="PH"
+            />
+          </View>
+          {/* Row 3 */}
+          <View style={styles.gridRow}>
+            <SensorItem
+              label="Nitrogen"
+              value={getSensorValue(sensor3Data, 'Nitrogen')}
+              sensorType="Nitrogen"
+              unit=" mg/L"
+            />
+            <SensorItem
+              label="Phosphor"
+              value={getSensorValue(sensor3Data, 'Phosphor')}
+              sensorType="Phosphor"
+              unit=" mg/L"
+            />
+          </View>
+          {/* Row 4 */}
+          <View style={styles.gridRow}>
+            <SensorItem
+              label="Kalium"
+              value={getSensorValue(sensor3Data, 'Kalium')}
+              sensorType="Kalium"
+              unit=" mg/L"
+            />
+            <View style={styles.gridItemEmpty} />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+});
+
+// Main component dengan lazy loading
 const DetailBlockOne: React.FC<Props> = ({navigation}) => {
   const {
     block1Control,
@@ -483,27 +818,17 @@ const DetailBlockOne: React.FC<Props> = ({navigation}) => {
 
   const {setActivePage} = usePageControl();
 
-  useFocusEffect(
-    React.useCallback(() => {
-      console.log('[DetailBlockOne] Setting active page to block1');
-      setActivePage('block1');
-
-      // return () => {
-      //   console.log('[DetailBlockOne] Cleaning up - setting active page to home');
-      //   setActivePage('home');
-      // };
-    }, [setActivePage]),
-  );
-
-  const [sensorData, setSensorData] = useState<SensorData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  const fetchSensorData = async (): Promise<void> => {
+  const fetchSensorData = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
       const response = await fetch(
         'http://10.0.2.2:4646/api/latest-sensor-block1',
       );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const result: ApiResponse = await response.json();
 
       if (result.success) {
@@ -517,329 +842,58 @@ const DetailBlockOne: React.FC<Props> = ({navigation}) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchSensorData();
-
-    // Optional: Set up auto-refresh every 30 seconds
-    // const interval = setInterval(fetchSensorData, 30000);
-    // return () => clearInterval(interval);
   }, []);
 
-  const getSensorValue = (sensorArray, keterangan) => {
-    const sensor = sensorArray?.find(
-      item => item.keterangan_sensor === keterangan,
-    );
-    return sensor?.nilai_sensor || 0;
-  };
+  // Optimized focus effect
+  useFocusEffect(
+    useCallback(() => {
+      console.log('[DetailBlockOne] Setting active page to block1');
+      setActivePage('block1');
+      fetchSensorData();
+    }, [setActivePage, fetchSensorData]),
+  );
 
-  const getSensorStatus = (value, sensorType) => {
-    const thresholds = {
-      Kalium: {good: [10, 15], unit: 'mg/L'},
-      EC: {good: [30, 50], unit: ''},
-      PH: {good: [6, 7.5], unit: ''},
-      Nitrogen: {good: [10, 20], unit: 'mg/L'},
-      Phosphor: {good: [5, 15], unit: 'mg/L'},
-      'Soil Humidity': {good: [40, 60], unit: '%'},
-      'Soil Temperature': {good: [20, 30], unit: '°C'},
-      Temperature: {good: [25, 35], unit: '°C'},
-      Humidity: {good: [60, 80], unit: '%'},
-    };
+  const [sensorData, setSensorData] = useState<SensorData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  
+  // Memoized components untuk menghindari re-render
+  const memoizedExpandableBlocks = useMemo(() => (
+    <>
+      <ExpandableBlock
+        title="Water"
+        animationSource={require('../../../assets/videos/air.mp4.lottie.json')}
+        blockCount={5}
+        blockType="water"
+        mainControl={block1Control}
+        row1Control={block1RowWater1Control}
+        row2Control={block1RowWater2Control}
+      />
 
-    const threshold = thresholds[sensorType];
-    if (!threshold || value === null)
-      return {status: 'Unknown', color: 'gray', icon: null};
+      <ExpandableBlock
+        title="Fertilizer"
+        animationSource={require('../../../assets/videos/pupuk.mp4.lottie.json')}
+        blockCount={5}
+        blockType="fertilizer"
+        mainControl={block1Control}
+        row1Control={block1RowFertilizer1Control}
+        row2Control={block1RowFertilizer2Control}
+      />
+    </>
+  ), [
+    block1Control,
+    block1RowWater1Control,
+    block1RowWater2Control,
+    block1RowFertilizer1Control,
+    block1RowFertilizer2Control,
+  ]);
 
-    const [min, max] = threshold.good;
-
-    if (value >= min && value <= max) {
-      return {status: 'Good', color: 'green', icon: null};
-    } else if (value < min) {
-      return {status: 'Low', color: 'red', icon: 'arrow-down'};
-    } else {
-      return {status: 'High', color: 'red', icon: 'arrow-up'};
-    }
-  };
-
-  const SensorItem = ({
-    label,
-    value,
-    sensorType,
-    unit = '',
-  }: {
-    label: string;
-    value: number;
-    sensorType: string;
-    unit?: string;
-  }) => {
-    const statusInfo = getSensorStatus(value, sensorType);
-
-    return (
-      <View style={styles.gridItem}>
-        <View style={styles.statContent}>
-          <Text style={styles.statLabel}>{label}</Text>
-          <Text style={styles.statValue}>
-            {value !== null ? `${value}${unit}` : 'N/A'}
-          </Text>
-        </View>
-        <View style={styles.statExtra}>
-          {statusInfo.icon && (
-            <Ionicons
-              name={statusInfo.icon}
-              size={16}
-              color={statusInfo.color}
-            />
-          )}
-          <Text style={[styles.statStatus, {color: statusInfo.color}]}>
-            {statusInfo.status}
-          </Text>
-        </View>
-      </View>
-    );
-  };
-
-  const Device1 = () => {
-    if (!sensorData?.sensor_1) return null;
-
-    const sensor1Data = sensorData.sensor_1;
-
-    return (
-      <View style={styles.cardTwo}>
-        <Text style={styles.soilTitle}>Statistic Device 1</Text>
-        <View style={styles.cardContentTwo}>
-          <Text style={styles.soilSubTitle}>Soil Statistic</Text>
-
-          <View style={styles.gridContainer}>
-            {/* Row 1 */}
-            <View style={styles.gridRow}>
-              <SensorItem
-                label="Soil Temperature"
-                value={getSensorValue(sensor1Data, 'Soil Temperature')}
-                sensorType="Soil Temperature"
-                unit="°C"
-              />
-              <SensorItem
-                label="Soil Humidity"
-                value={getSensorValue(sensor1Data, 'Soil Humidity')}
-                sensorType="Soil Humidity"
-                unit="%"
-              />
-            </View>
-            {/* Row 2 */}
-            <View style={styles.gridRow}>
-              <SensorItem
-                label="Conductivity"
-                value={getSensorValue(sensor1Data, 'EC')}
-                sensorType="EC"
-              />
-              <SensorItem
-                label="PH"
-                value={getSensorValue(sensor1Data, 'PH')}
-                sensorType="PH"
-              />
-            </View>
-            {/* Row 3 */}
-            <View style={styles.gridRow}>
-              <SensorItem
-                label="Nitrogen"
-                value={getSensorValue(sensor1Data, 'Nitrogen')}
-                sensorType="Nitrogen"
-                unit=" mg/L"
-              />
-              <SensorItem
-                label="Phosphor"
-                value={getSensorValue(sensor1Data, 'Phosphor')}
-                sensorType="Phosphor"
-                unit=" mg/L"
-              />
-            </View>
-            {/* Row 4 */}
-            <View style={styles.gridRow}>
-              <SensorItem
-                label="Kalium"
-                value={getSensorValue(sensor1Data, 'Kalium')}
-                sensorType="Kalium"
-                unit=" mg/L"
-              />
-              <View style={styles.gridItemEmpty} />
-            </View>
-          </View>
-        </View>
-      </View>
-    );
-  };
-
-  const Device2 = () => {
-    if (!sensorData?.sensor_2) return null;
-
-    const sensor2Data = sensorData.sensor_2;
-
-    return (
-      <View style={styles.cardThree}>
-        <Text style={styles.soilTitle}>Statistic Device 2</Text>
-
-        <View style={styles.containerTransmisi}>
-          <View style={[styles.cardTransmisi, {marginRight: 12}]}>
-            <View style={styles.cardDetailTransmisi}>
-              <View style={styles.Transmisi}>
-                <GaugeSvg />
-                <View style={{top: -100, right: -105}}>
-                  <Ellips />
-                </View>
-              </View>
-              <Text style={styles.nameSensorTransmisi}>Temperature</Text>
-            </View>
-            <Text style={styles.valueTransmisi}>
-              {getSensorValue(sensor2Data, 'Temperature') || 0}°C
-            </Text>
-          </View>
-          <View style={styles.cardTransmisi}>
-            <View style={styles.cardDetailTransmisi}>
-              <View style={styles.Transmisi}>
-                <GaugeSvg />
-              </View>
-              <Text style={styles.nameSensorTransmisi}>Humidity</Text>
-            </View>
-            <Text style={styles.valueTransmisi}>
-              {getSensorValue(sensor2Data, 'Humidity') || 0}%
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.cardContentTwo}>
-          <Text style={styles.soilSubTitle}>Soil Statistic</Text>
-
-          <View style={styles.gridContainer}>
-            {/* Row 1 */}
-            <View style={styles.gridRow}>
-              <SensorItem
-                label="Soil Temperature"
-                value={getSensorValue(sensor2Data, 'Soil Temperature')}
-                sensorType="Soil Temperature"
-                unit="°C"
-              />
-              <SensorItem
-                label="Soil Humidity"
-                value={getSensorValue(sensor2Data, 'Soil Humidity')}
-                sensorType="Soil Humidity"
-                unit="%"
-              />
-            </View>
-            {/* Row 2 */}
-            <View style={styles.gridRow}>
-              <SensorItem
-                label="Conductivity"
-                value={getSensorValue(sensor2Data, 'EC')}
-                sensorType="EC"
-              />
-              <SensorItem
-                label="PH"
-                value={getSensorValue(sensor2Data, 'PH')}
-                sensorType="PH"
-              />
-            </View>
-            {/* Row 3 */}
-            <View style={styles.gridRow}>
-              <SensorItem
-                label="Nitrogen"
-                value={getSensorValue(sensor2Data, 'Nitrogen')}
-                sensorType="Nitrogen"
-                unit=" mg/L"
-              />
-              <SensorItem
-                label="Phosphor"
-                value={getSensorValue(sensor2Data, 'Phosphor')}
-                sensorType="Phosphor"
-                unit=" mg/L"
-              />
-            </View>
-            {/* Row 4 */}
-            <View style={styles.gridRow}>
-              <SensorItem
-                label="Kalium"
-                value={getSensorValue(sensor2Data, 'Kalium')}
-                sensorType="Kalium"
-                unit=" mg/L"
-              />
-              <View style={styles.gridItemEmpty} />
-            </View>
-          </View>
-        </View>
-      </View>
-    );
-  };
-
-  const Device3 = () => {
-    if (!sensorData?.sensor_3) return null;
-
-    const sensor3Data = sensorData.sensor_3;
-
-    return (
-      <View style={styles.cardTwo}>
-        <Text style={styles.soilTitle}>Statistic Device 3</Text>
-        <View style={styles.cardContentTwo}>
-          <Text style={styles.soilSubTitle}>Soil Statistic</Text>
-
-          <View style={styles.gridContainer}>
-            {/* Row 1 */}
-            <View style={styles.gridRow}>
-              <SensorItem
-                label="Soil Temperature"
-                value={getSensorValue(sensor3Data, 'Soil Temperature')}
-                sensorType="Soil Temperature"
-                unit="°C"
-              />
-              <SensorItem
-                label="Soil Humidity"
-                value={getSensorValue(sensor3Data, 'Soil Humidity')}
-                sensorType="Soil Humidity"
-                unit="%"
-              />
-            </View>
-            {/* Row 2 */}
-            <View style={styles.gridRow}>
-              <SensorItem
-                label="Conductivity"
-                value={getSensorValue(sensor3Data, 'EC')}
-                sensorType="EC"
-              />
-              <SensorItem
-                label="PH"
-                value={getSensorValue(sensor3Data, 'PH')}
-                sensorType="PH"
-              />
-            </View>
-            {/* Row 3 */}
-            <View style={styles.gridRow}>
-              <SensorItem
-                label="Nitrogen"
-                value={getSensorValue(sensor3Data, 'Nitrogen')}
-                sensorType="Nitrogen"
-                unit=" mg/L"
-              />
-              <SensorItem
-                label="Phosphor"
-                value={getSensorValue(sensor3Data, 'Phosphor')}
-                sensorType="Phosphor"
-                unit=" mg/L"
-              />
-            </View>
-            {/* Row 4 */}
-            <View style={styles.gridRow}>
-              <SensorItem
-                label="Kalium"
-                value={getSensorValue(sensor3Data, 'Kalium')}
-                sensorType="Kalium"
-                unit=" mg/L"
-              />
-              <View style={styles.gridItemEmpty} />
-            </View>
-          </View>
-        </View>
-      </View>
-    );
-  };
+  const memoizedDevices = useMemo(() => (
+    <>
+      <Device1 sensorData={sensorData} />
+      <Device2 sensorData={sensorData} />
+      <Device3 sensorData={sensorData} />
+    </>
+  ), [sensorData]);
 
   if (loading) {
     return (
@@ -857,6 +911,7 @@ const DetailBlockOne: React.FC<Props> = ({navigation}) => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           bounces={true}>
+          
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.replace('HomeFix')}>
               <ArrowLeft2 color="black" variant="Linear" size={24} />
@@ -865,28 +920,8 @@ const DetailBlockOne: React.FC<Props> = ({navigation}) => {
             <View style={{width: 24}} />
           </View>
 
-          <ExpandableBlock
-            title="Water"
-            animationSource={require('../../../assets/videos/air.mp4.lottie.json')}
-            blockCount={5}
-            blockType="water"
-            mainControl={block1Control}
-            row1Control={block1RowWater1Control}
-            row2Control={block1RowWater2Control}
-          />
-
-          <ExpandableBlock
-            title="Fertilizer"
-            animationSource={require('../../../assets/videos/pupuk.mp4.lottie.json')}
-            blockCount={5}
-            blockType="fertilizer"
-            mainControl={block1Control}
-            row1Control={block1RowFertilizer1Control}
-            row2Control={block1RowFertilizer2Control}
-          />
-          <Device1 />
-          <Device2 />
-          <Device3 />
+          {memoizedExpandableBlocks}
+          {memoizedDevices}
         </ScrollView>
       </View>
     </SafeAreaView>

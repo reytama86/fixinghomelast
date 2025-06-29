@@ -15,7 +15,7 @@ const CARD_WIDTH = SCREEN_W - PADDING * 2;
 type DataPoint = {value: number; date: string};
 type Sensor = {id_sensor: number; esp_id: string};
 type Blok = {id_detail_blok: number; nama_blok: string; kondisi_blok: string};
-type MetricType = 'Suhu Udara' | 'Kelembaban Udara' | 'Cahaya' | 'Kelembaban Tanah';
+type MetricType = 'Temperature' | 'Kelembaban Udara' | 'Cahaya' | 'Kelembaban Tanah';
 type MyBarDataItem = barDataItem & { date: string };
 
 function formatLabel(date: Date, withTime = false): string {
@@ -42,7 +42,7 @@ export default function Temperature() {
   const [blokList, setBlokList] = useState<Blok[]>([]);
   const [selectedBlokIndex, setSelectedBlokIndex] = useState(0);
   const segments: MetricType[] = [
-    'Suhu Udara',
+    'Temperature',
     'Kelembaban Udara',
     'Cahaya',
     'Kelembaban Tanah',

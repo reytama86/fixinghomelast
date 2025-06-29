@@ -9,6 +9,9 @@ import {
   Platform,
   StatusBar,
   TextInput,
+  Alert,
+  ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import React, {useCallback, useState} from 'react';
 import {ArrowLeft2} from 'iconsax-react-native';
@@ -35,6 +38,25 @@ type Props = NativeStackScreenProps<HomeStackParamList, 'DetailBlockTwo'>;
 // import Gauge from "../assets/images/Gauge.png";
 
 // const Gauge = require('../assets/images/Gauge.png'
+
+interface SensorInfo {
+  keterangan_sensor: string;
+  nilai_sensor: number | null;
+  created_at: string | null;
+  timestamp: string | null;
+}
+
+interface SensorData {
+  sensor_1: SensorInfo[];
+  sensor_2: SensorInfo[];
+  sensor_3: SensorInfo[];
+}
+
+interface ApiResponse {
+  success: boolean;
+  data: SensorData;
+  timestamp: string;
+}
 
 const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
   const gaugeValue = -100;
@@ -70,6 +92,9 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
   const [confirmType, setConfirmType] = useState<'water' | 'fertilizer' | null>(
     null,
   );
+
+  const [sensorData, setSensorData] = useState<SensorData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   // Video refs - separate refs for each video to prevent conflicts
   const waterLottieRef = useRef<LottieView>(null);
@@ -123,6 +148,34 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
   //   };
   // }, [client, handleMqttMessage, setMessageHandler, clearMessageHandler]);
 
+  const fetchSensorData = async (): Promise<void> => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://10.0.2.2:4646/api/latest-sensor-block2');
+      const result: ApiResponse = await response.json();
+      
+      if (result.success) {
+        setSensorData(result.data);
+      } else {
+        Alert.alert('Error', 'Failed to fetch sensor data');
+      }
+    } catch (error) {
+      console.error('Error fetching sensor data:', error);
+      Alert.alert('Error', 'Network error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSensorData();
+    
+    // Optional: Set up auto-refresh every 30 seconds
+    // const interval = setInterval(fetchSensorData, 30000);
+    // return () => clearInterval(interval);
+  }, []);
+
+
   useEffect(() => {
     if (waterLottieRef.current) {
       try {
@@ -150,6 +203,318 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
       }
     }
   }, [controlState.isFertilizerOn]);
+
+  const getSensorValue = (sensorArray: SensorInfo[], keterangan: string): number => {
+    const sensor = sensorArray?.find(item => item.keterangan_sensor === keterangan);
+    return sensor?.nilai_sensor || 0;
+  };
+
+  // Fungsi untuk menentukan status berdasarkan nilai dan jenis sensor
+  const getSensorStatus = (value: number | null, sensorType: string) => {
+    // Contoh logic untuk menentukan status (sesuaikan dengan kebutuhan)
+    const thresholds: Record<string, { good: [number, number]; unit: string }> = {
+      'Kalium': { good: [10, 15], unit: 'mg/L' },
+      'EC': { good: [30, 50], unit: '' },
+      'PH': { good: [6, 7.5], unit: '' },
+      'Nitrogen': { good: [10, 20], unit: 'mg/L' },
+      'Phosphor': { good: [5, 15], unit: 'mg/L' },
+      'Soil Humidity': { good: [40, 60], unit: '%' },
+      'Soil Temperature': { good: [20, 30], unit: '°C' },
+      'Temperature': { good: [25, 35], unit: '°C' },
+      'Humidity': { good: [60, 80], unit: '%' }
+    };
+
+    const threshold = thresholds[sensorType];
+    if (!threshold || value === null) return { status: 'Unknown', color: 'gray', icon: null };
+
+    const [min, max] = threshold.good;
+    
+    if (value >= min && value <= max) {
+      return { status: 'Good', color: 'green', icon: null };
+    } else if (value < min) {
+      return { status: 'Low', color: 'red', icon: 'arrow-down' };
+    } else {
+      return { status: 'High', color: 'red', icon: 'arrow-up' };
+    }
+  };
+
+  // Komponen untuk menampilkan item sensor
+  const SensorItem = ({ 
+    label, 
+    value, 
+    sensorType, 
+    unit = '' 
+  }: {
+    label: string;
+    value: number;
+    sensorType: string;
+    unit?: string;
+  }) => {
+    const statusInfo = getSensorStatus(value, sensorType);
+
+    return (
+      <View style={styles.gridItem}>
+        <View style={styles.statContent}>
+          <Text style={styles.statLabel}>{label}</Text>
+          <Text style={styles.statValue}>
+            {value !== null ? `${value}${unit}` : 'N/A'}
+          </Text>
+        </View>
+        <View style={styles.statExtra}>
+          {statusInfo.icon && (
+            <Ionicons name={statusInfo.icon} size={16} color={statusInfo.color} />
+          )}
+          <Text style={[styles.statStatus, {color: statusInfo.color}]}>
+            {statusInfo.status}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  const Device1 = () => {
+    if (!sensorData?.sensor_1) return null;
+
+    const sensor1Data = sensorData.sensor_1;
+
+    return (
+      <View style={styles.cardTwo}>
+        <Text style={styles.soilTitle}>Statistic Device 1</Text>
+        <View style={styles.cardContentTwo}>
+          <Text style={styles.soilSubTitle}>Soil Statistic</Text>
+
+          <View style={styles.gridContainer}>
+            {/* Row 1 */}
+            <View style={styles.gridRow}>
+              <SensorItem
+                label="Soil Temperature"
+                value={getSensorValue(sensor1Data, 'Soil Temperature')}
+                sensorType="Soil Temperature"
+                unit="°C"
+              />
+              <SensorItem
+                label="Soil Humidity"
+                value={getSensorValue(sensor1Data, 'Soil Humidity')}
+                sensorType="Soil Humidity"
+                unit="%"
+              />
+            </View>
+            {/* Row 2 */}
+            <View style={styles.gridRow}>
+              <SensorItem
+                label="Conductivity"
+                value={getSensorValue(sensor1Data, 'EC')}
+                sensorType="EC"
+              />
+              <SensorItem
+                label="PH"
+                value={getSensorValue(sensor1Data, 'PH')}
+                sensorType="PH"
+              />
+            </View>
+            {/* Row 3 */}
+            <View style={styles.gridRow}>
+              <SensorItem
+                label="Nitrogen"
+                value={getSensorValue(sensor1Data, 'Nitrogen')}
+                sensorType="Nitrogen"
+                unit=" mg/L"
+              />
+              <SensorItem
+                label="Phosphor"
+                value={getSensorValue(sensor1Data, 'Phosphor')}
+                sensorType="Phosphor"
+                unit=" mg/L"
+              />
+            </View>
+            {/* Row 4 */}
+            <View style={styles.gridRow}>
+              <SensorItem
+                label="Kalium"
+                value={getSensorValue(sensor1Data, 'Kalium')}
+                sensorType="Kalium"
+                unit=" mg/L"
+              />
+              <View style={styles.gridItemEmpty} />
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
+  const Device2 = () => {
+    if (!sensorData?.sensor_2) return null;
+
+    const sensor2Data = sensorData.sensor_2;
+
+    return (
+      <View style={styles.cardThree}>
+        <Text style={styles.soilTitle}>Statistic Device 2</Text>
+
+        <View style={styles.containerTransmisi}>
+          <View style={[styles.cardTransmisi, {marginRight: 12}]}>
+            <View style={styles.cardDetailTransmisi}>
+              <View style={styles.Transmisi}>
+                <GaugeSvg />
+                <View style={{top: -100, right: -105}}>
+                  <Ellips />
+                </View>
+              </View>
+              <Text style={styles.nameSensorTransmisi}>Temperature</Text>
+            </View>
+            <Text style={styles.valueTransmisi}>
+              {getSensorValue(sensor2Data, 'Temperature') || 0}°C
+            </Text>
+          </View>
+          <View style={styles.cardTransmisi}>
+            <View style={styles.cardDetailTransmisi}>
+              <View style={styles.Transmisi}>
+                <GaugeSvg />
+              </View>
+              <Text style={styles.nameSensorTransmisi}>Humidity</Text>
+            </View>
+            <Text style={styles.valueTransmisi}>
+              {getSensorValue(sensor2Data, 'Humidity') || 0}%
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.cardContentTwo}>
+          <Text style={styles.soilSubTitle}>Soil Statistic</Text>
+
+          <View style={styles.gridContainer}>
+            {/* Row 1 */}
+            <View style={styles.gridRow}>
+              <SensorItem
+                label="Soil Temperature"
+                value={getSensorValue(sensor2Data, 'Soil Temperature')}
+                sensorType="Soil Temperature"
+                unit="°C"
+              />
+              <SensorItem
+                label="Soil Humidity"
+                value={getSensorValue(sensor2Data, 'Soil Humidity')}
+                sensorType="Soil Humidity"
+                unit="%"
+              />
+            </View>
+            {/* Row 2 */}
+            <View style={styles.gridRow}>
+              <SensorItem
+                label="Conductivity"
+                value={getSensorValue(sensor2Data, 'EC')}
+                sensorType="EC"
+              />
+              <SensorItem
+                label="PH"
+                value={getSensorValue(sensor2Data, 'PH')}
+                sensorType="PH"
+              />
+            </View>
+            {/* Row 3 */}
+            <View style={styles.gridRow}>
+              <SensorItem
+                label="Nitrogen"
+                value={getSensorValue(sensor2Data, 'Nitrogen')}
+                sensorType="Nitrogen"
+                unit=" mg/L"
+              />
+              <SensorItem
+                label="Phosphor"
+                value={getSensorValue(sensor2Data, 'Phosphor')}
+                sensorType="Phosphor"
+                unit=" mg/L"
+              />
+            </View>
+            {/* Row 4 */}
+            <View style={styles.gridRow}>
+              <SensorItem
+                label="Kalium"
+                value={getSensorValue(sensor2Data, 'Kalium')}
+                sensorType="Kalium"
+                unit=" mg/L"
+              />
+              <View style={styles.gridItemEmpty} />
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
+  const Device3 = () => {
+    if (!sensorData?.sensor_3) return null;
+
+    const sensor3Data = sensorData.sensor_3;
+
+    return (
+      <View style={styles.cardTwo}>
+        <Text style={styles.soilTitle}>Statistic Device 3</Text>
+        <View style={styles.cardContentTwo}>
+          <Text style={styles.soilSubTitle}>Soil Statistic</Text>
+
+          <View style={styles.gridContainer}>
+            {/* Row 1 */}
+            <View style={styles.gridRow}>
+              <SensorItem
+                label="Soil Temperature"
+                value={getSensorValue(sensor3Data, 'Soil Temperature')}
+                sensorType="Soil Temperature"
+                unit="°C"
+              />
+              <SensorItem
+                label="Soil Humidity"
+                value={getSensorValue(sensor3Data, 'Soil Humidity')}
+                sensorType="Soil Humidity"
+                unit="%"
+              />
+            </View>
+            {/* Row 2 */}
+            <View style={styles.gridRow}>
+              <SensorItem
+                label="Conductivity"
+                value={getSensorValue(sensor3Data, 'EC')}
+                sensorType="EC"
+              />
+              <SensorItem
+                label="PH"
+                value={getSensorValue(sensor3Data, 'PH')}
+                sensorType="PH"
+              />
+            </View>
+            {/* Row 3 */}
+            <View style={styles.gridRow}>
+              <SensorItem
+                label="Nitrogen"
+                value={getSensorValue(sensor3Data, 'Nitrogen')}
+                sensorType="Nitrogen"
+                unit=" mg/L"
+              />
+              <SensorItem
+                label="Phosphor"
+                value={getSensorValue(sensor3Data, 'Phosphor')}
+                sensorType="Phosphor"
+                unit=" mg/L"
+              />
+            </View>
+            {/* Row 4 */}
+            <View style={styles.gridRow}>
+              <SensorItem
+                label="Kalium"
+                value={getSensorValue(sensor3Data, 'Kalium')}
+                sensorType="Kalium"
+                unit=" mg/L"
+              />
+              <View style={styles.gridItemEmpty} />
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
+  
 
   // Format functions
   const formatDateForAndroid = useCallback((date: Date) => {
@@ -264,12 +629,25 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
     setShowConfirm(false);
   }, [confirmType, controlState]);
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text>Loading sensor data...</Text>
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView
       style={{
         flex: 1,
       }}>
       <View style={styles.main}>
+        <ScrollView
+                  contentContainerStyle={styles.scrollContent}
+                  showsVerticalScrollIndicator={false}
+                  bounces={true}>
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => {
@@ -299,114 +677,6 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
             style={{transform: [{rotate: '360deg'}]}}
             opacity={0}
           />
-        </View>
-        <View style={styles.containerTransmisi}>
-          <View style={[styles.cardTransmisi, {marginRight: 12}]}>
-            <View style={styles.cardDetailTransmisi}>
-              <View style={styles.Transmisi}>
-                <GaugeSvg />
-                <View style={{top: -100, right: -105}}>
-                  <Ellips />
-                </View>
-              </View>
-              <Text style={styles.nameSensorTransmisi}>Temperature</Text>
-            </View>
-            <Text style={styles.valueTransmisi}>32°</Text>
-          </View>
-          <View style={styles.cardTransmisi}>
-            <View style={styles.cardDetailTransmisi}>
-              <View style={styles.Transmisi}>
-                <GaugeSvg />
-              </View>
-              <Text style={styles.nameSensorTransmisi}>Humidity</Text>
-            </View>
-            <Text style={styles.valueTransmisi}>21%</Text>
-          </View>
-        </View>
-        <View style={styles.cardTwo}>
-          <Text style={styles.soilTitle}>Soil Statistic</Text>
-          <View style={styles.soilStatisticOne}>
-            <View style={styles.detailStatisticOne}>
-              <View style={styles.statContent}>
-                <Text style={styles.statLabel}>Soil Temperature</Text>
-                <Text style={styles.statValue}>34</Text>
-              </View>
-              <View style={styles.statExtra}>
-                <Ionicons name="arrow-down" size={18} color="red" />
-                <Text style={styles.statStatus}>Low</Text>
-              </View>
-            </View>
-
-            <View style={styles.detailStatisticOne}>
-              <View style={styles.statContent}>
-                <Text style={styles.statLabel}>Soil Moisture</Text>
-                <Text style={styles.statValue}>12 mg/L</Text>
-              </View>
-              <View style={styles.statExtra}>
-                <Ionicons name="arrow-down" size={18} color="red" />
-                <Text style={styles.statStatus}>Low</Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.soilStatisticTwo}>
-            <View style={styles.detailStatisticOne}>
-              <View style={styles.statContent}>
-                <Text style={styles.statLabel}>PH</Text>
-                <Text style={styles.statValue}>12 mg/L</Text>
-              </View>
-              <View style={styles.statExtra}>
-                <Ionicons name="arrow-down" size={18} color="red" />
-                <Text style={styles.statStatus}>Low</Text>
-              </View>
-            </View>
-
-            <View style={styles.detailStatisticOne}>
-              <View style={styles.statContent}>
-                <Text style={styles.statLabel}>Conductivity</Text>
-                <Text style={styles.statValue}>12 mg/L</Text>
-              </View>
-              <View style={styles.statExtra}>
-                <Ionicons name="arrow-up" size={18} color="green" />
-                <Text style={[styles.statStatus, {color: 'green'}]}>Good</Text>
-              </View>
-            </View>
-          </View>
-          <View style={styles.soilStatisticTwo}>
-            <View style={styles.detailStatisticOne}>
-              <View style={styles.statContent}>
-                <Text style={styles.statLabel}>Natrium</Text>
-                <Text style={styles.statValue}>12 mg/L</Text>
-              </View>
-              <View style={styles.statExtra}>
-                <Ionicons name="arrow-down" size={18} color="red" />
-                <Text style={styles.statStatus}>Low</Text>
-              </View>
-            </View>
-
-            <View style={styles.detailStatisticOne}>
-              <View style={styles.statContent}>
-                <Text style={styles.statLabel}>Phosphor</Text>
-                <Text style={styles.statValue}>12 mg/L</Text>
-              </View>
-              <View style={styles.statExtra}>
-                <Ionicons name="arrow-up" size={18} color="green" />
-                <Text style={[styles.statStatus, {color: 'green'}]}>Good</Text>
-              </View>
-            </View>
-          </View>
-          <View style={styles.soilStatisticTwo}>
-            <View style={styles.detailStatisticOneKal}>
-              <View style={styles.statContent}>
-                <Text style={styles.statLabel}>Kalium</Text>
-                <Text style={styles.statValue}>12 mg/L</Text>
-              </View>
-              <View style={styles.statExtra}>
-                <Ionicons name="arrow-down" size={18} color="red" />
-                <Text style={styles.statStatus}>Low</Text>
-              </View>
-            </View>
-          </View>
         </View>
         <View style={styles.controlCentre}>
           <View style={styles.controlCentreBox}>
@@ -527,7 +797,9 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
             </View>
           </View>
         </View>
-
+        <Device1 />
+          <Device2 />
+          <Device3 />
         <Modal
                 visible={showDurationModal}
                 transparent
@@ -652,6 +924,7 @@ const DetailBlockTwo: React.FC<Props> = ({navigation}) => {
           onCancel={() => setShowConfirm(false)}
           onConfirm={handleConfirmStop}
         />
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
@@ -674,140 +947,11 @@ const styles = StyleSheet.create({
     // paddingLeft: 10,
     paddingBottom: 4,
     marginTop: 20,
+    marginBottom: 15,
   },
-  containerTransmisi: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    // flex: 1,
-    height: 148,
-    marginTop: 12,
-    // left : 16,
-    gap: 1,
-    alignItems: 'center',
-  },
-  cardTransmisi: {
-    overflow: 'hidden',
-    backgroundColor: 'white',
-    flex: 1,
-    height: 148,
-    borderRadius: 16,
-    alignItems: 'center',
-
-    // padding: 8,
-    // paddingRight: 16,
-  },
-  cardDetailTransmisi: {
-    width: 160.5,
-    paddingHorizontal: 4,
-    height: 132,
-    backgroundColor: 'white',
-    gap: 4,
-    marginTop: 8,
-    alignItems: 'center',
-  },
-  Transmisi: {
-    backgroundColor: 'white',
-    width: 126,
-    height: 112,
-  },
-  valueTransmisi: {
-    position: 'absolute',
-    fontSize: 40,
-    fontWeight: 600,
-    fontFamily: 'SpaceGrotesk-Regular',
-    zIndex: 10,
-    top: 45,
-    textAlign: 'center',
-    marginLeft: 10,
-  },
-  nameSensorTransmisi: {
-    fontSize: 12,
-    fontWeight: 400,
-    fontFamily: 'SpaceGrotesk-Regular',
-  },
-  cardTwo: {
-    width: '100%',
-    height: 284,
-    borderRadius: 16,
-    overflow: 'hidden',
-    // justifyContent: 'flex-start',
-    padding: 12,
-    marginTop: 12,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    backgroundColor: 'white',
-    marginBottom: 8,
-  },
-  soilStatisticOne: {
-    height: 52,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 9,
-    marginHorizontal: 1,
-    gap: 8,
-  },
-  soilStatisticTwo: {
-    height: 52,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-    marginHorizontal: 1,
-    gap: 8,
-  },
-  detailStatisticOne: {
-    paddingHorizontal: 8,
-    flex: 1,
-    height: 52,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#DEE2E7',
-    justifyContent: 'space-between',
-    flexDirection: 'row',
-    // alignItems: 'center',
-  },
-  detailStatisticOneKal: {
-    paddingHorizontal: 8,
-    flex: 0.47,
-    height: 52,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#DEE2E7',
-    justifyContent: 'space-between',
-    flexDirection: 'row',
-    // alignItems: 'center',
-  },
-  statContent: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  statLabel: {
-    fontSize: 12,
-    fontWeight: '400',
-    fontFamily: 'SpaceGrotesk-Regular',
-  },
-  statValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    fontFamily: 'SpaceGrotesk-Regular',
-  },
-  statExtra: {
-    flexDirection: 'column',
-    marginTop: 10,
-    alignItems: 'center',
-    marginLeft: 8,
-  },
-  statStatus: {
-    fontSize: 12.5,
-    marginLeft: 4,
-  },
-  soilTitle: {
-    fontSize: 14,
-    fontWeight: 600,
-    fontFamily: 'SpaceGrotesk-Regular',
-  },
+  scrollContent: {},
   controlCentre: {
-    marginBottom: 8,
+    marginBottom: 2,
   },
   controlCentreText: {
     fontSize: 14,
@@ -931,10 +1075,6 @@ const styles = StyleSheet.create({
     top: -9.75,
     position: 'absolute',
   },
-  loadingContainer: {
-    padding: 20,
-    justifyContent: 'center',
-  },
   modalOverlay: {
     position: 'absolute',
     top: 0,
@@ -1025,6 +1165,173 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     width: 150.5,
     height: 36,
+  },
+  cardTwo: {
+    width: '100%',
+    height: 310,
+    borderRadius: 16,
+    overflow: 'hidden',
+    padding: 11,
+    marginTop: 12,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    backgroundColor: 'white',
+    marginBottom: 2,
+  },
+
+  cardContentTwo: {
+    flex: 1,
+    marginTop: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    padding: 8,
+  },
+
+  soilTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'SpaceGrotesk-Medium',
+    color: '#1F2937',
+  },
+
+  soilSubTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: 'SpaceGrotesk-Medium',
+    color: '#374151',
+    marginBottom: 12,
+  },
+
+  gridContainer: {
+    flex: 1,
+    gap: 8,
+  },
+
+  gridRow: {
+    flexDirection: 'row',
+    gap: 8,
+    height: 44, 
+  },
+
+  gridItem: {
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  statContent: {
+    flex: 1,
+  },
+
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '400',
+    fontFamily: 'SpaceGrotesk-Regular',
+    color: '#6B7280',
+    marginBottom: 2,
+  },
+
+  statValue: {
+    fontSize: 13,
+    fontWeight: '600',
+    fontFamily: 'SpaceGrotesk-Medium',
+    color: '#1F2937',
+  },
+
+  statExtra: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 4,
+  },
+
+  statStatus: {
+    fontSize: 10,
+    fontWeight: '500',
+    fontFamily: 'SpaceGrotesk-Medium',
+  },
+
+  gridItemEmpty: {
+    width: 155,
+    // Empty placeholder - no styling needed
+  },
+  cardThree: {
+    width: '100%',
+    height: 470,
+    borderRadius: 16,
+    overflow: 'hidden',
+    padding: 11,
+    marginTop: 12,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    backgroundColor: 'white',
+    marginBottom: 2,
+  },
+  containerTransmisi: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    // flex: 1,
+    height: 148,
+    marginTop: 12,
+    // left : 16,
+    gap: 1,
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  cardTransmisi: {
+    overflow: 'hidden',
+    backgroundColor: 'white',
+    flex: 1,
+    height: 148,
+    borderRadius: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+
+    // padding: 8,
+    // paddingRight: 16,
+  },
+  cardDetailTransmisi: {
+    width: 160.5,
+    paddingHorizontal: 4,
+    height: 132,
+    backgroundColor: 'white',
+    gap: 4,
+    marginTop: 8,
+    alignItems: 'center',
+  },
+  Transmisi: {
+    backgroundColor: 'white',
+    width: 126,
+    height: 112,
+  },
+  valueTransmisi: {
+    position: 'absolute',
+    fontSize: 40,
+    fontWeight: 600,
+    fontFamily: 'SpaceGrotesk-Regular',
+    zIndex: 10,
+    top: 45,
+    textAlign: 'center',
+    marginLeft: 10,
+  },
+  nameSensorTransmisi: {
+    fontSize: 12,
+    fontWeight: 400,
+    fontFamily: 'SpaceGrotesk-Regular',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   // ... styles lainnya

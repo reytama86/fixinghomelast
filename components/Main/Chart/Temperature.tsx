@@ -218,7 +218,7 @@ export default function Temperature() {
     color: '#ccc',
     strokeWidth: 1.5,
   };
-
+  
   return (
     <View style={styles.card}>
       <Text style={styles.title}>Temperature</Text>
@@ -311,6 +311,7 @@ export default function Temperature() {
           curved={false}
           color="#B4DC45"
           hideDataPoints
+          maxValue={80}
           yAxisLabelTexts={['0', '20', '40', '60', '80']}
           yAxisTextStyle={styles.yAxisText}
           xAxisColor="transparent"
@@ -339,7 +340,7 @@ export default function Temperature() {
               const [d, t] = date.split('\n');
               const chartLeft = 0;
               const chartRight = chartConfig.chartWidth ?? 350;
-              const tooltipWidth = 100;
+              const tooltipWidth = range ==='1M' ? 80 : 100;
               let tooltipLeft = x - tooltipWidth / 2;
               if (tooltipLeft < chartLeft) {
                 tooltipLeft = chartLeft;
@@ -393,7 +394,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 12,
     color: '#333',
-    fontFamily: 'Space Grotesk',
+    fontFamily: 'SpaceGrotesk-Regular',
   },
   rangeContainer: {
     marginBottom: 12,
@@ -418,7 +419,7 @@ const styles = StyleSheet.create({
     height: 25,
     backgroundColor: '#f0f0f0',
     borderRadius: 7,
-    fontFamily:'Space Grotesk',
+    fontFamily:'SpaceGrotesk-Regular',
   },
   chartWrapper: {
     marginLeft: -10,
@@ -426,7 +427,7 @@ const styles = StyleSheet.create({
     top: 10,
   },
   yAxisText: {
-    fontFamily: 'Space Grotesk',
+    fontFamily: 'SpaceGrotesk-Regular',
     fontWeight: '400',
     fontSize: 12,
     lineHeight: 16,
@@ -437,7 +438,6 @@ const styles = StyleSheet.create({
   tooltip: {
     position: 'absolute',
     flexDirection: 'row',
-    width: 110,
     backgroundColor: '#F0F8DA',
     padding: 6,
     borderRadius: 4,
@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
     left: 13,
   },
   xLabel: {
-    fontFamily: 'Space Grotesk',
+    fontFamily: 'SpaceGrotesk-Regular',
     fontWeight: '400',
     fontSize: 10,
   },

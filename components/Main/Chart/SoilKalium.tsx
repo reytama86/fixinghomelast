@@ -1,153 +1,216 @@
-import React, {useState, useMemo} from 'react';
+import React, {useState, useMemo, useEffect} from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   Dimensions,
   StyleSheet,
 } from 'react-native';
-import {LineChart} from 'react-native-gifted-charts';
-import Humidity from './Humidity';
+import {barDataItem, LineChart} from 'react-native-gifted-charts';
+import SegmentedControl from '@react-native-segmented-control/segmented-control';
 
 const {width: SCREEN_W} = Dimensions.get('window');
 const PADDING = 16;
 const CARD_WIDTH = SCREEN_W - PADDING * 2;
 
 type DataPoint = {value: number; date: string};
+type Sensor = {id_sensor: number; esp_id: string};
+type Blok = {id_detail_blok: number; nama_blok: string; kondisi_blok: string};
+type MetricType = 'Kalium' | 'Kelembaban Udara' | 'Cahaya' | 'Kelembaban Tanah';
+type MyBarDataItem = barDataItem & { date: string };
 
-// Helper to format date and time
-function formatLabel(dateObj: Date, showTime = false): string {
-  const day = dateObj.getDate();
+function formatLabel(date: Date, withTime = false): string {
+  const day = date.getDate();
   const monthNames = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
+    'Jan','Feb','Mar','Apr','Mei','Jun',
+    'Jul','Agu','Sep','Okt','Nov','Des',
   ];
-  const month = monthNames[dateObj.getMonth()];
-  if (!showTime) return `${day} ${month}`;
-  const hours = dateObj.getHours().toString().padStart(2, '0');
-  const minutes = dateObj.getMinutes().toString().padStart(2, '0');
-  return `${day} ${month}\n${hours}:${minutes}`;
+  const month = monthNames[date.getMonth()];
+  if (!withTime) {
+    return `${day} ${month}`;
+  }
+  const hh = String(date.getHours()).padStart(2, '0');
+  const mm = String(date.getMinutes()).padStart(2, '0');
+  return `${day} ${month}\n${hh}:${mm}`;
 }
 
 export default function SoilKalium() {
+  const [barData, setBarData] = useState<MyBarDataItem[]>([]);
   const [range, setRange] = useState<'7D' | '1M' | '1Y' | 'Max'>('7D');
+  const [sensorList, setSensorList] = useState<Sensor[]>([]);
+  const [selectedSensorIndex, setSelectedSensorIndex] = useState(0);
 
-  // Data generation
-  const data7d = useMemo<DataPoint[]>(() => {
-      const times = [0, 4, 8, 12, 16, 20];
-      const baseValues = [1600, 1900, 2000, 2460, 2100, 1790];
-      const points: DataPoint[] = [];
-      const today = new Date();
-      for (let dayOffset = 6; dayOffset >= 0; dayOffset--) {
-        const dateBase = new Date(
-          today.getFullYear(),
-          today.getMonth(),
-          today.getDate() - dayOffset,
-        );
-        times.forEach((hour, idx) => {
-          const dt = new Date(dateBase);
-          dt.setHours(hour);
-          dt.setMinutes(0);
-          const variation = Math.floor(Math.random() * 1000) - 500;
-          const value = Math.max(0, Math.min(3000, baseValues[idx] + variation));
-          points.push({value, date: formatLabel(dt, true)});
-        });
-      }
-      return points;
-    }, []);
+  const [blokList, setBlokList] = useState<Blok[]>([]);
+  const [selectedBlokIndex, setSelectedBlokIndex] = useState(0);
+  const segments: MetricType[] = [
+    'Kalium',
+    'Kelembaban Udara',
+    'Cahaya',
+    'Kelembaban Tanah',
+  ];
+  const [sensorType, setSensorType] = useState<MetricType>(segments[0]);
+  
+  // Range options untuk SegmentedControl
+  const rangeOptions = ['7D', '1M', '1Y', 'Max'];
+  const selectedRangeIndex = rangeOptions.indexOf(range);
 
-  const data1m = useMemo<DataPoint[]>(() => {
-    const pts: DataPoint[] = [];
-    const today = new Date();
-    // for (let i = 29; i >= 0; i--) {
-    //   const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
-    //   const val = 20 + ((d.getDate() * 3) % 15);
-    //   pts.push({ value: val, date: formatLabel(d) });
-    // }
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate() - i,
-      );
-      const dayIdx = d.getDate();
-      const sinus = Math.sin((dayIdx / 30) * Math.PI * 2) * 10;
-      const noise = (Math.random() - 0.5) * 10;
-      const val = Math.max(0, Math.min(40, 25 + sinus + noise));
-      pts.push({value: Math.round(val), date: formatLabel(d)});
-    }
-    return pts;
+  useEffect(() => {
+    fetch('http://10.0.2.2:4646/api/bloklist')
+      .then(r => r.json())
+      .then((list: Blok[]) => setBlokList(list))
+      .catch(console.error);
   }, []);
 
-  const data1y = data1m;
-  const dataMax = data1m;
+  useEffect(() => {
+    fetch('http://10.0.2.2:4646/api/sensorlist')
+      .then(r => r.json())
+      .then((list: Sensor[]) => setSensorList(list))
+      .catch(console.error);
+  }, []);
 
-  const dataMap = {'7D': data7d, '1M': data1m, '1Y': data1y, Max: dataMax};
-  const data = dataMap[range];
+  const uniqueSensors = useMemo(() => {
+    const map = new Map<string, Sensor>();
+    sensorList.forEach(s => {
+      if (!map.has(s.esp_id)) map.set(s.esp_id, s);
+    });
+    return Array.from(map.values());
+  }, [sensorList]);
+
+  useEffect(() => {
+    if (!sensorList.length || !blokList.length) return;
+
+    const fetchData = async () => {
+      const baseURL = 'http://10.0.2.2:4646';
+      const endpoint = range === '1M' ? '/api/monthly-data' : '/api/weekly-data';
+
+      const now = new Date();
+
+      // Hitung endDate = kemarin 23:59:59.999
+      const endDate = new Date(now);
+      endDate.setDate(now.getDate() - 1);
+      endDate.setHours(23, 59, 59, 999);
+
+      // Hitung startDate sesuai range
+      const startDate = new Date(endDate);
+      if (range === '7D') {
+        startDate.setDate(endDate.getDate() - 6);
+        startDate.setHours(0, 0, 0, 0);
+      } else if (range === '1M') {
+        startDate.setDate(endDate.getDate() - 29);
+        startDate.setHours(0, 0, 0, 0);
+      } else {
+        startDate.setDate(endDate.getDate() - 29);
+        startDate.setHours(0, 0, 0, 0);
+      }
+
+      const params = new URLSearchParams({
+        startDate: formatMySQLDatetime(startDate),
+        endDate: formatMySQLDatetime(endDate),
+        keterangan_sensor: sensorType,
+        esp_id: uniqueSensors[selectedSensorIndex].esp_id,
+        nama_blok: blokList[selectedBlokIndex].nama_blok,
+      });
+
+      try {
+        const resp = await fetch(`${baseURL}${endpoint}?${params.toString()}`);
+        if (!resp.ok) throw new Error(await resp.text());
+        const raw = await resp.json();
+
+        const points: DataPoint[] = raw.map((item: any) => {
+          if (range === '1M') {
+            const dt = new Date(item.date + 'T14:00:00');
+            return {value: item.value, date: formatLabel(dt, false)};
+          } else {
+            const dt = new Date(item.waktu);
+            return {value: item.nilai_sensor, date: formatLabel(dt, true)};
+          }
+        });
+        setBarData(points);
+      } catch (err) {
+        console.error('fetch data error:', err);
+      }
+    };
+
+    fetchData();
+  }, [
+    range,
+    selectedSensorIndex,
+    selectedBlokIndex,
+    sensorList,
+    blokList,
+    sensorType,
+    uniqueSensors,
+  ]);
+
+  function formatMySQLDatetime(d: Date) {
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 19)
+      .replace('T', ' ');
+  }
+  
+  const xLabelsFromBar = useMemo<string[]>(() => {
+    if (!barData.length) return [];
+    
+    const allDates = barData.map(pt => pt.date.split('\n')[0]); 
+    const total = allDates.length;
+    
+    if (range === '1M') {
+      const idxFirst = 0;
+      const idxQuarter = Math.floor(total * 0.25);
+      const idxHalf = Math.floor(total * 0.5);
+      const idxThreeQuarter = Math.floor(total * 0.75);
+      const idxLast = total - 1;
+      
+      return [
+        allDates[idxFirst], 
+        allDates[idxQuarter], 
+        allDates[idxHalf], 
+        allDates[idxLast]
+      ];
+    } else {
+      const idxFirst = 0;
+      const idxMid = Math.floor((total - 1) / 2);
+      const idxLast = total - 1;
+      return [allDates[idxFirst], allDates[idxMid], allDates[idxLast]];
+    }
+  }, [barData, range]);
+  
   const chartConfig = useMemo(() => {
+    const dataLength = barData.length;
     switch (range) {
       case '7D':
         return {
-          spacing: CARD_WIDTH / (data.length + 6),
+          spacing: CARD_WIDTH / (dataLength + 5.9),
           initialSpacing: 0,
           showVerticalLines: false,
-          xLabelsKeys: ['first', 'mid', 'last'],
-          rulesLength: 315.5,
+          rulesLength: 309,
           chartWidth: 350.5,
         };
       case '1M':
         return {
-          spacing: CARD_WIDTH / ((data.length + 4) / 1),
+          spacing: CARD_WIDTH / ((dataLength + 4) / 1),
           initialSpacing: 0,
           showVerticalLines: false,
-          xLabelsKeys: ['first', 'fourteen', 'last'],
           chartWidth: 350.5,
-          rulesLength: 316.5,
+          rulesLength: 309,
         };
       case '1Y':
       case 'Max':
         return {
-          spacing: CARD_WIDTH / ((data.length - 1) / 4),
+          spacing: CARD_WIDTH / ((dataLength - 1) / 4),
           initialSpacing: -55,
           chartWidth: 315.5,
           rulesLength: 316.5,
           showVerticalLines: false,
-          xLabelsKeys: ['first', 'mid', 'last'],
         };
       default:
         return {
-          spacing: CARD_WIDTH / (data.length - 1),
+          spacing: CARD_WIDTH / (dataLength - 1),
           initialSpacing: 0,
           showVerticalLines: false,
-          xLabelsKeys: ['first', 'mid', 'last'],
         };
     }
-  }, [range, data.length]);
-
-  // Mapping posisi label
-  const idxMap: Record<string, number> = {
-    first: 0,
-    seven: Math.floor((data.length * 1) / 4),
-    fourteen: Math.floor((data.length * 2) / 4),
-    twentyOne: Math.floor((data.length * 3) / 4),
-    mid: Math.floor((data.length - 1) / 2),
-    last: data.length - 1,
-  };
-
-  const xLabels = chartConfig.xLabelsKeys.map(key => {
-    const raw = data[idxMap[key]].date;
-    return raw.split('\n')[0];
-  });
+  }, [range, barData.length]);
 
   const zeroRule = {
     ruleType: 'horizontal',
@@ -155,108 +218,160 @@ export default function SoilKalium() {
     color: '#ccc',
     strokeWidth: 1.5,
   };
-
-  function formatRibuan(num) {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  }
-
+  
   return (
-    <>
-      <View style={styles.card}>
-        <Text style={styles.title}>Soil Kalium</Text>
-        <View style={styles.wraperSegment}>
-          <View style={styles.segmentContainer}>
-            {['7D', '1M', '1Y', 'Max'].map(tab => (
-              <TouchableOpacity
-                key={tab}
-                style={[styles.segment, range === tab && styles.segmentActive]}
-                onPress={() => setRange(tab as any)}>
-                <Text
-                  style={[
-                    styles.segmentText,
-                    range === tab && styles.segmentTextActive,
-                  ]}>
-                  {tab}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+    <View style={styles.card}>
+      <Text style={styles.title}>Soil Kalium</Text>
+      
+      {/* Range Selector menggunakan SegmentedControl */}
+      <View style={styles.rangeContainer}>
+        <SegmentedControl
+          values={rangeOptions}
+          selectedIndex={selectedRangeIndex}
+          onChange={(event) => {
+            const newIndex = event.nativeEvent.selectedSegmentIndex;
+            setRange(rangeOptions[newIndex] as '7D' | '1M' | '1Y' | 'Max');
+          }}
+          style={styles.rangeSegmentedControl}
+          fontStyle={{ 
+            fontFamily: 'SpaceGrotesk-Regular',
+            fontSize: 12,
+            fontWeight: '400',
+            color: '#666666'
+          }}
+          activeFontStyle={{
+            fontFamily: 'SpaceGrotesk-Regular',
+            fontSize: 12,
+            fontWeight: '400',
+            color: '#333333'
+          }}
+          backgroundColor="#f5f5f5"
+          tintColor="#B4DC45"
+        />
+      </View>
+      
+      <View style={styles.selectorRow}>
+        <View style={styles.selectorWrapper}>
+          {blokList.length > 0 ? (
+            <SegmentedControl
+              values={blokList.map(b => b.nama_blok)}
+              selectedIndex={selectedBlokIndex}
+              onChange={e =>
+                setSelectedBlokIndex(e.nativeEvent.selectedSegmentIndex)
+              }
+              style={styles.selectorControl}
+              fontStyle={{ 
+                fontFamily: 'SpaceGrotesk-Regular',
+                fontSize: 12
+              }}
+              activeFontStyle={{
+                fontFamily: 'SpaceGrotesk-Regular',
+                fontSize: 12,
+                fontWeight: '400', 
+              }}
+            />
+          ) : (
+            <Text style={{ color: 'gray', textAlign: 'center' }}>Memuat daftar blok…</Text>
+          )}
         </View>
-        <View style={styles.chartWrapper}>
-          <LineChart
-            data={data}
-            width={chartConfig.chartWidth}
-            height={220}
-            initialSpacing={chartConfig.initialSpacing}
-            spacing={chartConfig.spacing}
-            areaChart
-            curved={false}
-            color="#B4DC45"
-            hideDataPoints
-            yAxisLabelTexts={['0', '500', '1000', '2000', '3000']}
-            yAxisTextStyle={styles.yAxisText}
-            xAxisColor="transparent"
-            yAxisColor="transparent"
-            noOfSections={4}
-            // minValue={0}
-            // maxValue={3000}
-            rulesType="solid"
-            rulesLength={chartConfig.rulesLength}
-            rulesColor="#eee"
-            // extraRules={[zeroRule]}
-            showVerticalLines={chartConfig.showVerticalLines}
-            // useGradient
-            startFillColor="#B4DC45"
-            endFillColor="#B4DC45"
-            startOpacity={0.5}
-            endOpacity={0}
-            pointerConfig={{
-              pointerStripHeight: 230,
-              pointerStripColor: '#DEE2E7',
-              pointerStripWidth: 1,
-            //   pointerStripType: 'dashed',
-              strokeDashArray: [4, 4],
-              pointerColor: '#B4DC45',
-              activatePointersOnLongPress: true,
-              stripOverPointer: false, 
-              autoAdjustPointerLabelPosition: true, 
-              pointerLabelWidth: 100, 
-              pointerLabelComponent: items => {
-                const { value, date, x, y } = items[0];
-                const [d, t] = date.split('\n');
-                const chartLeft = 0; 
-                const chartWidth = chartConfig.chartWidth;
-                const chartRight = chartLeft + 20;
-                const tooltipWidth = 100;
-                let tooltipLeft = x - tooltipWidth / 2;
-                if (tooltipLeft < chartLeft) {
-                  tooltipLeft = chartLeft;
-                } else if (tooltipLeft + tooltipWidth > chartRight) {
-                  tooltipLeft = chartRight - tooltipWidth;
-                }
-                return (
-                  <View style={[styles.tooltip, { left: tooltipLeft, top: y - 55 }]}>
-                    <Text style={styles.tooltipText}>{formatRibuan(value)} mg/kg</Text>
-                    <View style={styles.tooltipDivider} />
-                    <View style={styles.tooltipDateRow}>
-                      <Text style={styles.tooltipSub}>{d}</Text>
-                      <Text style={styles.tooltipSub}>{t}</Text>
-                    </View>
-                  </View>
-                );
-              },              
-            }}            
-          />
-        </View>
-        <View style={styles.xLabels}>
-          {xLabels.map((lab, i) => (
-            <Text key={i} style={styles.xLabel}>
-              {lab}
-            </Text>
-          ))}
+
+        <View style={styles.selectorWrapper}>
+          {uniqueSensors.length > 0 ? (
+            <SegmentedControl
+              values={uniqueSensors.map(s => s.esp_id)}
+              selectedIndex={selectedSensorIndex}
+              onChange={e =>
+                setSelectedSensorIndex(e.nativeEvent.selectedSegmentIndex)
+              }
+              style={styles.selectorControl}
+              fontStyle={{ 
+                fontFamily: 'SpaceGrotesk-Regular',
+                fontSize: 12 
+              }}
+              activeFontStyle={{
+                fontFamily: 'SpaceGrotesk-Regular',
+                fontSize: 12,
+                fontWeight: 'normal', 
+              }}
+            />
+          ) : (
+            <Text style={{ color: 'gray', textAlign: 'center' }}>Memuat sensor…</Text>
+          )}
         </View>
       </View>
-    </>
+      
+      <View style={styles.chartWrapper}>
+        <LineChart
+          data={barData}
+          width={chartConfig.chartWidth}
+          height={220}
+          initialSpacing={chartConfig.initialSpacing}
+          spacing={chartConfig.spacing}
+          areaChart
+          curved={false}
+          color="#B4DC45"
+          hideDataPoints
+          maxValue={2000}
+          yAxisLabelTexts={['0', '500', '1000', '1500', '2000']}
+          yAxisTextStyle={styles.yAxisText}
+          xAxisColor="transparent"
+          yAxisColor="transparent"
+          noOfSections={4}
+          rulesType="solid"
+          rulesLength={chartConfig.rulesLength}
+          rulesColor="#eee"
+          showVerticalLines={chartConfig.showVerticalLines}
+          startFillColor="#B4DC45"
+          endFillColor="#B4DC45"
+          startOpacity={0.5}
+          endOpacity={0}
+          pointerConfig={{
+            pointerStripHeight: 230,
+            pointerStripColor: '#DEE2E7',
+            pointerStripWidth: 1,
+            strokeDashArray: [4, 4],
+            pointerColor: '#B4DC45',
+            activatePointersOnLongPress: true,
+            stripOverPointer: false,
+            autoAdjustPointerLabelPosition: true,
+            pointerLabelWidth: 100,
+            pointerLabelComponent: items => {
+              const {value, date, x, y} = items[0];
+              const [d, t] = date.split('\n');
+              const chartLeft = 0;
+              const chartRight = chartConfig.chartWidth ?? 350;
+              const tooltipWidth = range ==='1M' ? 80 : 100;
+              let tooltipLeft = x - tooltipWidth / 2;
+              if (tooltipLeft < chartLeft) {
+                tooltipLeft = chartLeft;
+              } else if (tooltipLeft + tooltipWidth > chartRight) {
+                tooltipLeft = chartRight - tooltipWidth;
+              }
+              return (
+                <View
+                  style={[styles.tooltip, {left: tooltipLeft, top: y - 55}]}>
+                  <Text style={styles.tooltipText}>{value} mg/kg</Text>
+                  <View style={styles.tooltipDivider} />
+                  <View style={styles.tooltipDateRow}>
+                    <Text style={styles.tooltipSub}>{d}</Text>
+                    <Text style={styles.tooltipSub}>{t}</Text>
+                  </View>
+                </View>
+              );
+            },
+          }}
+        />
+      </View>
+
+      {/* X-axis Labels */}
+      <View style={styles.xLabels}>
+        {xLabelsFromBar.map((lab, i) => (
+          <Text key={i} style={styles.xLabel}>
+            {lab}
+          </Text>
+        ))}
+      </View>
+    </View>
   );
 }
 
@@ -271,7 +386,6 @@ const styles = StyleSheet.create({
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 14,
-    elevation: 3,
     top: 56,
     marginBottom: -2.5,
   },
@@ -280,38 +394,32 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 12,
     color: '#333',
-    fontFamily: 'Space Grotesk',
+    fontFamily: 'SpaceGrotesk-Regular',
   },
-  wraperSegment: {
-    paddingHorizontal: 8,
-    width: 357.5,
-    left: -10,
+  rangeContainer: {
     marginBottom: 12,
+    marginHorizontal: -6,
   },
-  segmentContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#f0f0f0',
+  rangeSegmentedControl: {
+    height: 24,
+    backgroundColor: '#f5f5f5',
     borderRadius: 8,
-    overflow: 'hidden',
   },
-  segment: {
+  selectorRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginHorizontal: -10,
+  },
+  selectorWrapper: {
     flex: 1,
-    paddingVertical: 6,
-    alignItems: 'center',
+    marginHorizontal: 4,
   },
-  segmentActive: {
-    backgroundColor: '#B4DC45',
-    borderRadius: 6,
-  },
-  segmentText: {
-    color: '#555',
-    fontSize: 12,
-    fontWeight: 400,
-    fontFamily: 'Space Grotesk',
-  },
-  segmentTextActive: {
-    color: '#fff',
-    fontWeight: '600',
+  selectorControl: {
+    width: '100%',
+    height: 25,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 7,
+    fontFamily:'SpaceGrotesk-Regular',
   },
   chartWrapper: {
     marginLeft: -10,
@@ -319,7 +427,7 @@ const styles = StyleSheet.create({
     top: 10,
   },
   yAxisText: {
-    fontFamily: 'Space Grotesk',
+    fontFamily: 'SpaceGrotesk-Regular',
     fontWeight: '400',
     fontSize: 11,
     lineHeight: 16,
@@ -330,7 +438,6 @@ const styles = StyleSheet.create({
   tooltip: {
     position: 'absolute',
     flexDirection: 'row',
-    width: 142.5,
     backgroundColor: '#F0F8DA',
     padding: 6,
     borderRadius: 4,
@@ -368,7 +475,7 @@ const styles = StyleSheet.create({
     left: 13,
   },
   xLabel: {
-    fontFamily: 'Space Grotesk',
+    fontFamily: 'SpaceGrotesk-Regular',
     fontWeight: '400',
     fontSize: 10,
   },

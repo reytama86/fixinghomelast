@@ -509,8 +509,8 @@ const getSensorStatus = (value: number, sensorType: string) => {
     Nitrogen: {good: [10, 20], unit: 'mg/L'},
     Phosphor: {good: [5, 15], unit: 'mg/L'},
     'Soil Humidity': {good: [40, 60], unit: '%'},
-    'Soil Temperature': {good: [20, 30], unit: '°C'},
-    Temperature: {good: [25, 35], unit: '°C'},
+    'Soil Temperature': {good: [20, 30], unit: '°'},
+    Temperature: {good: [25, 35], unit: '°'},
     Humidity: {good: [60, 80], unit: '%'},
     Light: {good: [10000, 15000], unit: 'Lux'},
   };
@@ -554,7 +554,7 @@ const Device1 = React.memo<DeviceProps>(({ sensorData }) => {
               label="Soil Temperature"
               value={getSensorValue(sensor1Data, 'Soil Temperature')}
               sensorType="Soil Temperature"
-              unit="°C"
+              unit="°"
             />
             <SensorItem
               label="Soil Humidity"
@@ -642,7 +642,7 @@ const Device2 = React.memo<DeviceProps>(({ sensorData }) => {
             <Text style={styles.nameSensorTransmisi}>Temperature</Text>
           </View>
           <Text style={styles.valueTransmisi}>
-            {temperatureValue}°C
+            {temperatureValue}°
           </Text>
         </View>
         <View style={styles.cardTransmisi}>
@@ -667,7 +667,7 @@ const Device2 = React.memo<DeviceProps>(({ sensorData }) => {
               label="Soil Temperature"
               value={getSensorValue(sensor2Data, 'Soil Temperature')}
               sensorType="Soil Temperature"
-              unit="°C"
+              unit="°"
             />
             <SensorItem
               label="Soil Humidity"
@@ -746,7 +746,7 @@ const Device3 = React.memo<DeviceProps>(({ sensorData }) => {
               label="Soil Temperature"
               value={getSensorValue(sensor3Data, 'Soil Temperature')}
               sensorType="Soil Temperature"
-              unit="°C"
+              unit="°"
             />
             <SensorItem
               label="Soil Humidity"

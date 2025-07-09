@@ -349,26 +349,31 @@ const ExpandableBlock = React.memo<{
 
     const handleStart = useCallback(() => {
       if (!currentProcess) return;
-
+    
+      // Validasi input menit dan detik
       const validatedMinutes = validateTimeInput(inputMinutes, 120);
       const validatedSeconds = validateTimeInput(inputSeconds, 59);
-
+    
       setInputMinutes(validatedMinutes);
       setInputSeconds(validatedSeconds);
-
-      const totalMinutes =
-        parseInt(validatedMinutes) + parseInt(validatedSeconds) / 60;
-      const finalMinutes = Math.min(Math.max(totalMinutes, 0.1), 120);
-
+    
+      // Menghitung total detik
+      const totalMinutes = parseInt(validatedMinutes, 10);
+      const totalSeconds = parseInt(validatedSeconds, 10);
+      
+      // Menghitung total durasi dalam detik
+      const totalDurationInSeconds = totalMinutes * 60 + totalSeconds; // Total dalam detik
+    
       const ctrl =
         currentProcess.target === 'main'
           ? mainControl
           : currentProcess.target === 'row1'
           ? row1Control
           : row2Control;
-
-      ctrl.startProcess(currentProcess.type, finalMinutes);
-
+    
+      // Memanggil startProcess dengan total durasi dalam detik
+      ctrl.startProcess(currentProcess.type, totalDurationInSeconds); 
+    
       setShowDurationModal(false);
       setInputMinutes('1');
       setInputSeconds('0');
@@ -382,6 +387,7 @@ const ExpandableBlock = React.memo<{
       row1Control,
       row2Control,
     ]);
+    
 
     const handleStop = useCallback(() => {
       if (!confirmProcess) return;

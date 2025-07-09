@@ -362,43 +362,42 @@ export function useControlState({topicPrefix, publish, pageId, isActive = true}:
     messageTimeoutRef.current = setTimeout(processPendingMessages, 100);
   }, [processPendingMessages]);
 
-  const startProcess = useCallback((type: 'water' | 'fertilizer', minutes: number) => {
-    const totalSecs = minutes * 60;
+  const startProcess = useCallback((type: 'water' | 'fertilizer', totalDurationInSeconds: number) => {
     const startTimestamp = Date.now();
-
+  
     if (type === 'water') {
       updateState({
         waterStart: startTimestamp,
-        waterDuration: totalSecs,
-        remainingWaterTime: totalSecs,
+        waterDuration: totalDurationInSeconds,
+        remainingWaterTime: totalDurationInSeconds,
         isWaterOn: true,
       });
       
       if (isActiveRef.current) {
-        startWaterTimer(totalSecs);
+        startWaterTimer(totalDurationInSeconds);
       }
     } else {
       updateState({
         fertStart: startTimestamp,
-        fertDuration: totalSecs,
-        remainingFertTime: totalSecs,
+        fertDuration: totalDurationInSeconds,
+        remainingFertTime: totalDurationInSeconds,
         isFertilizerOn: true,
       });
       
       if (isActiveRef.current) {
-        startFertTimer(totalSecs);
+        startFertTimer(totalDurationInSeconds);
       }
     }
-
+  
     setTimeout(() => {
       const topic = `control/${type}${topicPrefix}`;
       const startTopic = `start/${type}${topicPrefix}`;
       
-      publish(topic, {valve_status: 'open', duration: totalSecs});
-      publish(startTopic, {startTimestamp, duration: totalSecs});
+      publish(topic, {valve_status: 'open', duration: totalDurationInSeconds}); // Mengirim total durasi dalam detik
+      publish(startTopic, {startTimestamp, duration: totalDurationInSeconds}); // Mengirim total durasi dalam detik
     }, 0);
-
   }, [topicPrefix, publish, startWaterTimer, startFertTimer, updateState]);
+  
 
   const stopProcess = useCallback((type: 'water' | 'fertilizer') => {
     const nowTs = Date.now();

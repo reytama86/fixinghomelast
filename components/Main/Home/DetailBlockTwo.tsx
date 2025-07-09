@@ -580,21 +580,32 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
 
   const handleStartProcess = useCallback(() => {
     if (!currentProcess) return;
-
-    const validatedMinutes = validateTimeInput(inputMinutes, 120);
-    const validatedSeconds = validateTimeInput(inputSeconds, 59);
-
+  
+    // Validasi input menit dan detik
+    const validatedMinutes = validateTimeInput(inputMinutes, 120); // Validasi menit
+    const validatedSeconds = validateTimeInput(inputSeconds, 59); // Validasi detik
+  
     setInputMinutes(validatedMinutes);
     setInputSeconds(validatedSeconds);
-
-    const totalMinutes = parseInt(validatedMinutes) + parseInt(validatedSeconds) / 60;
-    const finalMinutes = Math.min(Math.max(totalMinutes, 0.1), 120);
-
-    controlState.startProcess(currentProcess, finalMinutes);
+  
+    // Menghitung total durasi dalam detik
+    const totalMinutes = parseInt(validatedMinutes, 10); // Mengonversi menit ke integer
+    const totalSeconds = parseInt(validatedSeconds, 10); // Mengonversi detik ke integer
+    
+    // Menghitung total durasi dalam detik
+    const totalDurationInSeconds = totalMinutes * 60 + totalSeconds; // Total dalam detik
+  
+    // Memastikan durasi tidak melebihi batas
+    const finalDuration = Math.min(Math.max(totalDurationInSeconds, 6), 7200); // Batas 6 detik hingga 7200 detik (2 jam)
+  
+    // Memanggil startProcess dengan total durasi dalam detik
+    controlState.startProcess(currentProcess, finalDuration); 
+  
     setShowDurationModal(false);
     setInputMinutes('1');
     setInputSeconds('0');
   }, [currentProcess, inputMinutes, inputSeconds, controlState, validateTimeInput]);
+  
 
   const handleConfirmStop = useCallback(() => {
     if (confirmType) {

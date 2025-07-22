@@ -326,30 +326,42 @@ export default function SoilMoisture() {
           startOpacity={0.5}
           endOpacity={0}
           pointerConfig={{
-            pointerStripHeight: 230,
+            pointerStripHeight: 270,
             pointerStripColor: '#DEE2E7',
-            pointerStripWidth: 1,
+            pointerStripWidth: 1.5, // Perbesar dari 1 ke 3
             strokeDashArray: [4, 4],
             pointerColor: '#B4DC45',
-            activatePointersOnLongPress: true,
+            radius: 6, // Tambahkan radius untuk area touch yang lebih besar
+            activatePointersOnLongPress: false, // Ubah ke false agar bisa tap biasa
+            activatePointersDelay: 150, // Tambahkan delay
             stripOverPointer: false,
             autoAdjustPointerLabelPosition: true,
             pointerLabelWidth: 100,
+            
+            // Tambahkan properti ini untuk memperbesar area touch
+            persistPointer: true,
+            hidePointer1: false,
+            hidePointer2: false,
+            hidePointer3: false,
+            hidePointer4: false,
+            hidePointer5: false,
+            
             pointerLabelComponent: items => {
               const {value, date, x, y} = items[0];
               const [d, t] = date.split('\n');
               const chartLeft = 0;
               const chartRight = chartConfig.chartWidth ?? 350;
-              const tooltipWidth = range ==='1M' ? 80 : 100;
+              const tooltipWidth = range === '1M' ? 80 : 100;
               let tooltipLeft = x - tooltipWidth / 2;
+              
               if (tooltipLeft < chartLeft) {
                 tooltipLeft = chartLeft;
               } else if (tooltipLeft + tooltipWidth > chartRight) {
                 tooltipLeft = chartRight - tooltipWidth;
               }
+              
               return (
-                <View
-                  style={[styles.tooltip, {left: tooltipLeft, top: y - 55}]}>
+                <View style={[styles.tooltip, {left: tooltipLeft, top: y - 55}]}>
                   <Text style={styles.tooltipText}>{value}%</Text>
                   <View style={styles.tooltipDivider} />
                   <View style={styles.tooltipDateRow}>

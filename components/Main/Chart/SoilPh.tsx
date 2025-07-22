@@ -301,76 +301,110 @@ export default function SoilPh() {
       </View>
       
       <View style={styles.chartWrapper}>
-        <LineChart
-          data={barData}
-          width={chartConfig.chartWidth}
-          height={220}
-          initialSpacing={chartConfig.initialSpacing}
-          spacing={chartConfig.spacing}
-          areaChart
-          curved={false}
-          color="#B4DC45"
-          hideDataPoints
-          maxValue={9}
-          yAxisLabelTexts={['0', '3', '5', '7', '9']}
-          yAxisTextStyle={styles.yAxisText}
-          xAxisColor="transparent"
-          yAxisColor="transparent"
-          noOfSections={4}
-          rulesType="solid"
-          rulesLength={chartConfig.rulesLength}
-          rulesColor="#eee"
-          showVerticalLines={chartConfig.showVerticalLines}
-          startFillColor="#B4DC45"
-          endFillColor="#B4DC45"
-          startOpacity={0.5}
-          endOpacity={0}
-          pointerConfig={{
-            pointerStripHeight: 230,
-            pointerStripColor: '#DEE2E7',
-            pointerStripWidth: 1,
-            strokeDashArray: [4, 4],
-            pointerColor: '#B4DC45',
-            activatePointersOnLongPress: true,
-            stripOverPointer: false,
-            autoAdjustPointerLabelPosition: true,
-            pointerLabelWidth: 100,
-            pointerLabelComponent: items => {
-              const {value, date, x, y} = items[0];
-              const [d, t] = date.split('\n');
-              const chartLeft = 0;
-              const chartRight = chartConfig.chartWidth ?? 350;
-              const tooltipWidth = range ==='1M' ? 80 : 100;
-              let tooltipLeft = x - tooltipWidth / 2;
-              if (tooltipLeft < chartLeft) {
-                tooltipLeft = chartLeft;
-              } else if (tooltipLeft + tooltipWidth > chartRight) {
-                tooltipLeft = chartRight - tooltipWidth;
+  <LineChart
+    data={barData}
+    width={chartConfig.chartWidth}
+    height={220}
+    initialSpacing={chartConfig.initialSpacing}
+    spacing={chartConfig.spacing}
+    areaChart
+    curved={false}
+    color="#B4DC45"
+    hideDataPoints
+    maxValue={9}
+    yAxisLabelTexts={['0', '3', '5', '7', '9']}
+    yAxisTextStyle={styles.yAxisText}
+    xAxisColor="transparent"
+    yAxisColor="transparent"
+    noOfSections={4}
+    rulesType="solid"
+    rulesLength={chartConfig.rulesLength}
+    rulesColor="#eee"
+    showVerticalLines={chartConfig.showVerticalLines}
+    startFillColor="#B4DC45"
+    endFillColor="#B4DC45"
+    startOpacity={0.5}
+    endOpacity={0}
+    pointerConfig={{
+      pointerStripHeight: 300,
+      pointerStripColor: '#DEE2E7',
+      pointerStripWidth: 1,
+      strokeDashArray: [4, 4],
+      pointerColor: '#B4DC45',
+      activatePointersOnLongPress: true,
+      stripOverPointer: false,
+      autoAdjustPointerLabelPosition: true,
+      pointerLabelWidth: 100,
+      pointerLabelComponent: items => {
+        const {value, date, x, y} = items[0];
+        const [d, t] = date.split('\n');
+        const chartLeft = 0;
+        const chartRight = chartConfig.chartWidth ?? 350;
+        const tooltipWidth = range === '1M' ? 80 : 100;
+        const tooltipHeight = 50; // Estimasi tinggi tooltip
+        const chartTop = 10; // Margin atas chart
+        
+        // Horizontal positioning
+        let tooltipLeft = x - tooltipWidth / 2;
+        if (tooltipLeft < chartLeft) {
+          tooltipLeft = chartLeft;
+        } else if (tooltipLeft + tooltipWidth > chartRight) {
+          tooltipLeft = chartRight - tooltipWidth;
+        }
+        
+        // Vertical positioning - cek apakah tooltip akan keluar dari area chart
+        let tooltipTop = y - 55;
+        let showArrowBelow = false;
+        
+        // Jika tooltip akan keluar dari atas chart, tampilkan di bawah point
+        if (tooltipTop < chartTop) {
+          tooltipTop = y + 15; // Tampilkan di bawah point
+          showArrowBelow = true;
+        }
+        
+        return (
+          <View
+            style={[
+              styles.tooltip, 
+              {
+                left: tooltipLeft, 
+                top: tooltipTop,
+                // Tambahkan style untuk arrow jika diperlukan
+                ...(showArrowBelow && styles.tooltipBelow)
               }
-              return (
-                <View
-                  style={[styles.tooltip, {left: tooltipLeft, top: y - 55}]}>
-                  <Text style={styles.tooltipText}>{value}</Text>
-                  <View style={styles.tooltipDivider} />
-                  <View style={styles.tooltipDateRow}>
-                    <Text style={styles.tooltipSub}>{d}</Text>
-                    <Text style={styles.tooltipSub}>{t}</Text>
-                  </View>
-                </View>
-              );
-            },
-          }}
-        />
-      </View>
+            ]}
+          >
+            {/* Arrow atas (default) */}
+            {!showArrowBelow && (
+              <View style={styles.tooltipArrowUp} />
+            )}
+            
+            <Text style={styles.tooltipText}>{value}</Text>
+            <View style={styles.tooltipDivider} />
+            <View style={styles.tooltipDateRow}>
+              <Text style={styles.tooltipSub}>{d}</Text>
+              <Text style={styles.tooltipSub}>{t}</Text>
+            </View>
+            
+            {/* Arrow bawah (ketika tooltip di atas point) */}
+            {showArrowBelow && (
+              <View style={styles.tooltipArrowDown} />
+            )}
+          </View>
+        );
+      },
+    }}
+  />
+</View>
 
-      {/* X-axis Labels */}
-      <View style={styles.xLabels}>
-        {xLabelsFromBar.map((lab, i) => (
-          <Text key={i} style={styles.xLabel}>
-            {lab}
-          </Text>
-        ))}
-      </View>
+{/* X-axis Labels */}
+<View style={styles.xLabels}>
+  {xLabelsFromBar.map((lab, i) => (
+    <Text key={i} style={styles.xLabel}>
+      {lab}
+    </Text>
+  ))}
+</View>
     </View>
   );
 }
@@ -478,5 +512,39 @@ const styles = StyleSheet.create({
     fontFamily: 'SpaceGrotesk-Regular',
     fontWeight: '400',
     fontSize: 10,
+  },
+  tooltipBelow: {
+    // Style khusus ketika tooltip berada di bawah point
+    marginTop: 5,
+  },
+  
+  tooltipArrowUp: {
+    position: 'absolute',
+    top: -6,
+    left: '50%',
+    marginLeft: -6,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderBottomWidth: 6,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: '#FFFFFF',
+  },
+  
+  tooltipArrowDown: {
+    position: 'absolute',
+    bottom: -6,
+    left: '50%',
+    marginLeft: -6,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 6,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#FFFFFF',
   },
 });

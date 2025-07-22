@@ -1,10 +1,5 @@
 import React, {useState, useMemo, useEffect} from 'react';
-import {
-  View,
-  Text,
-  Dimensions,
-  StyleSheet,
-} from 'react-native';
+import {View, Text, Dimensions, StyleSheet} from 'react-native';
 import {barDataItem, LineChart} from 'react-native-gifted-charts';
 import SegmentedControl from '@react-native-segmented-control/segmented-control';
 
@@ -15,14 +10,28 @@ const CARD_WIDTH = SCREEN_W - PADDING * 2;
 type DataPoint = {value: number; date: string};
 type Sensor = {id_sensor: number; esp_id: string};
 type Blok = {id_detail_blok: number; nama_blok: string; kondisi_blok: string};
-type MetricType = 'Humidity' | 'Kelembaban Udara' | 'Cahaya' | 'Kelembaban Tanah';
-type MyBarDataItem = barDataItem & { date: string };
+type MetricType =
+  | 'Humidity'
+  | 'Kelembaban Udara'
+  | 'Cahaya'
+  | 'Kelembaban Tanah';
+type MyBarDataItem = barDataItem & {date: string};
 
 function formatLabel(date: Date, withTime = false): string {
   const day = date.getDate();
   const monthNames = [
-    'Jan','Feb','Mar','Apr','Mei','Jun',
-    'Jul','Agu','Sep','Okt','Nov','Des',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'Mei',
+    'Jun',
+    'Jul',
+    'Agu',
+    'Sep',
+    'Okt',
+    'Nov',
+    'Des',
   ];
   const month = monthNames[date.getMonth()];
   if (!withTime) {
@@ -48,39 +57,40 @@ export default function Humidity() {
     'Kelembaban Tanah',
   ];
   const [sensorType, setSensorType] = useState<MetricType>(segments[0]);
-  
+
   // Range options untuk SegmentedControl
   const rangeOptions = ['7D', '1M', '1Y', 'Max'];
   const selectedRangeIndex = rangeOptions.indexOf(range);
 
   useEffect(() => {
-      fetch('https://iot-vanili-api.permataindonesia.com/api/bloklist')
-        .then(r => r.json())
-        .then((list: Blok[]) => setBlokList(list))
-        .catch(console.error);
-    }, []);
-  
-    useEffect(() => {
-      fetch('https://iot-vanili-api.permataindonesia.com/api/sensorlist')
-        .then(r => r.json())
-        .then((list: Sensor[]) => setSensorList(list))
-        .catch(console.error);
-    }, []);
-  
-    const uniqueSensors = useMemo(() => {
-      const map = new Map<string, Sensor>();
-      sensorList.forEach(s => {
-        if (!map.has(s.esp_id)) map.set(s.esp_id, s);
-      });
-      return Array.from(map.values());
-    }, [sensorList]);
-  
-    useEffect(() => {
-      if (!sensorList.length || !blokList.length) return;
-  
-      const fetchData = async () => {
-        const baseURL = 'https://iot-vanili-api.permataindonesia.com';
-        const endpoint = range === '1M' ? '/api/monthly-data' : '/api/weekly-data';
+    fetch('https://iot-vanili-api.permataindonesia.com/api/bloklist')
+      .then(r => r.json())
+      .then((list: Blok[]) => setBlokList(list))
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    fetch('https://iot-vanili-api.permataindonesia.com/api/sensorlist')
+      .then(r => r.json())
+      .then((list: Sensor[]) => setSensorList(list))
+      .catch(console.error);
+  }, []);
+
+  const uniqueSensors = useMemo(() => {
+    const map = new Map<string, Sensor>();
+    sensorList.forEach(s => {
+      if (!map.has(s.esp_id)) map.set(s.esp_id, s);
+    });
+    return Array.from(map.values());
+  }, [sensorList]);
+
+  useEffect(() => {
+    if (!sensorList.length || !blokList.length) return;
+
+    const fetchData = async () => {
+      const baseURL = 'https://iot-vanili-api.permataindonesia.com';
+      const endpoint =
+        range === '1M' ? '/api/monthly-data' : '/api/weekly-data';
 
       const now = new Date();
 
@@ -147,25 +157,25 @@ export default function Humidity() {
       .slice(0, 19)
       .replace('T', ' ');
   }
-  
+
   const xLabelsFromBar = useMemo<string[]>(() => {
     if (!barData.length) return [];
-    
-    const allDates = barData.map(pt => pt.date.split('\n')[0]); 
+
+    const allDates = barData.map(pt => pt.date.split('\n')[0]);
     const total = allDates.length;
-    
+
     if (range === '1M') {
       const idxFirst = 0;
       const idxQuarter = Math.floor(total * 0.25);
       const idxHalf = Math.floor(total * 0.5);
       const idxThreeQuarter = Math.floor(total * 0.75);
       const idxLast = total - 1;
-      
+
       return [
-        allDates[idxFirst], 
-        allDates[idxQuarter], 
-        allDates[idxHalf], 
-        allDates[idxLast]
+        allDates[idxFirst],
+        allDates[idxQuarter],
+        allDates[idxHalf],
+        allDates[idxLast],
       ];
     } else {
       const idxFirst = 0;
@@ -174,7 +184,7 @@ export default function Humidity() {
       return [allDates[idxFirst], allDates[idxMid], allDates[idxLast]];
     }
   }, [barData, range]);
-  
+
   const chartConfig = useMemo(() => {
     const dataLength = barData.length;
     switch (range) {
@@ -218,38 +228,38 @@ export default function Humidity() {
     color: '#ccc',
     strokeWidth: 1.5,
   };
-  
+
   return (
     <View style={styles.card}>
       <Text style={styles.title}>Humidity</Text>
-      
+
       {/* Range Selector menggunakan SegmentedControl */}
       <View style={styles.rangeContainer}>
         <SegmentedControl
           values={rangeOptions}
           selectedIndex={selectedRangeIndex}
-          onChange={(event) => {
+          onChange={event => {
             const newIndex = event.nativeEvent.selectedSegmentIndex;
             setRange(rangeOptions[newIndex] as '7D' | '1M' | '1Y' | 'Max');
           }}
           style={styles.rangeSegmentedControl}
-          fontStyle={{ 
+          fontStyle={{
             fontFamily: 'SpaceGrotesk-Regular',
             fontSize: 12,
             fontWeight: '400',
-            color: '#666666'
+            color: '#666666',
           }}
           activeFontStyle={{
             fontFamily: 'SpaceGrotesk-Regular',
             fontSize: 12,
             fontWeight: '400',
-            color: '#333333'
+            color: '#333333',
           }}
           backgroundColor="#f5f5f5"
           tintColor="#B4DC45"
         />
       </View>
-      
+
       <View style={styles.selectorRow}>
         <View style={styles.selectorWrapper}>
           {blokList.length > 0 ? (
@@ -260,18 +270,20 @@ export default function Humidity() {
                 setSelectedBlokIndex(e.nativeEvent.selectedSegmentIndex)
               }
               style={styles.selectorControl}
-              fontStyle={{ 
+              fontStyle={{
                 fontFamily: 'SpaceGrotesk-Regular',
-                fontSize: 12
+                fontSize: 12,
               }}
               activeFontStyle={{
                 fontFamily: 'SpaceGrotesk-Regular',
                 fontSize: 12,
-                fontWeight: '400', 
+                fontWeight: '400',
               }}
             />
           ) : (
-            <Text style={{ color: 'gray', textAlign: 'center' }}>Memuat daftar blok…</Text>
+            <Text style={{color: 'gray', textAlign: 'center'}}>
+              Memuat daftar blok…
+            </Text>
           )}
         </View>
 
@@ -284,22 +296,24 @@ export default function Humidity() {
                 setSelectedSensorIndex(e.nativeEvent.selectedSegmentIndex)
               }
               style={styles.selectorControl}
-              fontStyle={{ 
+              fontStyle={{
                 fontFamily: 'SpaceGrotesk-Regular',
-                fontSize: 12 
+                fontSize: 12,
               }}
               activeFontStyle={{
                 fontFamily: 'SpaceGrotesk-Regular',
                 fontSize: 12,
-                fontWeight: 'normal', 
+                fontWeight: 'normal',
               }}
             />
           ) : (
-            <Text style={{ color: 'gray', textAlign: 'center' }}>Memuat sensor…</Text>
+            <Text style={{color: 'gray', textAlign: 'center'}}>
+              Memuat sensor…
+            </Text>
           )}
         </View>
       </View>
-      
+
       <View style={styles.chartWrapper}>
         <LineChart
           data={barData}
@@ -326,31 +340,44 @@ export default function Humidity() {
           startOpacity={0.5}
           endOpacity={0}
           pointerConfig={{
-            pointerStripHeight: 230,
+            pointerStripHeight: 270,
             pointerStripColor: '#DEE2E7',
-            pointerStripWidth: 1,
+            pointerStripWidth: 1.5, // Perbesar dari 1 ke 3
             strokeDashArray: [4, 4],
             pointerColor: '#B4DC45',
-            activatePointersOnLongPress: true,
+            radius: 6, // Tambahkan radius untuk area touch yang lebih besar
+            activatePointersOnLongPress: false, // Ubah ke false agar bisa tap biasa
+            activatePointersDelay: 150, // Tambahkan delay
             stripOverPointer: false,
             autoAdjustPointerLabelPosition: true,
             pointerLabelWidth: 100,
+
+            // Tambahkan properti ini untuk memperbesar area touch
+            persistPointer: true,
+            hidePointer1: false,
+            hidePointer2: false,
+            hidePointer3: false,
+            hidePointer4: false,
+            hidePointer5: false,
+
             pointerLabelComponent: items => {
               const {value, date, x, y} = items[0];
               const [d, t] = date.split('\n');
               const chartLeft = 0;
               const chartRight = chartConfig.chartWidth ?? 350;
-              const tooltipWidth = range === '1M' ? 90 : 100;
+              const tooltipWidth = range === '1M' ? 80 : 100;
               let tooltipLeft = x - tooltipWidth / 2;
+
               if (tooltipLeft < chartLeft) {
                 tooltipLeft = chartLeft;
               } else if (tooltipLeft + tooltipWidth > chartRight) {
                 tooltipLeft = chartRight - tooltipWidth;
               }
+
               return (
                 <View
                   style={[styles.tooltip, {left: tooltipLeft, top: y - 55}]}>
-                  <Text style={styles.tooltipText}>{value} %</Text>
+                  <Text style={styles.tooltipText}>{value}%</Text>
                   <View style={styles.tooltipDivider} />
                   <View style={styles.tooltipDateRow}>
                     <Text style={styles.tooltipSub}>{d}</Text>
@@ -419,7 +446,7 @@ const styles = StyleSheet.create({
     height: 25,
     backgroundColor: '#f0f0f0',
     borderRadius: 7,
-    fontFamily:'SpaceGrotesk-Regular',
+    fontFamily: 'SpaceGrotesk-Regular',
   },
   chartWrapper: {
     marginLeft: -10,

@@ -1,10 +1,5 @@
 import React, {useState, useMemo, useEffect} from 'react';
-import {
-  View,
-  Text,
-  Dimensions,
-  StyleSheet,
-} from 'react-native';
+import {View, Text, Dimensions, StyleSheet, ActivityIndicator} from 'react-native';
 import {barDataItem, LineChart} from 'react-native-gifted-charts';
 import SegmentedControl from '@react-native-segmented-control/segmented-control';
 
@@ -16,13 +11,23 @@ type DataPoint = {value: number; date: string};
 type Sensor = {id_sensor: number; esp_id: string};
 type Blok = {id_detail_blok: number; nama_blok: string; kondisi_blok: string};
 type MetricType = 'Light' | 'Kelembaban Udara' | 'Cahaya' | 'Kelembaban Tanah';
-type MyBarDataItem = barDataItem & { date: string };
+type MyBarDataItem = barDataItem & {date: string};
 
 function formatLabel(date: Date, withTime = false): string {
   const day = date.getDate();
   const monthNames = [
-    'Jan','Feb','Mar','Apr','Mei','Jun',
-    'Jul','Agu','Sep','Okt','Nov','Des',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'Mei',
+    'Jun',
+    'Jul',
+    'Agu',
+    'Sep',
+    'Okt',
+    'Nov',
+    'Des',
   ];
   const month = monthNames[date.getMonth()];
   if (!withTime) {
@@ -38,9 +43,14 @@ export default function Light() {
   const [range, setRange] = useState<'7D' | '1M' | '1Y' | 'Max'>('7D');
   const [sensorList, setSensorList] = useState<Sensor[]>([]);
   const [selectedSensorIndex, setSelectedSensorIndex] = useState(0);
-
   const [blokList, setBlokList] = useState<Blok[]>([]);
   const [selectedBlokIndex, setSelectedBlokIndex] = useState(0);
+  
+  // Loading states
+  const [isLoadingData, setIsLoadingData] = useState(false);
+  const [isLoadingSensorList, setIsLoadingSensorList] = useState(true);
+  const [isLoadingBlokList, setIsLoadingBlokList] = useState(true);
+  
   const segments: MetricType[] = [
     'Light',
     'Kelembaban Udara',
@@ -48,39 +58,58 @@ export default function Light() {
     'Kelembaban Tanah',
   ];
   const [sensorType, setSensorType] = useState<MetricType>(segments[0]);
-  
+
   // Range options untuk SegmentedControl
   const rangeOptions = ['7D', '1M', '1Y', 'Max'];
   const selectedRangeIndex = rangeOptions.indexOf(range);
 
   useEffect(() => {
-      fetch('https://iot-vanili-api.permataindonesia.com/api/bloklist')
-        .then(r => r.json())
-        .then((list: Blok[]) => setBlokList(list))
-        .catch(console.error);
-    }, []);
-  
-    useEffect(() => {
-      fetch('https://iot-vanili-api.permataindonesia.com/api/sensorlist')
-        .then(r => r.json())
-        .then((list: Sensor[]) => setSensorList(list))
-        .catch(console.error);
-    }, []);
-  
-    const uniqueSensors = useMemo(() => {
-      const map = new Map<string, Sensor>();
-      sensorList.forEach(s => {
-        if (!map.has(s.esp_id)) map.set(s.esp_id, s);
+    setIsLoadingBlokList(true);
+    fetch('https://iot-vanili-api.permataindonesia.com/api/bloklist')
+      .then(r => r.json())
+      .then((list: Blok[]) => {
+        setBlokList(list);
+        setIsLoadingBlokList(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setIsLoadingBlokList(false);
       });
-      return Array.from(map.values());
-    }, [sensorList]);
-  
-    useEffect(() => {
-      if (!sensorList.length || !blokList.length) return;
-  
-      const fetchData = async () => {
-        const baseURL = 'https://iot-vanili-api.permataindonesia.com';
-        const endpoint = range === '1M' ? '/api/monthly-data' : '/api/weekly-data';
+  }, []);
+
+  useEffect(() => {
+    setIsLoadingSensorList(true);
+    fetch('https://iot-vanili-api.permataindonesia.com/api/sensorlist')
+      .then(r => r.json())
+      .then((list: Sensor[]) => {
+        setSensorList(list);
+        setIsLoadingSensorList(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setIsLoadingSensorList(false);
+      });
+  }, []);
+
+  const uniqueSensors = useMemo(() => {
+    const map = new Map<string, Sensor>();
+    sensorList.forEach(s => {
+      if (!map.has(s.esp_id)) map.set(s.esp_id, s);
+    });
+    return Array.from(map.values());
+  }, [sensorList]);
+
+  useEffect(() => {
+    if (!sensorList.length || !blokList.length) return;
+
+    const fetchData = async () => {
+      setIsLoadingData(true);
+      // Clear previous data immediately when starting to load
+      setBarData([]);
+      
+      const baseURL = 'https://iot-vanili-api.permataindonesia.com';
+      const endpoint =
+        range === '1M' ? '/api/monthly-data' : '/api/weekly-data';
 
       const now = new Date();
 
@@ -127,6 +156,8 @@ export default function Light() {
         setBarData(points);
       } catch (err) {
         console.error('fetch data error:', err);
+      } finally {
+        setIsLoadingData(false);
       }
     };
 
@@ -147,25 +178,25 @@ export default function Light() {
       .slice(0, 19)
       .replace('T', ' ');
   }
-  
+
   const xLabelsFromBar = useMemo<string[]>(() => {
     if (!barData.length) return [];
-    
-    const allDates = barData.map(pt => pt.date.split('\n')[0]); 
+
+    const allDates = barData.map(pt => pt.date.split('\n')[0]);
     const total = allDates.length;
-    
+
     if (range === '1M') {
       const idxFirst = 0;
       const idxQuarter = Math.floor(total * 0.25);
       const idxHalf = Math.floor(total * 0.5);
       const idxThreeQuarter = Math.floor(total * 0.75);
       const idxLast = total - 1;
-      
+
       return [
-        allDates[idxFirst], 
-        allDates[idxQuarter], 
-        allDates[idxHalf], 
-        allDates[idxLast]
+        allDates[idxFirst],
+        allDates[idxQuarter],
+        allDates[idxHalf],
+        allDates[idxLast],
       ];
     } else {
       const idxFirst = 0;
@@ -174,7 +205,7 @@ export default function Light() {
       return [allDates[idxFirst], allDates[idxMid], allDates[idxLast]];
     }
   }, [barData, range]);
-  
+
   const chartConfig = useMemo(() => {
     const dataLength = barData.length;
     switch (range) {
@@ -218,159 +249,205 @@ export default function Light() {
     color: '#ccc',
     strokeWidth: 1.5,
   };
-  
+
+  // Handle range change
+  const handleRangeChange = (event: any) => {
+    const newIndex = event.nativeEvent.selectedSegmentIndex;
+    setRange(rangeOptions[newIndex] as '7D' | '1M' | '1Y' | 'Max');
+  };
+
+  // Handle blok change
+  const handleBlokChange = (event: any) => {
+    setSelectedBlokIndex(event.nativeEvent.selectedSegmentIndex);
+  };
+
+  // Handle sensor change
+  const handleSensorChange = (event: any) => {
+    setSelectedSensorIndex(event.nativeEvent.selectedSegmentIndex);
+  };
+
   return (
     <View style={styles.card}>
       <Text style={styles.title}>Light</Text>
-      
+
       {/* Range Selector menggunakan SegmentedControl */}
       <View style={styles.rangeContainer}>
         <SegmentedControl
           values={rangeOptions}
           selectedIndex={selectedRangeIndex}
-          onChange={(event) => {
-            const newIndex = event.nativeEvent.selectedSegmentIndex;
-            setRange(rangeOptions[newIndex] as '7D' | '1M' | '1Y' | 'Max');
-          }}
+          onChange={handleRangeChange}
           style={styles.rangeSegmentedControl}
-          fontStyle={{ 
+          fontStyle={{
             fontFamily: 'SpaceGrotesk-Regular',
             fontSize: 12,
             fontWeight: '400',
-            color: '#666666'
+            color: '#666666',
           }}
           activeFontStyle={{
             fontFamily: 'SpaceGrotesk-Regular',
             fontSize: 12,
             fontWeight: '400',
-            color: '#333333'
+            color: '#333333',
           }}
           backgroundColor="#f5f5f5"
           tintColor="#B4DC45"
         />
       </View>
-      
+
       <View style={styles.selectorRow}>
         <View style={styles.selectorWrapper}>
-          {blokList.length > 0 ? (
+          {isLoadingBlokList ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#B4DC45" />
+              <Text style={styles.loadingText}>Loading blok...</Text>
+            </View>
+          ) : blokList.length > 0 ? (
             <SegmentedControl
               values={blokList.map(b => b.nama_blok)}
               selectedIndex={selectedBlokIndex}
-              onChange={e =>
-                setSelectedBlokIndex(e.nativeEvent.selectedSegmentIndex)
-              }
+              onChange={handleBlokChange}
               style={styles.selectorControl}
-              fontStyle={{ 
+              fontStyle={{
                 fontFamily: 'SpaceGrotesk-Regular',
-                fontSize: 12
+                fontSize: 12,
               }}
               activeFontStyle={{
                 fontFamily: 'SpaceGrotesk-Regular',
                 fontSize: 12,
-                fontWeight: '400', 
+                fontWeight: '400',
               }}
             />
           ) : (
-            <Text style={{ color: 'gray', textAlign: 'center' }}>Memuat daftar blok…</Text>
+            <Text style={{color: 'gray', textAlign: 'center'}}>
+              Tidak ada blok tersedia
+            </Text>
           )}
         </View>
 
         <View style={styles.selectorWrapper}>
-          {uniqueSensors.length > 0 ? (
+          {isLoadingSensorList ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#B4DC45" />
+              <Text style={styles.loadingText}>Loading sensor...</Text>
+            </View>
+          ) : uniqueSensors.length > 0 ? (
             <SegmentedControl
               values={uniqueSensors.map(s => s.esp_id)}
               selectedIndex={selectedSensorIndex}
-              onChange={e =>
-                setSelectedSensorIndex(e.nativeEvent.selectedSegmentIndex)
-              }
+              onChange={handleSensorChange}
               style={styles.selectorControl}
-              fontStyle={{ 
+              fontStyle={{
                 fontFamily: 'SpaceGrotesk-Regular',
-                fontSize: 12 
+                fontSize: 12,
               }}
               activeFontStyle={{
                 fontFamily: 'SpaceGrotesk-Regular',
                 fontSize: 12,
-                fontWeight: 'normal', 
+                fontWeight: 'normal',
               }}
             />
           ) : (
-            <Text style={{ color: 'gray', textAlign: 'center' }}>Memuat sensor…</Text>
+            <Text style={{color: 'gray', textAlign: 'center'}}>
+              Tidak ada sensor tersedia
+            </Text>
           )}
         </View>
       </View>
-      
+
       <View style={styles.chartWrapper}>
-        <LineChart
-          data={barData}
-          width={chartConfig.chartWidth}
-          height={220}
-          initialSpacing={chartConfig.initialSpacing}
-          spacing={chartConfig.spacing}
-          areaChart
-          curved={false}
-          color="#B4DC45"
-          hideDataPoints
-          maxValue={25000}
-          yAxisLabelTexts={['0', '5000', '15000', '20000', '25000']}
-          yAxisTextStyle={styles.yAxisText}
-          xAxisColor="transparent"
-          yAxisColor="transparent"
-          noOfSections={4}
-          rulesType="solid"
-          rulesLength={chartConfig.rulesLength}
-          rulesColor="#eee"
-          showVerticalLines={chartConfig.showVerticalLines}
-          startFillColor="#B4DC45"
-          endFillColor="#B4DC45"
-          startOpacity={0.5}
-          endOpacity={0}
-          pointerConfig={{
-            pointerStripHeight: 230,
-            pointerStripColor: '#DEE2E7',
-            pointerStripWidth: 1,
-            strokeDashArray: [4, 4],
-            pointerColor: '#B4DC45',
-            activatePointersOnLongPress: true,
-            stripOverPointer: false,
-            autoAdjustPointerLabelPosition: true,
-            pointerLabelWidth: 100,
-            pointerLabelComponent: items => {
-              const {value, date, x, y} = items[0];
-              const [d, t] = date.split('\n');
-              const chartLeft = 0;
-              const chartRight = chartConfig.chartWidth ?? 350;
-              const tooltipWidth = range === '1M' ? 90 : 100;
-              let tooltipLeft = x - tooltipWidth / 2;
-              if (tooltipLeft < chartLeft) {
-                tooltipLeft = chartLeft;
-              } else if (tooltipLeft + tooltipWidth > chartRight) {
-                tooltipLeft = chartRight - tooltipWidth;
-              }
-              return (
-                <View
-                  style={[styles.tooltip, {left: tooltipLeft, top: y - 55}]}>
-                  <Text style={styles.tooltipText}>{value} Lux</Text>
-                  <View style={styles.tooltipDivider} />
-                  <View style={styles.tooltipDateRow}>
-                    <Text style={styles.tooltipSub}>{d}</Text>
-                    <Text style={styles.tooltipSub}>{t}</Text>
+        {isLoadingData ? (
+          <View style={styles.chartLoadingContainer}>
+            <ActivityIndicator size="large" color="#B4DC45" />
+            <Text style={styles.chartLoadingText}>Loading data...</Text>
+          </View>
+        ) : barData.length > 0 ? (
+          <LineChart
+            data={barData}
+            width={chartConfig.chartWidth}
+            height={220}
+            initialSpacing={chartConfig.initialSpacing}
+            spacing={chartConfig.spacing}
+            areaChart
+            curved={false}
+            color="#B4DC45"
+            hideDataPoints
+            maxValue={25000}
+            yAxisLabelTexts={['0', '5000', '15000', '20000', '25000']}
+            yAxisTextStyle={styles.yAxisText}
+            xAxisColor="transparent"
+            yAxisColor="transparent"
+            noOfSections={4}
+            rulesType="solid"
+            rulesLength={chartConfig.rulesLength}
+            rulesColor="#eee"
+            showVerticalLines={chartConfig.showVerticalLines}
+            startFillColor="#B4DC45"
+            endFillColor="#B4DC45"
+            startOpacity={0.5}
+            endOpacity={0}
+            pointerConfig={{
+              pointerStripHeight: 250,
+              pointerStripColor: '#DEE2E7',
+              pointerStripWidth: 1.5,
+              strokeDashArray: [4, 4],
+              pointerColor: '#B4DC45',
+              radius: 6,
+              activatePointersOnLongPress: false,
+              activatePointersDelay: 150,
+              stripOverPointer: false,
+              autoAdjustPointerLabelPosition: true,
+              pointerLabelWidth: 100,
+              persistPointer: true,
+              hidePointer1: false,
+              hidePointer2: false,
+              hidePointer3: false,
+              hidePointer4: false,
+              hidePointer5: false,
+              pointerLabelComponent: items => {
+                const {value, date, x, y} = items[0];
+                const [d, t] = date.split('\n');
+                const chartLeft = 0;
+                const chartRight = chartConfig.chartWidth ?? 350;
+                const tooltipWidth = range === '1M' ? 80 : 100;
+                let tooltipLeft = x - tooltipWidth / 2;
+
+                if (tooltipLeft < chartLeft) {
+                  tooltipLeft = chartLeft;
+                } else if (tooltipLeft + tooltipWidth > chartRight) {
+                  tooltipLeft = chartRight - tooltipWidth;
+                }
+
+                return (
+                  <View
+                    style={[styles.tooltip, {left: tooltipLeft, top: y - 55}]}>
+                    <Text style={styles.tooltipText}>{value}%</Text>
+                    <View style={styles.tooltipDivider} />
+                    <View style={styles.tooltipDateRow}>
+                      <Text style={styles.tooltipSub}>{d}</Text>
+                      <Text style={styles.tooltipSub}>{t}</Text>
+                    </View>
                   </View>
-                </View>
-              );
-            },
-          }}
-        />
+                );
+              },
+            }}
+          />
+        ) : (
+          <View style={styles.noDataContainer}>
+            <Text style={styles.noDataText}>Tidak ada data tersedia</Text>
+          </View>
+        )}
       </View>
 
       {/* X-axis Labels */}
-      <View style={styles.xLabels}>
-        {xLabelsFromBar.map((lab, i) => (
-          <Text key={i} style={styles.xLabel}>
-            {lab}
-          </Text>
-        ))}
-      </View>
+      {!isLoadingData && barData.length > 0 && (
+        <View style={styles.xLabels}>
+          {xLabelsFromBar.map((lab, i) => (
+            <Text key={i} style={styles.xLabel}>
+              {lab}
+            </Text>
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -419,12 +496,52 @@ const styles = StyleSheet.create({
     height: 25,
     backgroundColor: '#f0f0f0',
     borderRadius: 7,
-    fontFamily:'SpaceGrotesk-Regular',
+    fontFamily: 'SpaceGrotesk-Regular',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 25,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 7,
+    paddingHorizontal: 8,
+  },
+  loadingText: {
+    marginLeft: 6,
+    fontSize: 12,
+    color: '#666',
+    fontFamily: 'SpaceGrotesk-Regular',
   },
   chartWrapper: {
     marginLeft: -10,
     width: CARD_WIDTH,
     top: 10,
+  },
+  chartLoadingContainer: {
+    height: 220,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+  },
+  chartLoadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
+    fontFamily: 'SpaceGrotesk-Regular',
+  },
+  noDataContainer: {
+    height: 220,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+  },
+  noDataText: {
+    fontSize: 14,
+    color: '#999',
+    fontFamily: 'SpaceGrotesk-Regular',
   },
   yAxisText: {
     fontFamily: 'SpaceGrotesk-Regular',

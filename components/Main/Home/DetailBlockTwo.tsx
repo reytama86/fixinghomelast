@@ -12,6 +12,7 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  BackHandler,
 } from 'react-native';
 import React, {useCallback, useMemo, useState} from 'react';
 import {ArrowLeft2} from 'iconsax-react-native';
@@ -196,15 +197,22 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
       }
     }, []);
 
-  useFocusEffect(
+   useFocusEffect(
     useCallback(() => {
       setActivePage('block2');
       fetchSensorData();
-      
-      return () => {
-        // Don't reset page 
+  
+      const onBackPress = () => {
+        navigation.replace('HomeFix');
+        return true; // cegah default behavior
       };
-    }, [setActivePage, fetchSensorData])
+  
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+  
+      return () => {
+        subscription.remove();
+      };
+    }, [navigation, setActivePage, fetchSensorData])
   );
 
   // Cleanup on unmount

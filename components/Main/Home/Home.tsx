@@ -832,7 +832,7 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
                   color: 'white',
                   fontWeight: '600',
                   textAlign: 'center',
-                  top: -1,
+                  top: -6,
                 }}>
                 {Math.round(Number(getSensorValue('Temperature')))}°
               </Text>

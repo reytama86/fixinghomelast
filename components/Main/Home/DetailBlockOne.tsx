@@ -25,6 +25,7 @@ import {HomeStackParamList} from '../../../HomeStack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import GaugeSvg from '../../GaugeComponent';
 import Ellips from '../../../assets/svg/Ellips';
+import { BackHandler } from 'react-native';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'DetailBlockOne'>;
 
@@ -995,12 +996,22 @@ const DetailBlockOne: React.FC<Props> = ({navigation}) => {
   }, []);
 
   useFocusEffect(
-    useCallback(() => {
-      console.log('[DetailBlockOne] Setting active page to block1');
-      setActivePage('block1');
-      fetchSensorData();
-    }, [setActivePage, fetchSensorData]),
-  );
+  useCallback(() => {
+    setActivePage('block1');
+    fetchSensorData();
+
+    const onBackPress = () => {
+      navigation.replace('HomeFix');
+      return true; // cegah default behavior
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+    return () => {
+      subscription.remove();
+    };
+  }, [navigation, setActivePage, fetchSensorData])
+);
 
   const [sensorData, setSensorData] = useState<SensorData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);

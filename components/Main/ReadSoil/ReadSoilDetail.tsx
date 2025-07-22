@@ -227,7 +227,7 @@ const formatDate = (dateString: string): string => {
             <View style={styles.detailStatisticOne}>
               <View style={styles.statContent}>
                 <Text style={styles.statLabel}>Conductivity</Text>
-                <Text style={styles.statValue}>{ecValue}</Text>
+                <Text style={styles.statValue}>{ecValue} μS/cm</Text>
               </View>
               <View style={styles.statExtra}>
                 <Ionicons name={ecStatus.icon} size={18} color={ecStatus.color} />

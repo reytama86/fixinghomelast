@@ -873,7 +873,7 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
               <View style={{flex: 1}}>
                 <Text style={styles.detailSectionThreeText}>Conductivity</Text>
                 <Text style={styles.detailSectionThreeText}>
-                  {getSensorValue('EC')} S/cm
+                  {getSensorValue('EC')} μS/cm
                 </Text>
               </View>
             </View>

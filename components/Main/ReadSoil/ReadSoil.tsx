@@ -367,7 +367,7 @@ const ReadSoil: React.FC<Props> = ({navigation}) => {
   useEffect(() => {
     if (!isRescanPopupVisible) return;
 
-    let timeoutId: NodeJS.Timeout;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
     const startBLEProcess = async () => {
       await resetBLEState();
@@ -679,7 +679,7 @@ const ReadSoil: React.FC<Props> = ({navigation}) => {
               <Text style={styles.statLabel}>Conductivity</Text>
               <Text style={styles.statValue}>
                 {currentSensorData
-                  ? `${currentSensorData.EC} mS/cm`
+                  ? `${currentSensorData.EC} μS/cm`
                   : 'No Data'}
               </Text>
             </View>

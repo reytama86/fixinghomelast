@@ -280,6 +280,7 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
                 label="Conductivity"
                 value={getSensorValue(sensor1Data, 'EC')}
                 sensorType="EC"
+                unit="μS/cm"
               />
               <SensorItem
                 label="PH"
@@ -395,6 +396,7 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
                 label="Conductivity"
                 value={getSensorValue(sensor2Data, 'EC')}
                 sensorType="EC"
+                unit="μS/cm"
               />
               <SensorItem
                 label="PH"
@@ -476,6 +478,7 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
                 label="Conductivity"
                 value={getSensorValue(sensor3Data, 'EC')}
                 sensorType="EC"
+                unit="μS/cm"
               />
               <SensorItem
                 label="PH"

@@ -722,6 +722,7 @@ const Device1 = React.memo<DeviceProps>(({sensorData}) => {
               label="Conductivity"
               value={getSensorValue(sensor1Data, 'EC')}
               sensorType="EC"
+              unit="μS/cm"
             />
             <SensorItem
               label="PH"
@@ -836,6 +837,7 @@ const Device2 = React.memo<DeviceProps>(({sensorData}) => {
               label="Conductivity"
               value={getSensorValue(sensor2Data, 'EC')}
               sensorType="EC"
+              unit="μS/cm"
             />
             <SensorItem
               label="PH"
@@ -918,6 +920,7 @@ const Device3 = React.memo<DeviceProps>(({sensorData}) => {
               label="Conductivity"
               value={getSensorValue(sensor3Data, 'EC')}
               sensorType="EC"
+              unit="μS/cm"
             />
             <SensorItem
               label="PH"

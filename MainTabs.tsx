@@ -275,7 +275,7 @@ const MainTabs: React.FC = () => {
   useEffect(() => {
     if (!showPopup) return;
     
-    let timeoutId: NodeJS.Timeout;
+    let timeoutId: ReturnType<typeof setTimeout>;
     
     const startBLEProcess = async () => {
       // Reset BLE state sebelum mulai scan baru

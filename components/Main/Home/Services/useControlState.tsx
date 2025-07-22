@@ -95,11 +95,11 @@ export function useControlState({topicPrefix, publish, pageId, isActive = true}:
     const timestamp = new Date().toISOString();
     const nowTs = Date.now();
     
-    // setTimeout(() => {
-    //   publish(`control/water${topicPrefix}`, {valve_status: 'close', duration: 0});
-    //   publish(`time/water${topicPrefix}`, {timestamp});
-    //   publish(`start/water${topicPrefix}`, {startTimestamp: nowTs, duration: 0});
-    // }, 0);
+    setTimeout(() => {
+      publish(`control/water${topicPrefix}`, {valve_status: 'close', duration: 0});
+      publish(`time/water${topicPrefix}`, {timestamp});
+      publish(`start/water${topicPrefix}`, {startTimestamp: nowTs, duration: 0});
+    }, 0);
 
   }, [clearWaterTimer, updateState, publish, topicPrefix]);
 
@@ -117,11 +117,11 @@ export function useControlState({topicPrefix, publish, pageId, isActive = true}:
     const timestamp = new Date().toISOString();
     const nowTs = Date.now();
     
-    // setTimeout(() => {
-    //   publish(`control/fertilizer${topicPrefix}`, {valve_status: 'close', duration: 0});
-    //   publish(`time/fertilizer${topicPrefix}`, {timestamp});
-    //   publish(`start/fertilizer${topicPrefix}`, {startTimestamp: nowTs, duration: 0});
-    // }, 0);
+    setTimeout(() => {
+      publish(`control/fertilizer${topicPrefix}`, {valve_status: 'close', duration: 0});
+      publish(`time/fertilizer${topicPrefix}`, {timestamp});
+      publish(`start/fertilizer${topicPrefix}`, {startTimestamp: nowTs, duration: 0});
+    }, 0);
 
   }, [clearFertTimer, updateState, publish, topicPrefix]);
 

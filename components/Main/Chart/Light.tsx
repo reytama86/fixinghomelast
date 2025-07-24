@@ -1,5 +1,5 @@
 import React, {useState, useMemo, useEffect} from 'react';
-import {View, Text, Dimensions, StyleSheet, ActivityIndicator} from 'react-native';
+import {View, Text, Dimensions, StyleSheet} from 'react-native';
 import {barDataItem, LineChart} from 'react-native-gifted-charts';
 import SegmentedControl from '@react-native-segmented-control/segmented-control';
 
@@ -43,14 +43,9 @@ export default function Light() {
   const [range, setRange] = useState<'7D' | '1M' | '1Y' | 'Max'>('7D');
   const [sensorList, setSensorList] = useState<Sensor[]>([]);
   const [selectedSensorIndex, setSelectedSensorIndex] = useState(0);
+
   const [blokList, setBlokList] = useState<Blok[]>([]);
   const [selectedBlokIndex, setSelectedBlokIndex] = useState(0);
-  
-  // Loading states
-  const [isLoadingData, setIsLoadingData] = useState(false);
-  const [isLoadingSensorList, setIsLoadingSensorList] = useState(true);
-  const [isLoadingBlokList, setIsLoadingBlokList] = useState(true);
-  
   const segments: MetricType[] = [
     'Light',
     'Kelembaban Udara',
@@ -64,31 +59,17 @@ export default function Light() {
   const selectedRangeIndex = rangeOptions.indexOf(range);
 
   useEffect(() => {
-    setIsLoadingBlokList(true);
     fetch('https://iot-vanili-api.permataindonesia.com/api/bloklist')
       .then(r => r.json())
-      .then((list: Blok[]) => {
-        setBlokList(list);
-        setIsLoadingBlokList(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setIsLoadingBlokList(false);
-      });
+      .then((list: Blok[]) => setBlokList(list))
+      .catch(console.error);
   }, []);
 
   useEffect(() => {
-    setIsLoadingSensorList(true);
     fetch('https://iot-vanili-api.permataindonesia.com/api/sensorlist')
       .then(r => r.json())
-      .then((list: Sensor[]) => {
-        setSensorList(list);
-        setIsLoadingSensorList(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setIsLoadingSensorList(false);
-      });
+      .then((list: Sensor[]) => setSensorList(list))
+      .catch(console.error);
   }, []);
 
   const uniqueSensors = useMemo(() => {
@@ -103,61 +84,109 @@ export default function Light() {
     if (!sensorList.length || !blokList.length) return;
 
     const fetchData = async () => {
-      setIsLoadingData(true);
-      // Clear previous data immediately when starting to load
-      setBarData([]);
-      
       const baseURL = 'https://iot-vanili-api.permataindonesia.com';
-      const endpoint =
-        range === '1M' ? '/api/monthly-data' : '/api/weekly-data';
+      let endpoint = '';
+      let params: URLSearchParams;
 
       const now = new Date();
-
-      // Hitung endDate = kemarin 23:59:59.999
       const endDate = new Date(now);
       endDate.setDate(now.getDate() - 1);
       endDate.setHours(23, 59, 59, 999);
 
-      // Hitung startDate sesuai range
-      const startDate = new Date(endDate);
-      if (range === '7D') {
-        startDate.setDate(endDate.getDate() - 6);
-        startDate.setHours(0, 0, 0, 0);
-      } else if (range === '1M') {
-        startDate.setDate(endDate.getDate() - 29);
-        startDate.setHours(0, 0, 0, 0);
+      // Tentukan endpoint dan parameter berdasarkan range
+      if (range === '1Y') {
+        endpoint = '/api/yearly-data';
+        params = new URLSearchParams({
+          keterangan_sensor: sensorType,
+          esp_id: uniqueSensors[selectedSensorIndex].esp_id,
+          nama_blok: blokList[selectedBlokIndex].nama_blok,
+        });
+      } else if (range === 'Max') {
+        endpoint = '/api/max-data';
+        params = new URLSearchParams({
+          keterangan_sensor: sensorType,
+          esp_id: uniqueSensors[selectedSensorIndex].esp_id,
+          nama_blok: blokList[selectedBlokIndex].nama_blok,
+        });
       } else {
-        startDate.setDate(endDate.getDate() - 29);
-        startDate.setHours(0, 0, 0, 0);
-      }
+        // Untuk 7D dan 1M
+        endpoint = range === '1M' ? '/api/monthly-data' : '/api/weekly-data';
 
-      const params = new URLSearchParams({
-        startDate: formatMySQLDatetime(startDate),
-        endDate: formatMySQLDatetime(endDate),
-        keterangan_sensor: sensorType,
-        esp_id: uniqueSensors[selectedSensorIndex].esp_id,
-        nama_blok: blokList[selectedBlokIndex].nama_blok,
-      });
+        const startDate = new Date(endDate);
+        if (range === '7D') {
+          startDate.setDate(endDate.getDate() - 6);
+          startDate.setHours(0, 0, 0, 0);
+        } else if (range === '1M') {
+          startDate.setDate(endDate.getDate() - 29);
+          startDate.setHours(0, 0, 0, 0);
+        }
+
+        params = new URLSearchParams({
+          startDate: formatMySQLDatetime(startDate),
+          endDate: formatMySQLDatetime(endDate),
+          keterangan_sensor: sensorType,
+          esp_id: uniqueSensors[selectedSensorIndex].esp_id,
+          nama_blok: blokList[selectedBlokIndex].nama_blok,
+        });
+      }
 
       try {
         const resp = await fetch(`${baseURL}${endpoint}?${params.toString()}`);
         if (!resp.ok) throw new Error(await resp.text());
         const raw = await resp.json();
 
-        const points: DataPoint[] = raw.map((item: any) => {
-          if (range === '1M') {
+        let points: DataPoint[] = [];
+
+        if (range === '1Y') {
+          // Format data untuk yearly (periode: "2024-01", median_value: number)
+          points = raw.map((item: any) => {
+            const [year, month] = item.periode.split('-');
+            const monthNames = [
+              'Jan',
+              'Feb',
+              'Mar',
+              'Apr',
+              'Mei',
+              'Jun',
+              'Jul',
+              'Agu',
+              'Sep',
+              'Okt',
+              'Nov',
+              'Des',
+            ];
+            const monthName = monthNames[parseInt(month) - 1];
+            return {
+              value: item.median_value,
+              date: `${monthName} ${year}`,
+            };
+          });
+        } else if (range === 'Max') {
+          // Format data untuk max (week_period: number, start_date: string, median_value: number)
+          points = raw.map((item: any) => {
+            const startDate = new Date(item.start_date);
+            return {
+              value: item.median_value,
+              date: formatLabel(startDate, false),
+            };
+          });
+        } else if (range === '1M') {
+          // Format data untuk monthly
+          points = raw.map((item: any) => {
             const dt = new Date(item.date + 'T14:00:00');
             return {value: item.value, date: formatLabel(dt, false)};
-          } else {
+          });
+        } else {
+          // Format data untuk weekly (7D)
+          points = raw.map((item: any) => {
             const dt = new Date(item.waktu);
             return {value: item.nilai_sensor, date: formatLabel(dt, true)};
-          }
-        });
+          });
+        }
+
         setBarData(points);
       } catch (err) {
         console.error('fetch data error:', err);
-      } finally {
-        setIsLoadingData(false);
       }
     };
 
@@ -198,7 +227,21 @@ export default function Light() {
         allDates[idxHalf],
         allDates[idxLast],
       ];
+    } else if (range === '1Y' || range === 'Max') {
+      // Untuk 1Y dan Max, tampilkan 4 label waktu
+      const idxFirst = 0;
+      const idxQuarter = Math.floor(total * 0.33);
+      const idxHalf = Math.floor(total * 0.66);
+      const idxLast = total - 1;
+
+      return [
+        allDates[idxFirst],
+        allDates[idxQuarter],
+        allDates[idxHalf],
+        allDates[idxLast],
+      ];
     } else {
+      // Untuk 7D, tetap 3 label
       const idxFirst = 0;
       const idxMid = Math.floor((total - 1) / 2);
       const idxLast = total - 1;
@@ -211,11 +254,11 @@ export default function Light() {
     switch (range) {
       case '7D':
         return {
-          spacing: CARD_WIDTH / (dataLength + 5.9),
+          spacing: CARD_WIDTH / (dataLength + 9),
           initialSpacing: 0,
           showVerticalLines: false,
           rulesLength: 309,
-          chartWidth: 350.5,
+          chartWidth: 315.5,
         };
       case '1M':
         return {
@@ -250,22 +293,6 @@ export default function Light() {
     strokeWidth: 1.5,
   };
 
-  // Handle range change
-  const handleRangeChange = (event: any) => {
-    const newIndex = event.nativeEvent.selectedSegmentIndex;
-    setRange(rangeOptions[newIndex] as '7D' | '1M' | '1Y' | 'Max');
-  };
-
-  // Handle blok change
-  const handleBlokChange = (event: any) => {
-    setSelectedBlokIndex(event.nativeEvent.selectedSegmentIndex);
-  };
-
-  // Handle sensor change
-  const handleSensorChange = (event: any) => {
-    setSelectedSensorIndex(event.nativeEvent.selectedSegmentIndex);
-  };
-
   return (
     <View style={styles.card}>
       <Text style={styles.title}>Light</Text>
@@ -275,7 +302,10 @@ export default function Light() {
         <SegmentedControl
           values={rangeOptions}
           selectedIndex={selectedRangeIndex}
-          onChange={handleRangeChange}
+          onChange={event => {
+            const newIndex = event.nativeEvent.selectedSegmentIndex;
+            setRange(rangeOptions[newIndex] as '7D' | '1M' | '1Y' | 'Max');
+          }}
           style={styles.rangeSegmentedControl}
           fontStyle={{
             fontFamily: 'SpaceGrotesk-Regular',
@@ -296,16 +326,13 @@ export default function Light() {
 
       <View style={styles.selectorRow}>
         <View style={styles.selectorWrapper}>
-          {isLoadingBlokList ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="#B4DC45" />
-              <Text style={styles.loadingText}>Loading blok...</Text>
-            </View>
-          ) : blokList.length > 0 ? (
+          {blokList.length > 0 ? (
             <SegmentedControl
               values={blokList.map(b => b.nama_blok)}
               selectedIndex={selectedBlokIndex}
-              onChange={handleBlokChange}
+              onChange={e =>
+                setSelectedBlokIndex(e.nativeEvent.selectedSegmentIndex)
+              }
               style={styles.selectorControl}
               fontStyle={{
                 fontFamily: 'SpaceGrotesk-Regular',
@@ -319,22 +346,19 @@ export default function Light() {
             />
           ) : (
             <Text style={{color: 'gray', textAlign: 'center'}}>
-              Tidak ada blok tersedia
+              Memuat daftar blok…
             </Text>
           )}
         </View>
 
         <View style={styles.selectorWrapper}>
-          {isLoadingSensorList ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="#B4DC45" />
-              <Text style={styles.loadingText}>Loading sensor...</Text>
-            </View>
-          ) : uniqueSensors.length > 0 ? (
+          {uniqueSensors.length > 0 ? (
             <SegmentedControl
               values={uniqueSensors.map(s => s.esp_id)}
               selectedIndex={selectedSensorIndex}
-              onChange={handleSensorChange}
+              onChange={e =>
+                setSelectedSensorIndex(e.nativeEvent.selectedSegmentIndex)
+              }
               style={styles.selectorControl}
               fontStyle={{
                 fontFamily: 'SpaceGrotesk-Regular',
@@ -348,106 +372,123 @@ export default function Light() {
             />
           ) : (
             <Text style={{color: 'gray', textAlign: 'center'}}>
-              Tidak ada sensor tersedia
+              Memuat sensor…
             </Text>
           )}
         </View>
       </View>
 
       <View style={styles.chartWrapper}>
-        {isLoadingData ? (
-          <View style={styles.chartLoadingContainer}>
-            <ActivityIndicator size="large" color="#B4DC45" />
-            <Text style={styles.chartLoadingText}>Loading data...</Text>
-          </View>
-        ) : barData.length > 0 ? (
-          <LineChart
-            data={barData}
-            width={chartConfig.chartWidth}
-            height={220}
-            initialSpacing={chartConfig.initialSpacing}
-            spacing={chartConfig.spacing}
-            areaChart
-            curved={false}
-            color="#B4DC45"
-            hideDataPoints
-            maxValue={25000}
-            yAxisLabelTexts={['0', '5000', '15000', '20000', '25000']}
-            yAxisTextStyle={styles.yAxisText}
-            xAxisColor="transparent"
-            yAxisColor="transparent"
-            noOfSections={4}
-            rulesType="solid"
-            rulesLength={chartConfig.rulesLength}
-            rulesColor="#eee"
-            showVerticalLines={chartConfig.showVerticalLines}
-            startFillColor="#B4DC45"
-            endFillColor="#B4DC45"
-            startOpacity={0.5}
-            endOpacity={0}
-            pointerConfig={{
-              pointerStripHeight: 250,
-              pointerStripColor: '#DEE2E7',
-              pointerStripWidth: 1.5,
-              strokeDashArray: [4, 4],
-              pointerColor: '#B4DC45',
-              radius: 6,
-              activatePointersOnLongPress: false,
-              activatePointersDelay: 150,
-              stripOverPointer: false,
-              autoAdjustPointerLabelPosition: true,
-              pointerLabelWidth: 100,
-              persistPointer: true,
-              hidePointer1: false,
-              hidePointer2: false,
-              hidePointer3: false,
-              hidePointer4: false,
-              hidePointer5: false,
-              pointerLabelComponent: items => {
-                const {value, date, x, y} = items[0];
-                const [d, t] = date.split('\n');
-                const chartLeft = 0;
-                const chartRight = chartConfig.chartWidth ?? 350;
-                const tooltipWidth = range === '1M' ? 80 : 100;
-                let tooltipLeft = x - tooltipWidth / 2;
+        <LineChart
+          data={barData}
+          width={chartConfig.chartWidth}
+          height={220}
+          initialSpacing={chartConfig.initialSpacing}
+          spacing={chartConfig.spacing}
+          areaChart
+          curved={false}
+          color="#B4DC45"
+          hideDataPoints
+          maxValue={25000}
+          yAxisTextStyle={styles.yAxisText}
+          xAxisColor="transparent"
+          yAxisColor="transparent"
+          noOfSections={4}
+          rulesType="solid"
+          rulesLength={chartConfig.rulesLength}
+          rulesColor="#eee"
+          showVerticalLines={chartConfig.showVerticalLines}
+          startFillColor="#B4DC45"
+          endFillColor="#B4DC45"
+          startOpacity={0.5}
+          endOpacity={0}
+          pointerConfig={{
+            pointerStripHeight: 270,
+            pointerStripColor: '#DEE2E7',
+            pointerStripWidth: 1.5,
+            strokeDashArray: [4, 4],
+            pointerColor: '#B4DC45',
+            radius: 6,
+            activatePointersOnLongPress: false,
+            activatePointersDelay: 150,
+            stripOverPointer: false,
+            autoAdjustPointerLabelPosition: true,
+            pointerLabelWidth: 100,
+            persistPointer: false,
+            hidePointer1: false,
+            hidePointer2: false,
+            hidePointer3: false,
+            hidePointer4: false,
+            hidePointer5: false,
 
-                if (tooltipLeft < chartLeft) {
-                  tooltipLeft = chartLeft;
-                } else if (tooltipLeft + tooltipWidth > chartRight) {
-                  tooltipLeft = chartRight - tooltipWidth;
-                }
+            pointerLabelComponent: items => {
+              const {value, date, x, y} = items[0];
+              const [d, t] = date.split('\n');
+              const chartLeft = 0;
+              const chartRight = chartConfig.chartWidth ?? 350;
+              const tooltipWidth = range === '1M' ? 80 : 100;
+              const tooltipHeight = 40;
 
-                return (
-                  <View
-                    style={[styles.tooltip, {left: tooltipLeft, top: y - 55}]}>
-                    <Text style={styles.tooltipText}>{value}%</Text>
-                    <View style={styles.tooltipDivider} />
-                    <View style={styles.tooltipDateRow}>
-                      <Text style={styles.tooltipSub}>{d}</Text>
-                      <Text style={styles.tooltipSub}>{t}</Text>
-                    </View>
+              // Hitung posisi horizontal
+              let tooltipLeft = x - tooltipWidth / 2;
+              if (tooltipLeft < chartLeft) {
+                tooltipLeft = chartLeft;
+              } else if (tooltipLeft + tooltipWidth > chartRight) {
+                tooltipLeft = chartRight - tooltipWidth;
+              }
+
+              // Hitung posisi vertikal berdasarkan nilai data
+              // Menggunakan transform untuk memindahkan tooltip
+              let tooltipTop = y - 55; // posisi default
+              let transformY = 0;
+
+              // Jika nilai > 50, pindahkan tooltip ke bawah menggunakan transform
+              if (value > 17500) {
+                transformY = 110; // pindah ke bawah 70px dari posisi asli
+              }
+
+              return (
+                <View
+                  style={[
+                    styles.tooltip,
+                    {
+                      left: tooltipLeft,
+                      top: tooltipTop,
+                      transform: [{translateY: transformY}],
+                      // Tambahkan shadow untuk tooltip yang di bawah agar lebih terlihat
+                      ...(value > 17500 && {
+                        shadowColor: '#000',
+                        shadowOffset: {width: 0, height: 2},
+                        shadowOpacity: 0.25,
+                        shadowRadius: 3.84,
+                        elevation: 5,
+                      }),
+                    },
+                  ]}>
+                  {/* Tambahkan arrow indicator */}
+                  {value > 17500 && <View style={styles.tooltipArrowUp} />}
+                  {value <= 17500 && <View style={styles.tooltipArrowDown} />}
+                  <Text style={styles.tooltipText}>{value} Lux</Text>
+                  <View style={styles.tooltipDivider} />
+                  <View style={styles.tooltipDateRow}>
+                    <Text style={styles.tooltipSub}>{d}</Text>
+                    <Text style={styles.tooltipSub}>{t}</Text>
                   </View>
-                );
-              },
-            }}
-          />
-        ) : (
-          <View style={styles.noDataContainer}>
-            <Text style={styles.noDataText}>Tidak ada data tersedia</Text>
-          </View>
-        )}
+                </View>
+              );
+            },
+          }}
+        />
       </View>
 
       {/* X-axis Labels */}
-      {!isLoadingData && barData.length > 0 && (
-        <View style={styles.xLabels}>
-          {xLabelsFromBar.map((lab, i) => (
-            <Text key={i} style={styles.xLabel}>
-              {lab}
-            </Text>
-          ))}
-        </View>
-      )}
+      <View style={styles.xLabels}>
+        {xLabelsFromBar.map((lab, i) => (
+          <Text key={i} style={styles.xLabel}>
+            {lab}
+          </Text>
+        ))}
+      </View>
     </View>
   );
 }
@@ -498,50 +539,10 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     fontFamily: 'SpaceGrotesk-Regular',
   },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 25,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 7,
-    paddingHorizontal: 8,
-  },
-  loadingText: {
-    marginLeft: 6,
-    fontSize: 12,
-    color: '#666',
-    fontFamily: 'SpaceGrotesk-Regular',
-  },
   chartWrapper: {
     marginLeft: -10,
     width: CARD_WIDTH,
     top: 10,
-  },
-  chartLoadingContainer: {
-    height: 220,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f9f9f9',
-    borderRadius: 8,
-  },
-  chartLoadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#666',
-    fontFamily: 'SpaceGrotesk-Regular',
-  },
-  noDataContainer: {
-    height: 220,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f9f9f9',
-    borderRadius: 8,
-  },
-  noDataText: {
-    fontSize: 14,
-    color: '#999',
-    fontFamily: 'SpaceGrotesk-Regular',
   },
   yAxisText: {
     fontFamily: 'SpaceGrotesk-Regular',
@@ -595,5 +596,33 @@ const styles = StyleSheet.create({
     fontFamily: 'SpaceGrotesk-Regular',
     fontWeight: '400',
     fontSize: 10,
+  },
+  tooltipArrowUp: {
+    position: 'absolute',
+    top: -4,
+    left: '50%',
+    marginLeft: -3,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 3,
+    borderRightWidth: 3,
+    borderBottomWidth: 4,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: '#F0F8DA',
+  },
+  tooltipArrowDown: {
+    position: 'absolute',
+    bottom: -4,
+    left: '50%',
+    marginLeft: -3,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 3,
+    borderRightWidth: 3,
+    borderTopWidth: 4,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#F0F8DA',
   },
 });

@@ -7,7 +7,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { processWeeklyData, MetricType } from './ChartQuery';
 import { FlatList, TextInput } from 'react-native';
 
-// Sensor chart types
 type Sensor = { id_sensor: number; esp_id: string };
 type Blok = { id_detail_blok: number; nama_blok: string; kondisi_blok: string };
 
@@ -22,7 +21,6 @@ const sampleData: TableItem[] = [
 ];
 
 export default function Grafik() {
-  // Chart state
   const [currentDate, setCurrentDate] = React.useState(new Date());
   const [barData, setBarData] = React.useState<barDataItem[]>([]);
   const [chartKey, setChartKey] = React.useState(0);
@@ -45,13 +43,11 @@ export default function Grafik() {
   const [modalVisible, setModalVisible] = React.useState(false);
   const [selectedValue, setSelectedValue] = React.useState<number>(0);
 
-  // Table state
   const [filterDate, setFilterDate] = React.useState('');
   const filteredData = filterDate
     ? sampleData.filter(item => item.date.includes(filterDate))
     : sampleData;
 
-  // Fetch sensor & blok
   React.useEffect(() => {
     fetch('http://localhost:4646/api/sensorlist')
       .then(r => r.json())
@@ -65,7 +61,6 @@ export default function Grafik() {
       .catch(console.error);
   }, []);
 
-  // Weekly data fetch
   React.useEffect(() => {
     if (!sensorList.length || !blokList.length) return;
     const fetchWeekly = async () => {
@@ -142,7 +137,6 @@ export default function Grafik() {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-        {/* Chart Section */}
         <View style={styles.container}>
           <View style={styles.headerRow}>
             <TouchableOpacity onPress={handlePreviousWeek}>
@@ -259,7 +253,6 @@ export default function Grafik() {
   );
 }
 
-// Chart styles (unchanged)
 const styles = StyleSheet.create({
   container: { padding: 16 },
   headerRow: {
@@ -301,7 +294,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// Table styles
 const tableStyles = StyleSheet.create({
   container: {
     marginTop: 24,

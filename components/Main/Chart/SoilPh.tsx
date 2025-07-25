@@ -81,125 +81,132 @@ export default function SoilPh() {
   }, [sensorList]);
 
   useEffect(() => {
-    if (!sensorList.length || !blokList.length) return;
-
-    const fetchData = async () => {
-      const baseURL = 'https://iot-vanili-api.permataindonesia.com';
-      let endpoint = '';
-      let params: URLSearchParams;
-
-      const now = new Date();
-      const endDate = new Date(now);
-      endDate.setDate(now.getDate() - 1);
-      endDate.setHours(23, 59, 59, 999);
-
-      // Tentukan endpoint dan parameter berdasarkan range
-      if (range === '1Y') {
-        endpoint = '/api/yearly-data';
-        params = new URLSearchParams({
-          keterangan_sensor: sensorType,
-          esp_id: uniqueSensors[selectedSensorIndex].esp_id,
-          nama_blok: blokList[selectedBlokIndex].nama_blok,
-        });
-      } else if (range === 'Max') {
-        endpoint = '/api/max-data';
-        params = new URLSearchParams({
-          keterangan_sensor: sensorType,
-          esp_id: uniqueSensors[selectedSensorIndex].esp_id,
-          nama_blok: blokList[selectedBlokIndex].nama_blok,
-        });
-      } else {
-        // Untuk 7D dan 1M
-        endpoint = range === '1M' ? '/api/monthly-data' : '/api/weekly-data';
-
-        const startDate = new Date(endDate);
-        if (range === '7D') {
-          startDate.setDate(endDate.getDate() - 6);
-          startDate.setHours(0, 0, 0, 0);
-        } else if (range === '1M') {
-          startDate.setDate(endDate.getDate() - 29);
-          startDate.setHours(0, 0, 0, 0);
-        }
-
-        params = new URLSearchParams({
-          startDate: formatMySQLDatetime(startDate),
-          endDate: formatMySQLDatetime(endDate),
-          keterangan_sensor: sensorType,
-          esp_id: uniqueSensors[selectedSensorIndex].esp_id,
-          nama_blok: blokList[selectedBlokIndex].nama_blok,
-        });
-      }
-
-      try {
-        const resp = await fetch(`${baseURL}${endpoint}?${params.toString()}`);
-        if (!resp.ok) throw new Error(await resp.text());
-        const raw = await resp.json();
-
-        let points: DataPoint[] = [];
-
+      if (!sensorList.length || !blokList.length) return;
+  
+      const abortController = new AbortController();
+  
+      const fetchData = async () => {
+        const baseURL = 'https://iot-vanili-api.permataindonesia.com';
+        let endpoint = '';
+        let params: URLSearchParams;
+  
+        const now = new Date();
+        const endDate = new Date(now);
+        endDate.setDate(now.getDate() - 1);
+        endDate.setHours(23, 59, 59, 999);
+  
         if (range === '1Y') {
-          // Format data untuk yearly (periode: "2024-01", median_value: number)
-          points = raw.map((item: any) => {
-            const [year, month] = item.periode.split('-');
-            const monthNames = [
-              'Jan',
-              'Feb',
-              'Mar',
-              'Apr',
-              'Mei',
-              'Jun',
-              'Jul',
-              'Agu',
-              'Sep',
-              'Okt',
-              'Nov',
-              'Des',
-            ];
-            const monthName = monthNames[parseInt(month) - 1];
-            return {
-              value: item.median_value,
-              date: `${monthName} ${year}`,
-            };
+          endpoint = '/api/yearly-data';
+          params = new URLSearchParams({
+            keterangan_sensor: sensorType,
+            esp_id: uniqueSensors[selectedSensorIndex].esp_id,
+            nama_blok: blokList[selectedBlokIndex].nama_blok,
           });
         } else if (range === 'Max') {
-          // Format data untuk max (week_period: number, start_date: string, median_value: number)
-          points = raw.map((item: any) => {
-            const startDate = new Date(item.start_date);
-            return {
-              value: item.median_value,
-              date: formatLabel(startDate, false),
-            };
-          });
-        } else if (range === '1M') {
-          // Format data untuk monthly
-          points = raw.map((item: any) => {
-            const dt = new Date(item.date + 'T14:00:00');
-            return {value: item.value, date: formatLabel(dt, false)};
+          endpoint = '/api/max-data';
+          params = new URLSearchParams({
+            keterangan_sensor: sensorType,
+            esp_id: uniqueSensors[selectedSensorIndex].esp_id,
+            nama_blok: blokList[selectedBlokIndex].nama_blok,
           });
         } else {
-          // Format data untuk weekly (7D)
-          points = raw.map((item: any) => {
-            const dt = new Date(item.waktu);
-            return {value: item.nilai_sensor, date: formatLabel(dt, true)};
+          endpoint = range === '1M' ? '/api/monthly-data' : '/api/weekly-data';
+  
+          const startDate = new Date(endDate);
+          if (range === '7D') {
+            startDate.setDate(endDate.getDate() - 6);
+            startDate.setHours(0, 0, 0, 0);
+          } else if (range === '1M') {
+            startDate.setDate(endDate.getDate() - 29);
+            startDate.setHours(0, 0, 0, 0);
+          }
+  
+          params = new URLSearchParams({
+            startDate: formatMySQLDatetime(startDate),
+            endDate: formatMySQLDatetime(endDate),
+            keterangan_sensor: sensorType,
+            esp_id: uniqueSensors[selectedSensorIndex].esp_id,
+            nama_blok: blokList[selectedBlokIndex].nama_blok,
           });
         }
-
-        setBarData(points);
-      } catch (err) {
-        console.error('fetch data error:', err);
-      }
-    };
-
-    fetchData();
-  }, [
-    range,
-    selectedSensorIndex,
-    selectedBlokIndex,
-    sensorList,
-    blokList,
-    sensorType,
-    uniqueSensors,
-  ]);
+  
+        try {
+          const resp = await fetch(`${baseURL}${endpoint}?${params.toString()}`, {
+            signal: abortController.signal,
+          });
+  
+          if (!resp.ok) throw new Error(await resp.text());
+          const raw = await resp.json();
+  
+          if (abortController.signal.aborted) return;
+  
+          let points: DataPoint[] = [];
+  
+          if (range === '1Y') {
+            points = raw.map((item: any) => {
+              const [year, month] = item.periode.split('-');
+              const monthNames = [
+                'Jan',
+                'Feb',
+                'Mar',
+                'Apr',
+                'Mei',
+                'Jun',
+                'Jul',
+                'Agu',
+                'Sep',
+                'Okt',
+                'Nov',
+                'Des',
+              ];
+              const monthName = monthNames[parseInt(month) - 1];
+              return {
+                value: item.median_value,
+                date: `${monthName} ${year}`,
+              };
+            });
+          } else if (range === 'Max') {
+            points = raw.map((item: any) => {
+              const startDate = new Date(item.start_date);
+              return {
+                value: item.median_value,
+                date: formatLabel(startDate, false),
+              };
+            });
+          } else if (range === '1M') {
+            points = raw.map((item: any) => {
+              const dt = new Date(item.date + 'T14:00:00');
+              return {value: item.value, date: formatLabel(dt, false)};
+            });
+          } else {
+            points = raw.map((item: any) => {
+              const dt = new Date(item.waktu);
+              return {value: item.nilai_sensor, date: formatLabel(dt, true)};
+            });
+          }
+  
+          setBarData(points);
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            console.error('fetch data error:', err);
+          }
+        }
+      };
+  
+      fetchData();
+  
+      return () => {
+        abortController.abort();
+      };
+    }, [
+      range,
+      selectedSensorIndex,
+      selectedBlokIndex,
+      sensorList,
+      blokList,
+      sensorType,
+      uniqueSensors,
+    ]);
 
   function formatMySQLDatetime(d: Date) {
     return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
@@ -228,7 +235,6 @@ export default function SoilPh() {
         allDates[idxLast],
       ];
     } else if (range === '1Y' || range === 'Max') {
-      // Untuk 1Y dan Max, tampilkan 4 label waktu
       const idxFirst = 0;
       const idxQuarter = Math.floor(total * 0.33);
       const idxHalf = Math.floor(total * 0.66);
@@ -241,7 +247,6 @@ export default function SoilPh() {
         allDates[idxLast],
       ];
     } else {
-      // Untuk 7D, tetap 3 label
       const idxFirst = 0;
       const idxMid = Math.floor((total - 1) / 2);
       const idxLast = total - 1;
@@ -297,7 +302,6 @@ export default function SoilPh() {
     <View style={styles.card}>
       <Text style={styles.title}>Soil PH</Text>
 
-      {/* Range Selector menggunakan SegmentedControl */}
       <View style={styles.rangeContainer}>
         <SegmentedControl
           values={rangeOptions}
@@ -405,17 +409,16 @@ export default function SoilPh() {
           pointerConfig={{
             pointerStripHeight: 270,
             pointerStripColor: '#DEE2E7',
-            pointerStripWidth: 1.5, // Perbesar dari 1 ke 3
+            pointerStripWidth: 1.5, 
             strokeDashArray: [4, 4],
             pointerColor: '#B4DC45',
-            radius: 6, // Tambahkan radius untuk area touch yang lebih besar
-            activatePointersOnLongPress: false, // Ubah ke false agar bisa tap biasa
-            activatePointersDelay: 150, // Tambahkan delay
+            radius: 6, 
+            activatePointersOnLongPress: false, 
+            activatePointersDelay: 150, 
             stripOverPointer: false,
             autoAdjustPointerLabelPosition: true,
             pointerLabelWidth: 100,
 
-            // Tambahkan properti ini untuk memperbesar area touch
             persistPointer: false,
             hidePointer1: false,
             hidePointer2: false,
@@ -439,14 +442,11 @@ export default function SoilPh() {
                 tooltipLeft = chartRight - tooltipWidth;
               }
 
-              // Hitung posisi vertikal berdasarkan nilai data
-              // Menggunakan transform untuk memindahkan tooltip
-              let tooltipTop = y - 55; // posisi default
+              let tooltipTop = y - 55; 
               let transformY = 0;
 
-              // Jika nilai > 50, pindahkan tooltip ke bawah menggunakan transform
               if (value > 5) {
-                transformY = 110; // pindah ke bawah 5px dari posisi asli
+                transformY = 110; 
               }
 
               return (
@@ -457,7 +457,6 @@ export default function SoilPh() {
                       left: tooltipLeft,
                       top: tooltipTop,
                       transform: [{translateY: transformY}],
-                      // Tambahkan shadow untuk tooltip yang di bawah agar lebih terlihat
                       ...(value > 5 && {
                         shadowColor: '#000',
                         shadowOffset: {width: 0, height: 2},
@@ -467,7 +466,6 @@ export default function SoilPh() {
                       }),
                     },
                   ]}>
-                  {/* Tambahkan arrow indicator */}
                   {value > 5 && <View style={styles.tooltipArrowUp} />}
                   {value <= 5 && <View style={styles.tooltipArrowDown} />}
                   <Text style={styles.tooltipText}>{value}</Text>
@@ -483,7 +481,6 @@ export default function SoilPh() {
         />
       </View>
 
-      {/* X-axis Labels */}
       <View style={styles.xLabels}>
         {xLabelsFromBar.map((lab, i) => (
           <Text key={i} style={styles.xLabel}>

@@ -203,7 +203,7 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
       fetchSensorData();
   
       const onBackPress = () => {
-        navigation.replace('HomeFix');
+        navigation.navigate('HomeFix');
         return true; // cegah default behavior
       };
   

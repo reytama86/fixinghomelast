@@ -1,4 +1,3 @@
-// src/screens/DashboardScreen.tsx
 import React from 'react';
 import { ScrollView, SafeAreaView, Platform, StatusBar } from 'react-native';
 import Temperature from './Temperature';

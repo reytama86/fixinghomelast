@@ -1,4 +1,3 @@
-// ChartQuery.ts
 import { barDataItem } from 'react-native-gifted-charts';
 
 export type MetricType = 'Suhu Udara' | 'Kelembaban Udara' | 'Cahaya' | 'Kelembaban Tanah';

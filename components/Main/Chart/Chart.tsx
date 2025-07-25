@@ -1,4 +1,3 @@
-// SummaryChart.tsx
 import * as React from 'react';
 import {
   View,
@@ -40,7 +39,6 @@ export default function SummaryChart() {
   const [modalVisible, setModalVisible] = React.useState(false);
   const [selectedValue, setSelectedValue] = React.useState<number>(0);
 
-  // Fetch sensor list
   React.useEffect(() => {
     fetch('http://localhost:4646/api/sensorlist')
       .then(r => r.json())
@@ -48,7 +46,6 @@ export default function SummaryChart() {
       .catch(console.error);
   }, []);
 
-  // Fetch blok list
   React.useEffect(() => {
     fetch('http://localhost:4646/api/bloklist')
       .then(r => r.json())
@@ -56,7 +53,6 @@ export default function SummaryChart() {
       .catch(console.error);
   }, []);
 
-  // Fetch weekly data setiap kali dependensi berubah
   React.useEffect(() => {
     if (!sensorList.length || !blokList.length) return;
 
@@ -100,7 +96,6 @@ export default function SummaryChart() {
     blokList,
   ]);
 
-  // Hitung awal & akhir minggu
   const getWeekRange = (date: Date) => {
     const d = new Date(date);
     const day = d.getDay();
@@ -129,7 +124,6 @@ export default function SummaryChart() {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
-        {/* Header & Navigasi Minggu */}
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={handlePreviousWeek}>
             <Ionicons name="chevron-back-circle" size={32} color="gray" />
@@ -150,7 +144,6 @@ export default function SummaryChart() {
           </TouchableOpacity>
         </View>
 
-        {/* Pilihan Blok */}
         <SegmentedControl
           values={blokList.map(b => b.nama_blok)}
           selectedIndex={selectedBlokIndex}
@@ -160,7 +153,6 @@ export default function SummaryChart() {
           style={styles.segment}
         />
 
-        {/* Controls: Metric & Sensor */}
         <View style={styles.controlsRow}>
           <SegmentedControl
             values={segments}
@@ -180,10 +172,8 @@ export default function SummaryChart() {
           />
         </View>
 
-        {/* Total */}
         <Text style={styles.totalText}>{totalAmount.toFixed(2)}</Text>
 
-        {/* BarChart dengan onPress sederhana */}
         <BarChart
           key={chartKey}
           data={barData}
@@ -203,7 +193,6 @@ export default function SummaryChart() {
           animationDuration={300}
         />
 
-        {/* Modal hanya menampilkan nilai */}
         <Modal
           visible={modalVisible}
           transparent

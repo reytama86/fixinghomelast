@@ -6,7 +6,6 @@ import { apiKey } from '../constants';
 const DEFAULT_LAT = -8.128262;
 const DEFAULT_LON = 113.722259;
 
-/** Bangun endpoint OpenWeatherMap Current Weather */
 function buildCurrentEndpoint(lat = DEFAULT_LAT, lon = DEFAULT_LON) {
   return `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
 }
@@ -27,7 +26,6 @@ export async function fetchCurrentWeather(opts = {}) {
   const data = await apiCall(endpoint);
   if (!data) return null;
 
-  // Tentukan day/night dari suffix icon
   const iconCode = data.weather[0]?.icon || '';
   const isDay = iconCode.endsWith('d') ? 1 : 0;
 

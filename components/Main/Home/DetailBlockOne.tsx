@@ -1110,7 +1110,7 @@ const DetailBlockOne: React.FC<Props> = ({navigation}) => {
             <TouchableOpacity onPress={() => navigation.replace('HomeFix')}>
               <ArrowLeft2 color="black" variant="Linear" size={24} />
             </TouchableOpacity>
-            <Text style={styles.title}>Block 1</Text>
+            <Text style={styles.title}>Block 4</Text>
             <View style={{width: 24}} />
           </View>
 

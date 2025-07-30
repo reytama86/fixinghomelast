@@ -696,7 +696,7 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
               fontFamily: 'SpaceGrotesk-Regular',
               right: 5,
               textAlign: 'center',
-            }}>Block 2</Text>
+            }}>Block 6</Text>
             <ArrowLeft2
               color="black"
               variant="Linear"

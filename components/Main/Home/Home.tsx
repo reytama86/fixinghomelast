@@ -140,8 +140,8 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
     block1RowWater2Control,
     block1RowFertilizer1Control,
     block1RowFertilizer2Control,
-    } = useControl();
-    
+  } = useControl();
+
   const controlState = homeControl;
   const {setActivePage} = usePageControl();
 
@@ -171,7 +171,7 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
 
   const isBlock1AnyActive = useMemo(
     () => isBlock1WaterActive || isBlock1FertilizerActive,
-    [isBlock1WaterActive, isBlock1FertilizerActive]
+    [isBlock1WaterActive, isBlock1FertilizerActive],
   );
 
   // useEffect(() => {
@@ -320,7 +320,13 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
         },
       },
       Kalium: {
-        low: {min: 0, max: 149, color: 'red', icon: 'arrow-down', status: 'Low'},
+        low: {
+          min: 0,
+          max: 149,
+          color: 'red',
+          icon: 'arrow-down',
+          status: 'Low',
+        },
         good: {
           min: 150,
           max: 250,
@@ -691,11 +697,11 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
         Alert.alert(
           'Block 1 Active',
           'Terdapat proses penyiraman atau pemupukan aktif di Detail Block One. Mohon hentikan terlebih dahulu.',
-          [{ text: 'OK', style: 'default' }]
+          [{text: 'OK', style: 'default'}],
         );
         return;
       }
-  
+
       // Cek jika proses yang diminta sudah berjalan di home
       if (type === 'water' && controlState.remainingWaterTime > 0) {
         setConfirmType('water');
@@ -705,13 +711,13 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
         setConfirmType('fertilizer');
         return setShowConfirm(true);
       }
-  
+
       // Cek jika proses lain sedang berjalan di home
       if (type === 'water' && controlState.remainingFertTime > 0) {
         Alert.alert(
           'Fertilizer Active',
           'Fertilizer is currently running. Please wait until it finishes or stop it first.',
-          [{ text: 'OK', style: 'default' }]
+          [{text: 'OK', style: 'default'}],
         );
         return;
       }
@@ -719,11 +725,11 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
         Alert.alert(
           'Water Active',
           'Watering is currently running. Please wait until it finishes or stop it first.',
-          [{ text: 'OK', style: 'default' }]
+          [{text: 'OK', style: 'default'}],
         );
         return;
       }
-  
+
       // Jika tidak ada proses yang berjalan, lanjutkan dengan normal
       setCurrentProcess(type);
       setSelectedDuration(1);
@@ -733,9 +739,9 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
       controlState.remainingWaterTime,
       controlState.remainingFertTime,
       isBlock1AnyActive,
-    ]
+    ],
   );
-  
+
   const validateTimeInput = (value: string, max: number): string => {
     const numValue = parseInt(value);
     if (isNaN(numValue) || numValue < 0) return '0';
@@ -755,32 +761,37 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
 
   const handleStartProcess = useCallback(() => {
     if (!currentProcess) return;
-  
+
     // Validasi input menit dan detik
     const validatedMinutes = validateTimeInput(inputMinutes, 120); // Validasi menit
     const validatedSeconds = validateTimeInput(inputSeconds, 59); // Validasi detik
-  
+
     setInputMinutes(validatedMinutes);
     setInputSeconds(validatedSeconds);
-  
+
     // Menghitung total durasi dalam detik
     const totalMinutes = parseInt(validatedMinutes, 10); // Mengonversi menit ke integer
     const totalSeconds = parseInt(validatedSeconds, 10); // Mengonversi detik ke integer
-    
+
     // Menghitung total durasi dalam detik
     const totalDurationInSeconds = totalMinutes * 60 + totalSeconds; // Total dalam detik
-  
+
     // Menambahkan batasan durasi
     const finalDuration = Math.min(Math.max(totalDurationInSeconds, 6), 7200); // Batas 6 detik hingga 7200 detik (2 jam)
-  
+
     // Memanggil startProcess dengan total durasi dalam detik
-    controlState.startProcess(currentProcess, finalDuration); 
-  
+    controlState.startProcess(currentProcess, finalDuration);
+
     setShowDurationModal(false);
     setInputMinutes('1');
     setInputSeconds('0');
-  }, [currentProcess, inputMinutes, inputSeconds, controlState, validateTimeInput]);
-  
+  }, [
+    currentProcess,
+    inputMinutes,
+    inputSeconds,
+    controlState,
+    validateTimeInput,
+  ]);
 
   const handleConfirmStop = useCallback(() => {
     if (confirmType) {
@@ -1203,10 +1214,10 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
                           />
                         </Svg>
                       </View>
-                      <Text style={styles.vectorLabel1}>1</Text>
+                      <Text style={styles.vectorLabel1}>4</Text>
                     </View>
                     <View style={styles.containerTextBlock}>
-                      <Text style={styles.textBlockHeader}>Block 1</Text>
+                      <Text style={styles.textBlockHeader}>Block 4</Text>
                       <Text style={styles.textBlock}>
                         Temperature:{' '}
                         {Math.round(Number(sensorDataBlock.block1.temp))}°
@@ -1285,10 +1296,10 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
                           />
                         </Svg>
                       </View>
-                      <Text style={styles.vectorLabel2}>2</Text>
+                      <Text style={styles.vectorLabel2}>6</Text>
                     </View>
                     <View style={styles.containerTextBlock}>
-                      <Text style={styles.textBlockHeader}>Block 2</Text>
+                      <Text style={styles.textBlockHeader}>Block 6</Text>
                       <Text style={styles.textBlock}>
                         Temperature:{' '}
                         {Math.round(Number(sensorDataBlock.block2.temp))}°
@@ -1329,8 +1340,7 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
               </Text>
               <TouchableOpacity
                 onPress={() => {
-                  // Handle show all action
-                  console.log('Show all portable tools');
+                  navigation.navigate('AllPortableTools');
                 }}>
                 <View style={styles.showAll}>
                   <Text

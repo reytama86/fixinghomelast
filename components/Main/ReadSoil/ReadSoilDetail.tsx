@@ -1,3 +1,4 @@
+//readsoildetail di home kalau kita pencet opsi pilihan 5 terakhirnya
 import {
     View,
     Text,
@@ -156,7 +157,7 @@ const formatDate = (dateString: string): string => {
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => {
-              navigation.navigate('HomeFix');
+              navigation.goBack();
             }}>
             <ArrowLeft2
               color="black"
@@ -298,7 +299,6 @@ const formatDate = (dateString: string): string => {
       justifyContent: 'space-between',
       alignItems: 'center',
       width: 375,
-      height: 32,
       paddingTop: 4,
       // paddingRight: 10,
       // paddingLeft: 10,

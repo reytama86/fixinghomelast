@@ -6,12 +6,15 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
+  BackHandler,
+  Platform,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Svg, {Path} from 'react-native-svg';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {HomeStackParamList} from '../../../HomeStack';
 import {ArrowDown, ArrowLeft, ArrowLeft2} from 'iconsax-react-native';
+import { useFocusEffect } from '@react-navigation/native';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'AllBlock'>;
 
@@ -88,6 +91,25 @@ const AllBlock: React.FC<Props> = ({navigation}) => {
     const interval = setInterval(fetchAllBlocksData, 30000); // Update setiap 30 detik
     return () => clearInterval(interval);
   }, [fetchAllBlocksData]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS !== 'android') return; // hanya untuk android
+
+      const onBackPress = () => {
+        // gunakan replace agar tidak menumpuk route
+        navigation.replace('HomeFix' as any);
+        return true; // mencegah default behavior
+      };
+
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress,
+      );
+
+      return () => subscription.remove();
+    }, [navigation]),
+  );
 
   const CornerCutComponent = useMemo(() => {
     return ({
@@ -290,10 +312,10 @@ const AllBlock: React.FC<Props> = ({navigation}) => {
     <View key={block.id} style={styles.blockCard}>
       <TouchableOpacity
         onPress={() => {
-          if (block.navigationTarget) {
-            navigation.navigate(block.navigationTarget);
-          }
-        }}
+        if (block.navigationTarget) {
+          navigation.navigate(block.navigationTarget, { from: 'AllBlock' }); // Tambah parameter from
+        }
+      }}
         disabled={!block.navigationTarget}>
         <CornerCutComponent
           width={cardWidth}
@@ -339,7 +361,7 @@ const AllBlock: React.FC<Props> = ({navigation}) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.navigate('HomeFix')}
           activeOpacity={0.7}
           style={{marginLeft: 16}}>
           <ArrowLeft2 color="black" variant="Linear" size={24} />

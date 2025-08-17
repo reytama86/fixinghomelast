@@ -14,6 +14,7 @@ import {
   StatusBar,
   FlatList,
   TextInput,
+  BackHandler,
   // Video
 } from 'react-native';
 import React, {
@@ -667,6 +668,28 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
     updateAnimations();
   }, [controlState.isWaterOn, controlState.isFertilizerOn]);
 
+  useEffect(() => {
+  const backAction = () => {
+    // Tutup modal jika ada yang terbuka
+    if (showDurationModal) {
+      setShowDurationModal(false);
+      return true;
+    }
+    
+    if (showConfirm) {
+      setShowConfirm(false);
+      return true;
+    }
+
+    // Langsung keluar aplikasi
+    BackHandler.exitApp();
+    return true;
+  };
+
+  const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+  return () => backHandler.remove();
+}, [showDurationModal, showConfirm]);
+
   const weatherInfo = useMemo(() => {
     if (!weather) return {Icon: null, timeKey: 'Day', descKey: ''};
 
@@ -1137,7 +1160,7 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
                 }}>
                 Field List
               </Text>
-              <TouchableOpacity onPress={()=>navigation.navigate('AllBlock')}>
+              <TouchableOpacity onPress={() => navigation.navigate('AllBlock')}>
                 <View style={styles.showAll}>
                   <Text
                     style={{
@@ -1155,7 +1178,7 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
             <View style={styles.containerBlock}>
               <TouchableOpacity
                 onPress={() => {
-                  navigation.replace('DetailBlockOne');
+                  navigation.navigate('DetailBlockOne', {from: 'HomeFix'}); // Tambah parameter from
                 }}>
                 <CornerCutComponent
                   width={cardWidth}
@@ -1247,7 +1270,7 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
 
               <TouchableOpacity
                 onPress={() => {
-                  navigation.replace('DetailBlockTwo');
+                  navigation.navigate('DetailBlockTwo', {from: 'HomeFix'}); // Tambah parameter from
                 }}>
                 <CornerCutComponent
                   width={cardWidth}

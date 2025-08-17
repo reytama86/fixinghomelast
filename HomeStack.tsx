@@ -1,4 +1,4 @@
-// HomeStack.tsx - Updated with AllPortableTools screen
+// HomeStack.tsx - Updated with navigation params
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeFix from './components/Main/Home/Home';
@@ -6,7 +6,7 @@ import DetailBlockOne from './components/Main/Home/DetailBlockOne';
 import DetailBlockTwo from './components/Main/Home/DetailBlockTwo';
 import ReadSoilDetail from './components/Main/ReadSoil/ReadSoilDetail';
 import AllPortableTools from './components/Main/ReadSoil/AllPortableTools';
-import AllBlock from './components/Main/Home/AllBlock';// Import halaman baru
+import AllBlock from './components/Main/Home/AllBlock';
 
 // Define the sensor data structure
 export type SensorData = {
@@ -24,13 +24,17 @@ export type PortableToolData = {
 
 export type HomeStackParamList = {
   HomeFix: undefined;
-  DetailBlockOne: undefined;
-  DetailBlockTwo: undefined;
+  DetailBlockOne: {
+    from?: 'HomeFix' | 'AllBlock'; // Parameter untuk mengetahui dari mana datang
+  } | undefined;
+  DetailBlockTwo: {
+    from?: 'HomeFix' | 'AllBlock'; // Parameter untuk mengetahui dari mana datang
+  } | undefined;
   ReadSoilDetail: {
     portableData: PortableToolData;
   };
   AllPortableTools: undefined;
-  AllBlock: undefined // Tambahkan screen baru
+  AllBlock: undefined;
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();

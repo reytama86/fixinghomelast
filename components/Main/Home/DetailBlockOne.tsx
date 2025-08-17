@@ -25,7 +25,7 @@ import {HomeStackParamList} from '../../../HomeStack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import GaugeSvg from '../../GaugeComponent';
 import Ellips from '../../../assets/svg/Ellips';
-import { BackHandler } from 'react-native';
+import {BackHandler} from 'react-native';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'DetailBlockOne'>;
 
@@ -350,31 +350,31 @@ const ExpandableBlock = React.memo<{
 
     const handleStart = useCallback(() => {
       if (!currentProcess) return;
-    
+
       // Validasi input menit dan detik
       const validatedMinutes = validateTimeInput(inputMinutes, 120);
       const validatedSeconds = validateTimeInput(inputSeconds, 59);
-    
+
       setInputMinutes(validatedMinutes);
       setInputSeconds(validatedSeconds);
-    
+
       // Menghitung total detik
       const totalMinutes = parseInt(validatedMinutes, 10);
       const totalSeconds = parseInt(validatedSeconds, 10);
-      
+
       // Menghitung total durasi dalam detik
       const totalDurationInSeconds = totalMinutes * 60 + totalSeconds; // Total dalam detik
-    
+
       const ctrl =
         currentProcess.target === 'main'
           ? mainControl
           : currentProcess.target === 'row1'
           ? row1Control
           : row2Control;
-    
+
       // Memanggil startProcess dengan total durasi dalam detik
-      ctrl.startProcess(currentProcess.type, totalDurationInSeconds); 
-    
+      ctrl.startProcess(currentProcess.type, totalDurationInSeconds);
+
       setShowDurationModal(false);
       setInputMinutes('1');
       setInputSeconds('0');
@@ -388,7 +388,6 @@ const ExpandableBlock = React.memo<{
       row1Control,
       row2Control,
     ]);
-    
 
     const handleStop = useCallback(() => {
       if (!confirmProcess) return;
@@ -958,7 +957,7 @@ const Device3 = React.memo<DeviceProps>(({sensorData}) => {
   );
 });
 
-const DetailBlockOne: React.FC<Props> = ({navigation}) => {
+const DetailBlockOne: React.FC<Props> = ({navigation, route}) => {
   const {
     block1Control,
     block1RowWater1Control,
@@ -995,23 +994,33 @@ const DetailBlockOne: React.FC<Props> = ({navigation}) => {
     }
   }, []);
 
+  const from = route.params?.from || 'HomeFix';
+
   useFocusEffect(
-  useCallback(() => {
-    setActivePage('block1');
-    fetchSensorData();
+    useCallback(() => {
+      setActivePage('block1');
+      fetchSensorData();
 
-    const onBackPress = () => {
-      navigation.replace('HomeFix');
-      return true; // cegah default behavior
-    };
+      const onBackPress = () => {
+        // Navigasi berdasarkan dari mana user datang
+        if (from === 'AllBlock') {
+          navigation.navigate('AllBlock');
+        } else {
+          navigation.navigate('HomeFix');
+        }
+        return true; // cegah default behavior
+      };
 
-    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress,
+      );
 
-    return () => {
-      subscription.remove();
-    };
-  }, [navigation, setActivePage, fetchSensorData])
-);
+      return () => {
+        subscription.remove();
+      };
+    }, [navigation, setActivePage, fetchSensorData, from]), // tambahkan from ke dependency
+  );
 
   const [sensorData, setSensorData] = useState<SensorData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -1107,7 +1116,15 @@ const DetailBlockOne: React.FC<Props> = ({navigation}) => {
           showsVerticalScrollIndicator={false}
           bounces={true}>
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.replace('HomeFix')}>
+            <TouchableOpacity
+              onPress={() => {
+                // Navigasi berdasarkan dari mana user datang
+                if (from === 'AllBlock') {
+                  navigation.navigate('AllBlock');
+                } else {
+                  navigation.navigate('HomeFix');
+                }
+              }}>
               <ArrowLeft2 color="black" variant="Linear" size={24} />
             </TouchableOpacity>
             <Text style={styles.title}>Block 4</Text>

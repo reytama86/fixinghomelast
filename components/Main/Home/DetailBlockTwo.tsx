@@ -149,7 +149,7 @@ const getSensorStatus = (value: number, sensorType: string) => {
   }
 };
 
-const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
+const DetailBlockTwo: React.FC<Props> = ({ navigation, route }) => {
   const [sensorData, setSensorData] = useState<SensorData | null>(null);
   const [loading, setLoading] = useState<boolean>(false); // Changed to false initially
   const [selectedDuration, setSelectedDuration] = useState<number>(0);
@@ -197,22 +197,29 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
       }
     }, []);
 
+    const from = route.params?.from || 'HomeFix';
+
    useFocusEffect(
     useCallback(() => {
-      setActivePage('block2');
+      setActivePage('block2'); // atau sesuai dengan page yang tepat
       fetchSensorData();
-  
+
       const onBackPress = () => {
-        navigation.navigate('HomeFix');
+        // Navigasi berdasarkan dari mana user datang
+        if (from === 'AllBlock') {
+          navigation.navigate('AllBlock');
+        } else {
+          navigation.navigate('HomeFix');
+        }
         return true; // cegah default behavior
       };
-  
+
       const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-  
+
       return () => {
         subscription.remove();
       };
-    }, [navigation, setActivePage, fetchSensorData])
+    }, [navigation, setActivePage, fetchSensorData, from]) // tambahkan from ke dependency
   );
 
   // Cleanup on unmount
@@ -680,7 +687,14 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
         >
           <View style={styles.header}>
             <TouchableOpacity
-              onPress={() => navigation.navigate('HomeFix')}
+              onPress={() => {
+                // Navigasi berdasarkan dari mana user datang
+                if (from === 'AllBlock') {
+                  navigation.navigate('AllBlock');
+                } else {
+                  navigation.navigate('HomeFix');
+                }
+              }}
               activeOpacity={0.7}
             >
               <ArrowLeft2

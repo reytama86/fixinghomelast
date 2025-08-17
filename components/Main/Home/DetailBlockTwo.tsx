@@ -693,7 +693,7 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation }) => {
             <Text style={{
               fontSize: 18,
               fontWeight: 600,
-              fontFamily: 'SpaceGrotesk-Regular',
+              fontFamily: 'SpaceGrotesk-Medium',
               right: 5,
               textAlign: 'center',
             }}>Block 6</Text>

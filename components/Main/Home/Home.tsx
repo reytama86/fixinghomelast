@@ -1137,7 +1137,7 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
                 }}>
                 Field List
               </Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={()=>navigation.navigate('AllBlock')}>
                 <View style={styles.showAll}>
                   <Text
                     style={{
@@ -1379,6 +1379,14 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
                 refreshing={loading}
               />
             )}
+          </View>
+          <View style={{}}>
+            <Text style={{}}></Text>
+            {/* konten section */}
+          </View>
+          <View style={{}}>
+            <Text style={{}}></Text>
+            {/* konten section */}
           </View>
         </ScrollView>
       </View>
@@ -1897,7 +1905,7 @@ const styles = StyleSheet.create({
   textBlockHeader: {
     fontSize: 14,
     fontWeight: 600,
-    fontFamily: 'SpaceGrotesk-Regular',
+    fontFamily: 'SpaceGrotesk-Medium',
   },
   textBlock: {
     fontSize: 14,
@@ -2133,9 +2141,8 @@ const styles = StyleSheet.create({
     top: 12,
   },
   infoArea: {
-    fontFamily: 'SpaceGrotesk-Regular',
+    fontFamily: 'SpaceGrotesk-Medium',
     fontSize: 13,
-    fontWeight: '700',
     marginBottom: 5,
   },
   infoSensor: {

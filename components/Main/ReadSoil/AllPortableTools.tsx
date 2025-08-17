@@ -256,7 +256,7 @@ const AllPortableTools: React.FC<Props> = ({navigation}) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.7}>
+        <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.7} style={{marginLeft: 16}}>
           <ArrowLeft2 color="black" variant="Linear" size={24} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>All Portable Tools</Text>
@@ -306,11 +306,9 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: 'transparent',
+    alignItems: 'center',
+    height: 32,
     marginTop: 20,
   },
   headerTitle: {

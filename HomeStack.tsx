@@ -5,7 +5,8 @@ import HomeFix from './components/Main/Home/Home';
 import DetailBlockOne from './components/Main/Home/DetailBlockOne';
 import DetailBlockTwo from './components/Main/Home/DetailBlockTwo';
 import ReadSoilDetail from './components/Main/ReadSoil/ReadSoilDetail';
-import AllPortableTools from './components/Main/ReadSoil/AllPortableTools'; // Import halaman baru
+import AllPortableTools from './components/Main/ReadSoil/AllPortableTools';
+import AllBlock from './components/Main/Home/AllBlock';// Import halaman baru
 
 // Define the sensor data structure
 export type SensorData = {
@@ -28,7 +29,8 @@ export type HomeStackParamList = {
   ReadSoilDetail: {
     portableData: PortableToolData;
   };
-  AllPortableTools: undefined; // Tambahkan screen baru
+  AllPortableTools: undefined;
+  AllBlock: undefined // Tambahkan screen baru
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -55,6 +57,13 @@ export default function HomeStack() {
       <Stack.Screen 
         name="AllPortableTools" 
         component={AllPortableTools}
+        options={{
+          animation: 'slide_from_right', 
+        }}
+      />
+      <Stack.Screen 
+        name="AllBlock" 
+        component={AllBlock}
         options={{
           animation: 'slide_from_right', 
         }}

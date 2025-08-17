@@ -1142,7 +1142,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '600',
-    fontFamily: 'SpaceGrotesk-Regular',
+    fontFamily: 'SpaceGrotesk-Medium',
   },
 
   container: {

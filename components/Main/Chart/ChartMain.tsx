@@ -1,23 +1,28 @@
-import React, { useState } from 'react';
-import { 
-  ScrollView, 
-  SafeAreaView, 
-  Platform, 
-  StatusBar, 
-  StyleSheet, 
-  View, 
-  TouchableOpacity, 
-  Text, 
+import React, {useState} from 'react';
+import {
+  ScrollView,
+  SafeAreaView,
+  Platform,
+  StatusBar,
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Text,
   Modal,
   Alert,
   FlatList,
-  PermissionsAndroid
+  PermissionsAndroid,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import RNFS from 'react-native-fs';
 import XLSX from 'xlsx';
-import { ArrowLeft2, Calendar, CloseSquare, ArrowDown2 } from 'iconsax-react-native';
-import { useNavigation } from '@react-navigation/native';
+import {
+  ArrowLeft2,
+  Calendar,
+  CloseSquare,
+  ArrowDown2,
+} from 'iconsax-react-native';
+import {useNavigation} from '@react-navigation/native';
 
 // Import komponen chart
 import Temperature from './Temperature';
@@ -39,45 +44,45 @@ export default function ChartMain() {
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  
+
   // Dropdown states
-  const [selectedBlock, setSelectedBlock] = useState('Block 4');
+  const [selectedBlock, setSelectedBlock] = useState('Blok 4');
   const [selectedSensor, setSelectedSensor] = useState('Temperature');
-  const [selectedDevice, setSelectedDevice] = useState('Device 1');
+  const [selectedDevice, setSelectedDevice] = useState('1');
   const [showBlockDropdown, setShowBlockDropdown] = useState(false);
   const [showSensorDropdown, setShowSensorDropdown] = useState(false);
   const [showDeviceDropdown, setShowDeviceDropdown] = useState(false);
-  
+
   const FOOTER_HEIGHT = 84;
 
   // Dropdown options
   const blockOptions = ['Blok 4', 'Blok 7'];
   const sensorOptions = [
-    'Temperature', 
-    'Humidity', 
-    'Light', 
-    'Soil Temperature', 
-    'Soil Humidity', 
-    'EC', 
-    'PH', 
-    'Nitrogen', 
-    'Phosphor', 
-    'Kalium'
+    'Temperature',
+    'Humidity',
+    'Light',
+    'Soil Temperature',
+    'Soil Humidity',
+    'EC',
+    'PH',
+    'Nitrogen',
+    'Phosphor',
+    'Kalium',
   ];
   const deviceOptions = ['1', '2', '3'];
 
   // Map sensor untuk API
   const sensorApiMap = {
-    'Temperature': 'Temperature',
-    'Humidity': 'Humidity',
-    'Light': 'Light',
+    Temperature: 'Temperature',
+    Humidity: 'Humidity',
+    Light: 'Light',
     'Soil Temperature': 'Soil Temperature',
     'Soil Humidity': 'Soil Humidity',
-    'EC': 'EC',
-    'PH': 'PH',
-    'Nitrogen': 'Nitrogen',
-    'Phosphor': 'Phosphor',
-    'Kalium': 'Kalium'
+    EC: 'EC',
+    PH: 'PH',
+    Nitrogen: 'Nitrogen',
+    Phosphor: 'Phosphor',
+    Kalium: 'Kalium',
   };
 
   // Request storage permission for Android
@@ -92,7 +97,7 @@ export default function ChartMain() {
             buttonNeutral: 'Ask Me Later',
             buttonNegative: 'Cancel',
             buttonPositive: 'OK',
-          }
+          },
         );
         return granted === PermissionsAndroid.RESULTS.GRANTED;
       } catch (err) {
@@ -104,16 +109,25 @@ export default function ChartMain() {
   };
 
   // Fetch data dari API
-  const fetchReportData = async (startDateStr: string, endDateStr: string, sensorType: string, deviceId: string, blockName: string) => {
+  const fetchReportData = async (
+    startDateStr: string,
+    endDateStr: string,
+    sensorType: string,
+    deviceId: string,
+    blockName: string,
+  ) => {
     try {
       const baseURL = 'https://iot-vanili-api.permataindonesia.com';
-      
+
       // Tentukan endpoint berdasarkan range tanggal
-      const daysDiff = Math.ceil((new Date(endDateStr).getTime() - new Date(startDateStr).getTime()) / (1000 * 60 * 60 * 24));
+      const daysDiff = Math.ceil(
+        (new Date(endDateStr).getTime() - new Date(startDateStr).getTime()) /
+          (1000 * 60 * 60 * 24),
+      );
       let endpoint = '/api/weekly-data';
-      
+
       if (daysDiff > 60) {
-        endpoint = '/api/yearly-data';
+        endpoint = '/api/weekly-data';
       } else if (daysDiff > 7) {
         endpoint = '/api/weekly-data';
       }
@@ -126,12 +140,14 @@ export default function ChartMain() {
         nama_blok: blockName,
       });
 
-      const response = await fetch(`${baseURL}${endpoint}?${params.toString()}`);
-      
+      const response = await fetch(
+        `${baseURL}${endpoint}?${params.toString()}`,
+      );
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       return data;
     } catch (error) {
@@ -140,8 +156,45 @@ export default function ChartMain() {
     }
   };
 
-  // Generate Excel file
-  const generateExcelFile = async (data: any[], reportInfo: any) => {
+  // Tambahkan fungsi helper untuk timezone di bagian atas komponen
+  const formatDateToWIB = dateString => {
+    const date = new Date(dateString);
+    // Tambah 7 jam untuk WIB (UTC+7)
+    const wibDate = new Date(date.getTime());
+
+    // Format manual untuk konsistensi
+    const year = wibDate.getFullYear();
+    const month = String(wibDate.getMonth() + 1).padStart(2, '0');
+    const day = String(wibDate.getDate()).padStart(2, '0');
+    const hours = String(wibDate.getHours()).padStart(2, '0');
+    const minutes = String(wibDate.getMinutes()).padStart(2, '0');
+    const seconds = String(wibDate.getSeconds()).padStart(2, '0');
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  };
+
+  // Fungsi untuk mendeteksi kolom tanggal/waktu
+  const isDateTimeColumn = columnName => {
+    const dateTimeIndicators = [
+      'time',
+      'date',
+      'created',
+      'updated',
+      'timestamp',
+      'waktu',
+      'tanggal',
+      'jam',
+      'created_at',
+      'updated_at',
+    ];
+
+    return dateTimeIndicators.some(indicator =>
+      columnName.toLowerCase().includes(indicator),
+    );
+  };
+
+  // Update fungsi generateExcelFile
+  const generateExcelFile = async (data, reportInfo) => {
     try {
       // Siapkan data untuk Excel
       const excelData = [
@@ -153,9 +206,9 @@ export default function ChartMain() {
         ['Sensor Type:', reportInfo.sensor],
         ['Device ID:', reportInfo.device],
         ['Period:', `${reportInfo.startDate} to ${reportInfo.endDate}`],
-        ['Generated:', new Date().toLocaleString()],
+        ['Generated:', formatDateToWIB(new Date().toISOString())], // Fix timezone
         [''],
-        ['Data:']
+        ['Data:'],
       ];
 
       // Header kolom data
@@ -163,10 +216,26 @@ export default function ChartMain() {
         const firstItem = data[0];
         const headers = Object.keys(firstItem);
         excelData.push(headers);
-        
-        // Data rows
+
+        // Data rows dengan koreksi timezone
         data.forEach(item => {
-          const row = headers.map(header => item[header]);
+          const row = headers.map(header => {
+            const value = item[header];
+
+            // Cek apakah kolom ini berisi tanggal/waktu
+            if (isDateTimeColumn(header) && value) {
+              // Jika value adalah string tanggal yang valid
+              if (typeof value === 'string' && !isNaN(Date.parse(value))) {
+                return formatDateToWIB(value);
+              }
+              // Jika value sudah dalam format Date object
+              else if (value instanceof Date) {
+                return formatDateToWIB(value.toISOString());
+              }
+            }
+
+            return value;
+          });
           excelData.push(row);
         });
       } else {
@@ -176,23 +245,24 @@ export default function ChartMain() {
       // Buat workbook dan worksheet
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet(excelData);
-      
-      // Set column widths
+
+      // Set column widths yang lebih sesuai
       const colWidths = [
-        { wch: 15 }, // Column A
-        { wch: 20 }, // Column B
-        { wch: 15 }, // Column C
-        { wch: 15 }, // Column D
-        { wch: 25 }, // Column E
+        {wch: 15}, // Column A
+        {wch: 25}, // Column B - lebih lebar untuk timestamp
+        {wch: 15}, // Column C
+        {wch: 15}, // Column D
+        {wch: 25}, // Column E - lebih lebar untuk timestamp
+        {wch: 15}, // Column F
       ];
       ws['!cols'] = colWidths;
 
       // Add worksheet to workbook
       XLSX.utils.book_append_sheet(wb, ws, 'Sensor Data');
-      
+
       // Generate binary string
-      const wbout = XLSX.write(wb, { type: 'binary', bookType: 'xlsx' });
-      
+      const wbout = XLSX.write(wb, {type: 'binary', bookType: 'xlsx'});
+
       return wbout;
     } catch (error) {
       console.error('Error generating Excel:', error);
@@ -205,23 +275,27 @@ export default function ChartMain() {
     try {
       const hasPermission = await requestStoragePermission();
       if (!hasPermission) {
-        Alert.alert('Permission Required', 'Storage permission is required to save files');
+        Alert.alert(
+          'Permission Required',
+          'Storage permission is required to save files',
+        );
         return false;
       }
 
       // Tentukan path untuk menyimpan file
-      const downloadPath = Platform.OS === 'ios' 
-        ? RNFS.DocumentDirectoryPath 
-        : RNFS.DownloadDirectoryPath;
-      
+      const downloadPath =
+        Platform.OS === 'ios'
+          ? RNFS.DocumentDirectoryPath
+          : RNFS.DownloadDirectoryPath;
+
       const filePath = `${downloadPath}/${filename}`;
 
       // Convert binary string to base64
       const base64Data = btoa(excelData);
-      
+
       // Write file
       await RNFS.writeFile(filePath, base64Data, 'base64');
-      
+
       return filePath;
     } catch (error) {
       console.error('Error saving file:', error);
@@ -249,21 +323,24 @@ export default function ChartMain() {
     try {
       const startDateStr = startDate.toISOString().split('T')[0];
       const endDateStr = endDate.toISOString().split('T')[0];
-      
+
       // Map sensor name untuk API
       const apiSensorType = sensorApiMap[selectedSensor] || selectedSensor;
-      
+
       // Fetch data dari API
       const reportData = await fetchReportData(
-        startDateStr, 
-        endDateStr, 
-        apiSensorType, 
-        selectedDevice, 
-        selectedBlock
+        startDateStr,
+        endDateStr,
+        apiSensorType,
+        selectedDevice,
+        selectedBlock,
       );
 
       // Generate filename
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const timestamp = new Date()
+        .toISOString()
+        .replace(/[:.]/g, '-')
+        .slice(0, 19);
       const filename = `SensorReport_${selectedSensor}_${startDateStr}_to_${endDateStr}_${timestamp}.xlsx`;
 
       // Report info
@@ -272,28 +349,28 @@ export default function ChartMain() {
         sensor: selectedSensor,
         device: selectedDevice,
         startDate: startDateStr,
-        endDate: endDateStr
+        endDate: endDateStr,
       };
 
       // Generate Excel
       const excelData = await generateExcelFile(reportData, reportInfo);
-      
+
       // Save to device
       const filePath = await saveExcelFile(excelData, filename);
-      
+
       if (filePath) {
         Alert.alert(
-          'Success', 
+          'Success',
           `Report saved successfully!\n\nLocation: ${filePath}\n\nFile: ${filename}`,
-          [{ text: 'OK', onPress: () => setModalVisible(false) }]
+          [{text: 'OK', onPress: () => setModalVisible(false)}],
         );
       }
     } catch (error) {
       console.error('Download error:', error);
       Alert.alert(
-        'Error', 
+        'Error',
         `Failed to generate report: ${error.message || 'Unknown error'}`,
-        [{ text: 'OK' }]
+        [{text: 'OK'}],
       );
     } finally {
       setIsDownloading(false);
@@ -302,12 +379,12 @@ export default function ChartMain() {
 
   const handleCloseModal = () => {
     if (isDownloading) return; // Prevent closing while downloading
-    
+
     setStartDate(undefined);
     setEndDate(undefined);
-    setSelectedBlock('Block 4');
+    setSelectedBlock('Blok 4');
     setSelectedSensor('Temperature');
-    setSelectedDevice('Device 1');
+    setSelectedDevice('1');
     setShowBlockDropdown(false);
     setShowSensorDropdown(false);
     setShowDeviceDropdown(false);
@@ -367,31 +444,33 @@ export default function ChartMain() {
           paddingBottom: FOOTER_HEIGHT + 16,
         }}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={{marginLeft: 16}}>
             <ArrowLeft2 color="black" variant="Linear" size={24} />
           </TouchableOpacity>
           <Text style={styles.title}>Summary Sensor</Text>
           <View style={{width: 24}} />
         </View>
         <Temperature />
-        <Humidity/>
-        <Light/> 
-        <SoilTemperature/>
-        <SoilMoisture/>
-        <SoilEc/>
-        <SoilPh/>
-        <SoilNitrogen/>
-        <SoilPhospor/>
-        <SoilKalium/>     
+        <Humidity />
+        <Light />
+        <SoilTemperature />
+        <SoilMoisture />
+        <SoilEc />
+        <SoilPh />
+        <SoilNitrogen />
+        <SoilPhospor />
+        <SoilKalium />
       </ScrollView>
-      
+
       <View style={styles.footerWrapper}>
         <View style={styles.footerBox}>
           <TouchableOpacity
-            style={[styles.downloadButton, isDownloading && styles.downloadButtonDisabled]}
+            style={[
+              styles.downloadButton,
+              isDownloading && styles.downloadButtonDisabled,
+            ]}
             onPress={handleDownload}
-            disabled={isDownloading}
-          >
+            disabled={isDownloading}>
             <Text style={styles.downloadText}>
               {isDownloading ? 'Generating Report...' : 'Download Report'}
             </Text>
@@ -404,18 +483,15 @@ export default function ChartMain() {
         animationType="fade"
         transparent={true}
         visible={modalVisible}
-        onRequestClose={handleCloseModal}
-      >
-        <TouchableOpacity 
-          style={styles.modalOverlay} 
-          activeOpacity={1} 
-          onPress={!isDownloading ? handleCloseModal : undefined}
-        >
-          <TouchableOpacity 
-            style={styles.modalContainer} 
-            activeOpacity={1} 
-            onPress={(e) => e.stopPropagation()}
-          >
+        onRequestClose={handleCloseModal}>
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={!isDownloading ? handleCloseModal : undefined}>
+          <TouchableOpacity
+            style={styles.modalContainer}
+            activeOpacity={1}
+            onPress={e => e.stopPropagation()}>
             {/* Header Modal */}
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Download Report</Text>
@@ -427,7 +503,7 @@ export default function ChartMain() {
               <View style={styles.formRow}>
                 <View style={styles.halfWidth}>
                   <Text style={styles.inputLabel}>Block</Text>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.dropdownWrapper}
                     onPress={() => {
                       if (isDownloading) return;
@@ -435,8 +511,7 @@ export default function ChartMain() {
                       setShowSensorDropdown(false);
                       setShowDeviceDropdown(false);
                     }}
-                    disabled={isDownloading}
-                  >
+                    disabled={isDownloading}>
                     <Text style={styles.dropdownText}>{selectedBlock}</Text>
                     <ArrowDown2 color="#666" variant="Linear" size={16} />
                   </TouchableOpacity>
@@ -446,8 +521,7 @@ export default function ChartMain() {
                         <TouchableOpacity
                           key={index}
                           style={styles.dropdownItem}
-                          onPress={() => handleBlockSelect(block)}
-                        >
+                          onPress={() => handleBlockSelect(block)}>
                           <Text style={styles.dropdownItemText}>{block}</Text>
                         </TouchableOpacity>
                       ))}
@@ -457,7 +531,7 @@ export default function ChartMain() {
 
                 <View style={styles.halfWidth}>
                   <Text style={styles.inputLabel}>Sensor</Text>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.dropdownWrapper}
                     onPress={() => {
                       if (isDownloading) return;
@@ -465,21 +539,26 @@ export default function ChartMain() {
                       setShowBlockDropdown(false);
                       setShowDeviceDropdown(false);
                     }}
-                    disabled={isDownloading}
-                  >
-                    <Text style={[styles.dropdownText, {fontSize: 13}]}>{selectedSensor}</Text>
+                    disabled={isDownloading}>
+                    <Text style={[styles.dropdownText, {fontSize: 13}]}>
+                      {selectedSensor}
+                    </Text>
                     <ArrowDown2 color="#666" variant="Linear" size={16} />
                   </TouchableOpacity>
                   {showSensorDropdown && (
                     <View style={styles.dropdownContainer}>
-                      <ScrollView style={styles.dropdownScrollView} nestedScrollEnabled={true}>
+                      <ScrollView
+                        style={styles.dropdownScrollView}
+                        nestedScrollEnabled={true}>
                         {sensorOptions.map((sensor, index) => (
                           <TouchableOpacity
                             key={index}
                             style={styles.dropdownItem}
-                            onPress={() => handleSensorSelect(sensor)}
-                          >
-                            <Text style={[styles.dropdownItemText, {fontSize: 12}]}>{sensor}</Text>
+                            onPress={() => handleSensorSelect(sensor)}>
+                            <Text
+                              style={[styles.dropdownItemText, {fontSize: 12}]}>
+                              {sensor}
+                            </Text>
                           </TouchableOpacity>
                         ))}
                       </ScrollView>
@@ -491,7 +570,7 @@ export default function ChartMain() {
               {/* Device Selection */}
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Device ID</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.dropdownWrapper}
                   onPress={() => {
                     if (isDownloading) return;
@@ -499,8 +578,7 @@ export default function ChartMain() {
                     setShowBlockDropdown(false);
                     setShowSensorDropdown(false);
                   }}
-                  disabled={isDownloading}
-                >
+                  disabled={isDownloading}>
                   <Text style={styles.dropdownText}>{selectedDevice}</Text>
                   <ArrowDown2 color="#666" variant="Linear" size={16} />
                 </TouchableOpacity>
@@ -510,8 +588,7 @@ export default function ChartMain() {
                       <TouchableOpacity
                         key={index}
                         style={styles.dropdownItem}
-                        onPress={() => handleDeviceSelect(device)}
-                      >
+                        onPress={() => handleDeviceSelect(device)}>
                         <Text style={styles.dropdownItemText}>{device}</Text>
                       </TouchableOpacity>
                     ))}
@@ -522,12 +599,15 @@ export default function ChartMain() {
               {/* Start Date */}
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>From</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.dateInputWrapper}
                   onPress={!isDownloading ? showStartPicker : undefined}
-                  disabled={isDownloading}
-                >
-                  <Text style={[styles.dateDisplayText, !startDate && styles.placeholderText]}>
+                  disabled={isDownloading}>
+                  <Text
+                    style={[
+                      styles.dateDisplayText,
+                      !startDate && styles.placeholderText,
+                    ]}>
                     {startDate ? formatDate(startDate) : 'Choose date'}
                   </Text>
                   <Calendar color="#666" variant="Linear" size={16} />
@@ -537,12 +617,15 @@ export default function ChartMain() {
               {/* End Date */}
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>To</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.dateInputWrapper}
                   onPress={!isDownloading ? showEndPicker : undefined}
-                  disabled={isDownloading}
-                >
-                  <Text style={[styles.dateDisplayText, !endDate && styles.placeholderText]}>
+                  disabled={isDownloading}>
+                  <Text
+                    style={[
+                      styles.dateDisplayText,
+                      !endDate && styles.placeholderText,
+                    ]}>
                     {endDate ? formatDate(endDate) : 'Choose date'}
                   </Text>
                   <Calendar color="#666" variant="Linear" size={16} />
@@ -552,18 +635,22 @@ export default function ChartMain() {
               {/* Buttons */}
               <View style={styles.modalButtonContainer}>
                 <TouchableOpacity
-                  style={[styles.cancelButton, isDownloading && styles.buttonDisabled]}
+                  style={[
+                    styles.cancelButton,
+                    isDownloading && styles.buttonDisabled,
+                  ]}
                   onPress={handleCloseModal}
-                  disabled={isDownloading}
-                >
+                  disabled={isDownloading}>
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
-                
+
                 <TouchableOpacity
-                  style={[styles.confirmButton, isDownloading && styles.buttonDisabled]}
+                  style={[
+                    styles.confirmButton,
+                    isDownloading && styles.buttonDisabled,
+                  ]}
                   onPress={handleConfirmDownload}
-                  disabled={isDownloading}
-                >
+                  disabled={isDownloading}>
                   <Text style={styles.confirmButtonText}>
                     {isDownloading ? 'Downloading...' : 'Download'}
                   </Text>
@@ -600,20 +687,20 @@ export default function ChartMain() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: {flex: 1, backgroundColor: '#fff'},
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     height: 48,
-    marginTop: 20,
+    marginTop: 10,
     paddingHorizontal: 4,
-    marginBottom: -70
+    marginBottom: -70,
   },
   title: {
     fontSize: 18,
     fontWeight: '600',
-    fontFamily: 'SpaceGrotesk-Regular',
+    fontFamily: 'SpaceGrotesk-Medium',
   },
   footerWrapper: {
     position: 'absolute',
@@ -632,7 +719,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
+    shadowOffset: {width: 0, height: -2},
     shadowOpacity: 0.06,
     shadowRadius: 6,
     elevation: 6,
@@ -649,11 +736,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#cccccc',
   },
   downloadText: {
-    color: "Black",
+    color: 'Black',
     fontWeight: '600',
     fontFamily: 'SpaceGrotesk-Regular',
   },
-  
+
   // Modal Styles
   modalOverlay: {
     flex: 1,
@@ -665,10 +752,10 @@ const styles = StyleSheet.create({
   modalContainer: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    width: '90%',        
-    maxWidth: 380,       
+    width: '90%',
+    maxWidth: 380,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 8,
@@ -692,7 +779,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
   },
-  
+
   // Form layout styles
   formRow: {
     flexDirection: 'row',
@@ -735,7 +822,7 @@ const styles = StyleSheet.create({
     color: '#999',
     fontFamily: 'SpaceGrotesk-Regular',
   },
-  
+
   // Dropdown styles
   dropdownWrapper: {
     flexDirection: 'row',
@@ -767,7 +854,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     maxHeight: 120,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 6,
@@ -787,7 +874,7 @@ const styles = StyleSheet.create({
     color: '#333',
     fontFamily: 'SpaceGrotesk-Regular',
   },
-  
+
   modalButtonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',

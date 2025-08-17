@@ -1,7 +1,7 @@
-// MainTabs.tsx - Fixed BLE reset issue
+// MainTabs.tsx - Fixed BLE reset issue with animated tab bar
 import { Buffer } from 'buffer';
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Modal, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Modal, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { getFocusedRouteNameFromRoute, NavigatorScreenParams } from '@react-navigation/native';
 import { Home, Chart, Scan } from 'iconsax-react-native';
@@ -46,6 +46,98 @@ export type MainTabParamList = {
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
+
+// Custom Tab Bar Component with Animation
+const AnimatedTabBar = (props: any) => {
+  const tabBarAnimation = useRef(new Animated.Value(0)).current;
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    const { state, descriptors } = props;
+    const currentRoute = state.routes[state.index];
+    const routeName = getFocusedRouteNameFromRoute(currentRoute) ?? currentRoute.name;
+    const hideTabScreens = ['ReadSoil', 'DetailBlockOne', 'DetailBlockTwo', 'ReadSoilDetail', 'ChartMain', 'AllPortableTools', 'AllBlock'];
+    
+    const shouldHide = hideTabScreens.includes(routeName);
+    
+    if (shouldHide && isVisible) {
+      // Hide animation - slide down
+      setIsVisible(false);
+      Animated.timing(tabBarAnimation, {
+        toValue: 60, // Tab bar height
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else if (!shouldHide && !isVisible) {
+      // Show animation - slide up
+      setIsVisible(true);
+      Animated.timing(tabBarAnimation, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [props.state]);
+
+  const { state, descriptors, navigation } = props;
+
+  return (
+    <Animated.View
+      style={[
+        styles.animatedTabBar,
+        {
+          transform: [{ translateY: tabBarAnimation }],
+        },
+      ]}
+    >
+      <View style={styles.tabBarContainer}>
+        {state.routes.map((route: any, index: number) => {
+          const { options } = descriptors[route.key];
+          const label = options.tabBarLabel || route.name;
+          const isFocused = state.index === index;
+
+          const onPress = () => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
+          };
+
+          const Icon = options.tabBarIcon;
+
+          return (
+            <Pressable
+              key={route.key}
+              accessibilityRole="button"
+              accessibilityState={isFocused ? { selected: true } : {}}
+              onPress={onPress}
+              style={styles.tabBarItem}
+            >
+              <Icon 
+                focused={isFocused} 
+                color={isFocused ? '#B4DC45' : 'gray'} 
+                size={24} 
+              />
+              {route.name !== 'ReadSoil' && (
+                <Text style={[
+                  styles.tabBarLabel, 
+                  { color: isFocused ? '#B4DC45' : 'gray' }
+                ]}>
+                  {label}
+                </Text>
+              )}
+            </Pressable>
+          );
+        })}
+      </View>
+    </Animated.View>
+  );
+};
 
 const MainTabs: React.FC = () => {
   const [showPopup, setShowPopup] = useState(false);
@@ -410,31 +502,23 @@ const MainTabs: React.FC = () => {
   return (
     <>
       <Tab.Navigator
-        screenOptions={({ route }) => {
-          const routeName = getFocusedRouteNameFromRoute(route) ?? route.name;
-          const hideTabScreens = ['ReadSoil', 'DetailBlockOne', 'DetailBlockTwo', 'ReadSoilDetail', 'ChartMain'];
-          return {
-            headerShown: false,
-            tabBarStyle: hideTabScreens.includes(routeName) ? { display: 'none' } : { height: 60 },
-            tabBarShowLabel: !hideTabScreens.includes(routeName),
-            tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
-            tabBarActiveTintColor: '#B4DC45',
-            tabBarInactiveTintColor: 'gray',
-            tabBarIcon: ({ color, size, focused }) => {
-              if (route.name === 'HomeStack') {
-                return <Home color={focused ? '#B4DC45' : color} variant="Bold" size={size} />;
-              }
-              if (route.name === 'ReadSoil') {
-                return (
-                  <View style={styles.readIconContainer}>
-                    <Scan color="white" variant="Linear" size={20} />
-                  </View>
-                );
-              }
-              return <Chart color={focused ? '#B4DC45' : color} variant="Linear" size={size} />;
-            },
-          };
-        }}
+        tabBar={(props) => <AnimatedTabBar {...props} />}
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          tabBarIcon: ({ color, size, focused }) => {
+            if (route.name === 'HomeStack') {
+              return <Home color={focused ? '#B4DC45' : color} variant="Bold" size={size} />;
+            }
+            if (route.name === 'ReadSoil') {
+              return (
+                <View style={styles.readIconContainer}>
+                  <Scan color="white" variant="Linear" size={20} />
+                </View>
+              );
+            }
+            return <Chart color={focused ? '#B4DC45' : color} variant="Linear" size={size} />;
+          },
+        })}
       >
         <Tab.Screen
           name="HomeStack"
@@ -491,6 +575,43 @@ const styles = StyleSheet.create({
     backgroundColor: '#B4DC45',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  // Animated Tab Bar Styles
+  animatedTabBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 70,
+    backgroundColor: 'white',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  tabBarContainer: {
+    flexDirection: 'row',
+    height: '100%',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  tabBarItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+  },
+  tabBarLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 4,
+    fontFamily: 'SpaceGrotesk-Regular'
   },
   modalOverlay: {
     flex: 1,

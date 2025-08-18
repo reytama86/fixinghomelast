@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {
   ScrollView,
   SafeAreaView,
@@ -12,6 +12,7 @@ import {
   Alert,
   FlatList,
   PermissionsAndroid,
+  BackHandler,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import RNFS from 'react-native-fs';
@@ -22,7 +23,7 @@ import {
   CloseSquare,
   ArrowDown2,
 } from 'iconsax-react-native';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 
 // Import komponen chart
 import Temperature from './Temperature';
@@ -269,6 +270,18 @@ export default function ChartMain() {
       throw error;
     }
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.goBack(); // Go back to previous screen
+        return true; // Prevent default behavior
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [navigation])
+  );
 
   // Save file to device storage
   const saveExcelFile = async (excelData: string, filename: string) => {

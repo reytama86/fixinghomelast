@@ -1,6 +1,6 @@
 // ReadSoil.tsx - Modified with rescan functionality and consistent modal styling
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,8 @@ import {
   TextInput,
   PermissionsAndroid,
   Platform,
-  KeyboardAvoidingView
+  KeyboardAvoidingView,
+  BackHandler
 } from 'react-native';
 import {Animated} from 'react-native';
 import {BleManager, Device} from 'react-native-ble-plx';
@@ -23,7 +24,7 @@ import {HomeStackParamList} from '../../../HomeStack';
 import {ArrowLeft2} from 'iconsax-react-native';
 import {MainTabParamList, SoilSensorData} from '../../../MainTabs';
 import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
-import {RouteProp, useRoute} from '@react-navigation/native';
+import {RouteProp, useFocusEffect, useRoute} from '@react-navigation/native';
 import {Buffer} from 'buffer';
 // Import your loading component
 import ImgLoadPortable from '../../../assets/svg/ImgLoadPortable';
@@ -472,6 +473,18 @@ const ReadSoil: React.FC<Props> = ({navigation}) => {
       resetBLEState();
     };
   }, []);
+
+  useFocusEffect(
+      useCallback(() => {
+        const onBackPress = () => {
+          navigation.goBack(); // Go back to previous screen
+          return true; // Prevent default behavior
+        };
+  
+        const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+        return () => subscription.remove();
+      }, [navigation])
+    );
 
   const openModal = () => {
     setIsModalVisible(true);

@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Dimensions,
+  BackHandler,
 } from 'react-native';
 import {ArrowLeft2, ArrowDown} from 'iconsax-react-native';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -19,6 +20,7 @@ import {
 } from '../../../HomeStack';
 
 import {Svg, Path} from 'react-native-svg';
+import { useFocusEffect } from '@react-navigation/native';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'AllPortableTools'>;
 
@@ -230,6 +232,18 @@ const AllPortableTools: React.FC<Props> = ({navigation}) => {
   useEffect(() => {
     fetchPortableData();
   }, [fetchPortableData]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.goBack(); // Go back to previous screen (HomeFix)
+        return true; // Prevent default behavior
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [navigation])
+  );
 
   const reversedData = useMemo(() => 
     [...portableData].reverse(), 

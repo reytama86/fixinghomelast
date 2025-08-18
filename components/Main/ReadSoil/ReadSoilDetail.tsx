@@ -9,6 +9,7 @@ import {
     Modal,
     Platform,
     StatusBar,
+    BackHandler,
   } from 'react-native';
   import React, {useCallback, useState} from 'react';
   import {ArrowLeft2} from 'iconsax-react-native';
@@ -21,6 +22,7 @@ import {
   import Ellips from '../../../assets/svg/Ellips';
   import type {NativeStackScreenProps} from '@react-navigation/native-stack';
   import {HomeStackParamList} from '../../../HomeStack'; 
+import { useFocusEffect } from '@react-navigation/native';
   
   type Props = NativeStackScreenProps<HomeStackParamList, 'ReadSoilDetail'>;
 
@@ -38,6 +40,18 @@ const ReadSoilDetail: React.FC<Props> = ({ navigation, route }) => {
     }).start();
   }, [gaugeValue]);
 
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.goBack(); // Go back to previous screen
+        return true; // Prevent default behavior
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [navigation])
+  );
+  
   // Helper function to get sensor value by type with proper formatting
   const getSensorValue = (sensorType: string): string => {
     const sensor = portableData.sensors?.find(s => 

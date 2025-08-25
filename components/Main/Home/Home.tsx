@@ -385,13 +385,40 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
     [getSensorValue, getSoilStatus],
   );
 
-  const focusCallback = useCallback(() => {
-    setActivePage('home');
-    fetchSensorData(); // Tambahkan ini
-    fetchDataBlock();
-  }, [setActivePage, fetchSensorData]);
+  // Replace your existing focusCallback and useFocusEffect with this:
 
-  useFocusEffect(focusCallback);
+const focusCallback = useCallback(() => {
+  setActivePage('home');
+  fetchSensorData();
+  fetchDataBlock();
+
+  // BackHandler logic
+  const backAction = () => {
+    // Tutup modal jika ada yang terbuka
+    if (showDurationModal) {
+      setShowDurationModal(false);
+      return true;
+    }
+    
+    if (showConfirm) {
+      setShowConfirm(false);
+      return true;
+    }
+
+    // Langsung keluar aplikasi
+    BackHandler.exitApp();
+    return true;
+  };
+
+  const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+  
+  // Return cleanup function
+  return () => backHandler.remove();
+}, [setActivePage, fetchSensorData, showDurationModal, showConfirm]);
+
+useFocusEffect(focusCallback);
+
+// Remove the existing standalone useEffect for BackHandler since it's now in useFocusEffect
 
   const [portableData, setPortableData] = useState<PortableToolData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -667,28 +694,6 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
 
     updateAnimations();
   }, [controlState.isWaterOn, controlState.isFertilizerOn]);
-
-  useEffect(() => {
-  const backAction = () => {
-    // Tutup modal jika ada yang terbuka
-    if (showDurationModal) {
-      setShowDurationModal(false);
-      return true;
-    }
-    
-    if (showConfirm) {
-      setShowConfirm(false);
-      return true;
-    }
-
-    // Langsung keluar aplikasi
-    BackHandler.exitApp();
-    return true;
-  };
-
-  const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
-  return () => backHandler.remove();
-}, [showDurationModal, showConfirm]);
 
   const weatherInfo = useMemo(() => {
     if (!weather) return {Icon: null, timeKey: 'Day', descKey: ''};
@@ -1319,10 +1324,10 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
                           />
                         </Svg>
                       </View>
-                      <Text style={styles.vectorLabel2}>6</Text>
+                      <Text style={styles.vectorLabel2}>7</Text>
                     </View>
                     <View style={styles.containerTextBlock}>
-                      <Text style={styles.textBlockHeader}>Block 6</Text>
+                      <Text style={styles.textBlockHeader}>Block 7</Text>
                       <Text style={styles.textBlock}>
                         Temperature:{' '}
                         {Math.round(Number(sensorDataBlock.block2.temp))}°

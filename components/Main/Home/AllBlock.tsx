@@ -14,7 +14,7 @@ import Svg, {Path} from 'react-native-svg';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {HomeStackParamList} from '../../../HomeStack';
 import {ArrowDown, ArrowLeft, ArrowLeft2} from 'iconsax-react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'AllBlock'>;
 
@@ -53,8 +53,8 @@ const AllBlock: React.FC<Props> = ({navigation}) => {
         const blockSensorMap = {
           3: 'block3', // Block 3
           2: 'block4', // Block 4 (sensor ID 2)
-          5: 'block6', // Block 6 (sensor ID 5)
-          6: 'block7', // Block 7 (sensor ID 6)
+          5: 'block7', // Block 6 (sensor ID 5)
+          6: 'block6', // Block 7 (sensor ID 6)
           7: 'block8', // Block 8 (sensor ID 7)
         };
 
@@ -157,7 +157,10 @@ const AllBlock: React.FC<Props> = ({navigation}) => {
     };
   }, []);
 
-  const renderSvgByType = (svgType: 'block1' | 'block2' | 'block3' | 'block7' | 'block8', blockId: number) => {
+  const renderSvgByType = (
+    svgType: 'block1' | 'block2' | 'block3' | 'block7' | 'block8',
+    blockId: number,
+  ) => {
     if (svgType === 'block1') {
       return (
         <>
@@ -281,8 +284,7 @@ const AllBlock: React.FC<Props> = ({navigation}) => {
       humidity: isNaN(Number(sensorDataBlocks.block6.humidity))
         ? '0'
         : Math.round(Number(sensorDataBlocks.block6.humidity)).toString(),
-      navigationTarget: 'DetailBlockTwo',
-      svgPath: 'block2',
+      svgPath: 'block7',
     },
     {
       id: 7,
@@ -293,7 +295,8 @@ const AllBlock: React.FC<Props> = ({navigation}) => {
       humidity: isNaN(Number(sensorDataBlocks.block7.humidity))
         ? '0'
         : Math.round(Number(sensorDataBlocks.block7.humidity)).toString(),
-      svgPath: 'block7',
+      navigationTarget: 'DetailBlockTwo',
+      svgPath: 'block2',
     },
     {
       id: 8,
@@ -312,10 +315,10 @@ const AllBlock: React.FC<Props> = ({navigation}) => {
     <View key={block.id} style={styles.blockCard}>
       <TouchableOpacity
         onPress={() => {
-        if (block.navigationTarget) {
-          navigation.navigate(block.navigationTarget, { from: 'AllBlock' }); // Tambah parameter from
-        }
-      }}
+          if (block.navigationTarget) {
+            navigation.navigate(block.navigationTarget, {from: 'AllBlock'}); // Tambah parameter from
+          }
+        }}
         disabled={!block.navigationTarget}>
         <CornerCutComponent
           width={cardWidth}

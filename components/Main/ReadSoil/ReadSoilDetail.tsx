@@ -184,7 +184,7 @@ const formatDate = (dateString: string): string => {
             style={{
               fontSize: 18,
               fontWeight: 600,
-              fontFamily: 'SpaceGrotesk-Regular',
+              fontFamily: 'SpaceGrotesk-Medium',
               right: 5,
               textAlign: 'center',
             }}>
@@ -433,7 +433,7 @@ const formatDate = (dateString: string): string => {
     statValue: {
       fontSize: 14,
       fontWeight: '600',
-      fontFamily: 'SpaceGrotesk-Regular',
+      fontFamily: 'SpaceGrotesk-Medium',
     },
     statExtra: {
       flexDirection: 'column',
@@ -448,7 +448,7 @@ const formatDate = (dateString: string): string => {
     soilTitle: {
       fontSize: 14,
       fontWeight: 600,
-      fontFamily: 'SpaceGrotesk-Regular',
+      fontFamily: 'SpaceGrotesk-Medium',
     },
     controlCentre: {
       marginBottom: 8,

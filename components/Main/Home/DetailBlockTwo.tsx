@@ -710,7 +710,7 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation, route }) => {
               fontFamily: 'SpaceGrotesk-Medium',
               right: 5,
               textAlign: 'center',
-            }}>Block 6</Text>
+            }}>Block 7</Text>
             <ArrowLeft2
               color="black"
               variant="Linear"

@@ -53,8 +53,8 @@ const AllBlock: React.FC<Props> = ({navigation}) => {
         const blockSensorMap = {
           3: 'block3', // Block 3
           2: 'block4', // Block 4 (sensor ID 2)
-          5: 'block6', // Block 6 (sensor ID 5)
-          6: 'block7', // Block 7 (sensor ID 6)
+          6: 'block6', // Block 6 (sensor ID 5)
+          5: 'block7', // Block 7 (sensor ID 6)
           7: 'block8', // Block 8 (sensor ID 7)
         };
 
@@ -98,7 +98,7 @@ const AllBlock: React.FC<Props> = ({navigation}) => {
 
       const onBackPress = () => {
         // gunakan replace agar tidak menumpuk route
-        navigation.replace('HomeFix' as any);
+        navigation.goBack();
         return true; // mencegah default behavior
       };
 
@@ -281,8 +281,8 @@ const AllBlock: React.FC<Props> = ({navigation}) => {
       humidity: isNaN(Number(sensorDataBlocks.block6.humidity))
         ? '0'
         : Math.round(Number(sensorDataBlocks.block6.humidity)).toString(),
-      navigationTarget: 'DetailBlockTwo',
-      svgPath: 'block2',
+      
+      svgPath: 'block7',
     },
     {
       id: 7,
@@ -293,7 +293,8 @@ const AllBlock: React.FC<Props> = ({navigation}) => {
       humidity: isNaN(Number(sensorDataBlocks.block7.humidity))
         ? '0'
         : Math.round(Number(sensorDataBlocks.block7.humidity)).toString(),
-      svgPath: 'block7',
+      navigationTarget: 'DetailBlockTwo',
+      svgPath: 'block2',
     },
     {
       id: 8,
@@ -392,7 +393,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     height: 32,
-    marginTop: -30,
   },
   headerTitle: {
     fontSize: 18,

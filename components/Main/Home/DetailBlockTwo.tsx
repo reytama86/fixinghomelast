@@ -175,7 +175,7 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation, route }) => {
       try {
         setLoading(true);
         const response = await fetch(
-          'https://iot-vanili-api.permataindonesia.com/api/latest-sensor-block2',
+          'https://iot-api.permataindonesia.com/api/latest-sensor-block2',
         );
         
         if (!response.ok) {
@@ -206,11 +206,7 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation, route }) => {
 
       const onBackPress = () => {
         // Navigasi berdasarkan dari mana user datang
-        if (from === 'AllBlock') {
-          navigation.navigate('AllBlock');
-        } else {
-          navigation.navigate('HomeFix');
-        }
+        navigation.goBack();
         return true; // cegah default behavior
       };
 
@@ -710,7 +706,7 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation, route }) => {
               fontFamily: 'SpaceGrotesk-Medium',
               right: 5,
               textAlign: 'center',
-            }}>Block 6</Text>
+            }}>Block 7</Text>
             <ArrowLeft2
               color="black"
               variant="Linear"
@@ -720,7 +716,7 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation, route }) => {
             />
           </View>
           
-          <View style={styles.controlCentre}>
+          {/* <View style={styles.controlCentre}>
             <View style={styles.controlCentreBox}>
               <View style={styles.boxControl}>
                 <View style={styles.frameTopControl}>
@@ -828,7 +824,7 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation, route }) => {
                 </View>
               </View>
             </View>
-          </View>
+          </View> */}
           {memoizedDevices}
           <Modal
                 visible={showDurationModal}

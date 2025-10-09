@@ -1003,11 +1003,7 @@ const DetailBlockOne: React.FC<Props> = ({navigation, route}) => {
 
       const onBackPress = () => {
         // Navigasi berdasarkan dari mana user datang
-        if (from === 'AllBlock') {
-          navigation.navigate('AllBlock');
-        } else {
-          navigation.navigate('HomeFix');
-        }
+        navigation.goBack();
         return true; // cegah default behavior
       };
 

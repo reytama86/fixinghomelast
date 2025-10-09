@@ -55,6 +55,7 @@ export default function ChartMain() {
   const [showDeviceDropdown, setShowDeviceDropdown] = useState(false);
 
   const FOOTER_HEIGHT = 84;
+  const HEADER_HEIGHT = 58; // Height untuk header
 
   // Dropdown options
   const blockOptions = ['Blok 4', 'Blok 7'];
@@ -157,13 +158,11 @@ export default function ChartMain() {
     }
   };
 
-  // Tambahkan fungsi helper untuk timezone di bagian atas komponen
+  // Format date ke WIB timezone
   const formatDateToWIB = dateString => {
     const date = new Date(dateString);
-    // Tambah 7 jam untuk WIB (UTC+7)
     const wibDate = new Date(date.getTime());
 
-    // Format manual untuk konsistensi
     const year = wibDate.getFullYear();
     const month = String(wibDate.getMonth() + 1).padStart(2, '0');
     const day = String(wibDate.getDate()).padStart(2, '0');
@@ -174,7 +173,7 @@ export default function ChartMain() {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   };
 
-  // Fungsi untuk mendeteksi kolom tanggal/waktu
+  // Deteksi kolom tanggal/waktu
   const isDateTimeColumn = columnName => {
     const dateTimeIndicators = [
       'time',
@@ -194,12 +193,10 @@ export default function ChartMain() {
     );
   };
 
-  // Update fungsi generateExcelFile
+  // Generate Excel file
   const generateExcelFile = async (data, reportInfo) => {
     try {
-      // Siapkan data untuk Excel
       const excelData = [
-        // Header informasi report
         ['SENSOR DATA REPORT'],
         [''],
         ['Report Information:'],
@@ -207,30 +204,24 @@ export default function ChartMain() {
         ['Sensor Type:', reportInfo.sensor],
         ['Device ID:', reportInfo.device],
         ['Period:', `${reportInfo.startDate} to ${reportInfo.endDate}`],
-        ['Generated:', formatDateToWIB(new Date().toISOString())], // Fix timezone
+        ['Generated:', formatDateToWIB(new Date().toISOString())],
         [''],
         ['Data:'],
       ];
 
-      // Header kolom data
       if (data.length > 0) {
         const firstItem = data[0];
         const headers = Object.keys(firstItem);
         excelData.push(headers);
 
-        // Data rows dengan koreksi timezone
         data.forEach(item => {
           const row = headers.map(header => {
             const value = item[header];
 
-            // Cek apakah kolom ini berisi tanggal/waktu
             if (isDateTimeColumn(header) && value) {
-              // Jika value adalah string tanggal yang valid
               if (typeof value === 'string' && !isNaN(Date.parse(value))) {
                 return formatDateToWIB(value);
-              }
-              // Jika value sudah dalam format Date object
-              else if (value instanceof Date) {
+              } else if (value instanceof Date) {
                 return formatDateToWIB(value.toISOString());
               }
             }
@@ -243,25 +234,20 @@ export default function ChartMain() {
         excelData.push(['No data available for the selected criteria']);
       }
 
-      // Buat workbook dan worksheet
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet(excelData);
 
-      // Set column widths yang lebih sesuai
       const colWidths = [
-        {wch: 15}, // Column A
-        {wch: 25}, // Column B - lebih lebar untuk timestamp
-        {wch: 15}, // Column C
-        {wch: 15}, // Column D
-        {wch: 25}, // Column E - lebih lebar untuk timestamp
-        {wch: 15}, // Column F
+        {wch: 15},
+        {wch: 25},
+        {wch: 15},
+        {wch: 15},
+        {wch: 25},
+        {wch: 15},
       ];
       ws['!cols'] = colWidths;
 
-      // Add worksheet to workbook
       XLSX.utils.book_append_sheet(wb, ws, 'Sensor Data');
-
-      // Generate binary string
       const wbout = XLSX.write(wb, {type: 'binary', bookType: 'xlsx'});
 
       return wbout;
@@ -274,8 +260,8 @@ export default function ChartMain() {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        navigation.goBack(); // Go back to previous screen
-        return true; // Prevent default behavior
+        navigation.goBack();
+        return true;
       };
 
       const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
@@ -295,18 +281,14 @@ export default function ChartMain() {
         return false;
       }
 
-      // Tentukan path untuk menyimpan file
       const downloadPath =
         Platform.OS === 'ios'
           ? RNFS.DocumentDirectoryPath
           : RNFS.DownloadDirectoryPath;
 
       const filePath = `${downloadPath}/${filename}`;
-
-      // Convert binary string to base64
       const base64Data = btoa(excelData);
 
-      // Write file
       await RNFS.writeFile(filePath, base64Data, 'base64');
 
       return filePath;
@@ -337,10 +319,8 @@ export default function ChartMain() {
       const startDateStr = startDate.toISOString().split('T')[0];
       const endDateStr = endDate.toISOString().split('T')[0];
 
-      // Map sensor name untuk API
       const apiSensorType = sensorApiMap[selectedSensor] || selectedSensor;
 
-      // Fetch data dari API
       const reportData = await fetchReportData(
         startDateStr,
         endDateStr,
@@ -349,14 +329,12 @@ export default function ChartMain() {
         selectedBlock,
       );
 
-      // Generate filename
       const timestamp = new Date()
         .toISOString()
         .replace(/[:.]/g, '-')
         .slice(0, 19);
       const filename = `SensorReport_${selectedSensor}_${startDateStr}_to_${endDateStr}_${timestamp}.xlsx`;
 
-      // Report info
       const reportInfo = {
         block: selectedBlock,
         sensor: selectedSensor,
@@ -365,10 +343,7 @@ export default function ChartMain() {
         endDate: endDateStr,
       };
 
-      // Generate Excel
       const excelData = await generateExcelFile(reportData, reportInfo);
-
-      // Save to device
       const filePath = await saveExcelFile(excelData, filename);
 
       if (filePath) {
@@ -391,7 +366,7 @@ export default function ChartMain() {
   };
 
   const handleCloseModal = () => {
-    if (isDownloading) return; // Prevent closing while downloading
+    if (isDownloading) return;
 
     setStartDate(undefined);
     setEndDate(undefined);
@@ -401,6 +376,8 @@ export default function ChartMain() {
     setShowBlockDropdown(false);
     setShowSensorDropdown(false);
     setShowDeviceDropdown(false);
+    setShowStartDatePicker(false);
+    setShowEndDatePicker(false);
     setModalVisible(false);
   };
 
@@ -408,8 +385,11 @@ export default function ChartMain() {
     return date.toLocaleDateString('en-CA');
   };
 
+  // Updated date change handlers
   const handleStartDateChange = (event: any, selectedDate?: Date) => {
-    setShowStartDatePicker(false);
+    if (Platform.OS === 'android') {
+      setShowStartDatePicker(false);
+    }
     if (selectedDate) {
       setStartDate(selectedDate);
       if (endDate && selectedDate > endDate) {
@@ -419,7 +399,9 @@ export default function ChartMain() {
   };
 
   const handleEndDateChange = (event: any, selectedDate?: Date) => {
-    setShowEndDatePicker(false);
+    if (Platform.OS === 'android') {
+      setShowEndDatePicker(false);
+    }
     if (selectedDate) {
       setEndDate(selectedDate);
     }
@@ -427,10 +409,18 @@ export default function ChartMain() {
 
   const showStartPicker = () => {
     setShowStartDatePicker(true);
+    setShowEndDatePicker(false);
+    setShowBlockDropdown(false);
+    setShowSensorDropdown(false);
+    setShowDeviceDropdown(false);
   };
 
   const showEndPicker = () => {
     setShowEndDatePicker(true);
+    setShowStartDatePicker(false);
+    setShowBlockDropdown(false);
+    setShowSensorDropdown(false);
+    setShowDeviceDropdown(false);
   };
 
   // Dropdown handlers
@@ -450,19 +440,21 @@ export default function ChartMain() {
   };
 
   return (
-    <SafeAreaView style={{flex: 1, paddingTop: 0}}>
+    <SafeAreaView style={styles.container}>
+      {/* STICKY HEADER - Di luar ScrollView */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{marginLeft: 16}}>
+          <ArrowLeft2 color="black" variant="Linear" size={24} />
+        </TouchableOpacity>
+        <Text style={styles.title}>Summary Sensor</Text>
+        <View style={{width: 24}} />
+      </View>
+
       <ScrollView
         contentContainerStyle={{
-          marginTop: 0,
           paddingBottom: FOOTER_HEIGHT + 16,
+          marginTop: -55
         }}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={{marginLeft: 16}}>
-            <ArrowLeft2 color="black" variant="Linear" size={24} />
-          </TouchableOpacity>
-          <Text style={styles.title}>Summary Sensor</Text>
-          <View style={{width: 24}} />
-        </View>
         <Temperature />
         <Humidity />
         <Light />
@@ -475,6 +467,7 @@ export default function ChartMain() {
         <SoilKalium />
       </ScrollView>
 
+      {/* FOOTER BUTTON */}
       <View style={styles.footerWrapper}>
         <View style={styles.footerBox}>
           <TouchableOpacity
@@ -491,7 +484,7 @@ export default function ChartMain() {
         </View>
       </View>
 
-      {/* Modal untuk Date Range Selection */}
+      {/* Modal untuk Date Range Selection dengan DateTimePicker Inside */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -523,6 +516,8 @@ export default function ChartMain() {
                       setShowBlockDropdown(!showBlockDropdown);
                       setShowSensorDropdown(false);
                       setShowDeviceDropdown(false);
+                      setShowStartDatePicker(false);
+                      setShowEndDatePicker(false);
                     }}
                     disabled={isDownloading}>
                     <Text style={styles.dropdownText}>{selectedBlock}</Text>
@@ -551,6 +546,8 @@ export default function ChartMain() {
                       setShowSensorDropdown(!showSensorDropdown);
                       setShowBlockDropdown(false);
                       setShowDeviceDropdown(false);
+                      setShowStartDatePicker(false);
+                      setShowEndDatePicker(false);
                     }}
                     disabled={isDownloading}>
                     <Text style={[styles.dropdownText, {fontSize: 13}]}>
@@ -590,6 +587,8 @@ export default function ChartMain() {
                     setShowDeviceDropdown(!showDeviceDropdown);
                     setShowBlockDropdown(false);
                     setShowSensorDropdown(false);
+                    setShowStartDatePicker(false);
+                    setShowEndDatePicker(false);
                   }}
                   disabled={isDownloading}>
                   <Text style={styles.dropdownText}>{selectedDevice}</Text>
@@ -627,6 +626,28 @@ export default function ChartMain() {
                 </TouchableOpacity>
               </View>
 
+              {/* DateTimePicker for Start Date - INLINE dalam Modal */}
+              {showStartDatePicker && (
+                <View style={styles.inlinePickerContainer}>
+                  <View style={styles.pickerHeader}>
+                    <Text style={styles.pickerTitle}>Select Start Date</Text>
+                    <TouchableOpacity
+                      onPress={() => setShowStartDatePicker(false)}
+                      style={styles.pickerCloseButton}>
+                      <Text style={styles.pickerCloseText}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <DateTimePicker
+                    value={startDate || new Date()}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                    onChange={handleStartDateChange}
+                    maximumDate={new Date()}
+                    style={styles.inlinePicker}
+                  />
+                </View>
+              )}
+
               {/* End Date */}
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>To</Text>
@@ -644,6 +665,29 @@ export default function ChartMain() {
                   <Calendar color="#666" variant="Linear" size={16} />
                 </TouchableOpacity>
               </View>
+
+              {/* DateTimePicker for End Date - INLINE dalam Modal */}
+              {showEndDatePicker && (
+                <View style={styles.inlinePickerContainer}>
+                  <View style={styles.pickerHeader}>
+                    <Text style={styles.pickerTitle}>Select End Date</Text>
+                    <TouchableOpacity
+                      onPress={() => setShowEndDatePicker(false)}
+                      style={styles.pickerCloseButton}>
+                      <Text style={styles.pickerCloseText}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <DateTimePicker
+                    value={endDate || new Date()}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                    onChange={handleEndDateChange}
+                    minimumDate={startDate || undefined}
+                    maximumDate={new Date()}
+                    style={styles.inlinePicker}
+                  />
+                </View>
+              )}
 
               {/* Buttons */}
               <View style={styles.modalButtonContainer}>
@@ -672,43 +716,45 @@ export default function ChartMain() {
             </View>
           </TouchableOpacity>
         </TouchableOpacity>
+
+        {/* DateTimePicker untuk Android - Tetap diluar modal */}
+        {showStartDatePicker && Platform.OS === 'android' && (
+          <DateTimePicker
+            value={startDate || new Date()}
+            mode="date"
+            display="default"
+            onChange={handleStartDateChange}
+            maximumDate={new Date()}
+          />
+        )}
+
+        {showEndDatePicker && Platform.OS === 'android' && (
+          <DateTimePicker
+            value={endDate || new Date()}
+            mode="date"
+            display="default"
+            onChange={handleEndDateChange}
+            minimumDate={startDate || undefined}
+            maximumDate={new Date()}
+          />
+        )}
       </Modal>
-
-      {/* Date Pickers */}
-      {showStartDatePicker && (
-        <DateTimePicker
-          value={startDate || new Date()}
-          mode="date"
-          display="default"
-          onChange={handleStartDateChange}
-          maximumDate={new Date()}
-        />
-      )}
-
-      {showEndDatePicker && (
-        <DateTimePicker
-          value={endDate || new Date()}
-          mode="date"
-          display="default"
-          onChange={handleEndDateChange}
-          minimumDate={startDate || undefined}
-          maximumDate={new Date()}
-        />
-      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#fff'},
+  container: {
+    flex: 1, 
+    backgroundColor: '#fff'
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    height: 48,
-    marginTop: 10,
+    height: 58,
     paddingHorizontal: 4,
-    marginBottom: -70,
+
   },
   title: {
     fontSize: 18,
@@ -765,8 +811,9 @@ const styles = StyleSheet.create({
   modalContainer: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    width: '90%',
-    maxWidth: 380,
+    width: '95%',
+    maxWidth: 400,
+    maxHeight: '90%',
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.25,
@@ -775,12 +822,15 @@ const styles = StyleSheet.create({
   },
   modalHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
+    backgroundColor: '#f8f9fa',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
   },
   modalTitle: {
     fontSize: 16,
@@ -791,6 +841,7 @@ const styles = StyleSheet.create({
   modalContent: {
     paddingHorizontal: 16,
     paddingVertical: 16,
+    maxHeight: '80%',
   },
 
   // Form layout styles
@@ -886,6 +937,42 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#333',
     fontFamily: 'SpaceGrotesk-Regular',
+  },
+
+  // Inline DatePicker Styles
+  inlinePickerContainer: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: 12,
+    marginVertical: 8,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  pickerTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    fontFamily: 'SpaceGrotesk-Medium',
+  },
+  pickerCloseButton: {
+    padding: 4,
+    borderRadius: 4,
+    backgroundColor: '#e9ecef',
+  },
+  pickerCloseText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+  },
+  inlinePicker: {
+    backgroundColor: 'transparent',
+    height: Platform.OS === 'ios' ? 100 : 'auto',
   },
 
   modalButtonContainer: {

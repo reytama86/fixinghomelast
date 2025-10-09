@@ -1319,10 +1319,10 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
                           />
                         </Svg>
                       </View>
-                      <Text style={styles.vectorLabel2}>6</Text>
+                      <Text style={styles.vectorLabel2}>7</Text>
                     </View>
                     <View style={styles.containerTextBlock}>
-                      <Text style={styles.textBlockHeader}>Block 6</Text>
+                      <Text style={styles.textBlockHeader}>Block 7</Text>
                       <Text style={styles.textBlock}>
                         Temperature:{' '}
                         {Math.round(Number(sensorDataBlock.block2.temp))}°

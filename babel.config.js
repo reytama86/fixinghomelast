@@ -1,7 +1,9 @@
 module.exports = {
   presets: ['module:metro-react-native-babel-preset'],
   plugins: [
-    // plugin lain...
-    'react-native-reanimated/plugin', // <- HARUS jadi yang terakhir
+    ['@babel/plugin-transform-class-properties', { loose: true }],
+    ['@babel/plugin-transform-private-methods', { loose: true }],
+    ['@babel/plugin-transform-private-property-in-object', { loose: true }],
+    'react-native-reanimated/plugin', // This should always be last
   ],
 };

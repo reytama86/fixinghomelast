@@ -175,7 +175,7 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation, route }) => {
       try {
         setLoading(true);
         const response = await fetch(
-          'https://iot-api.permataindonesia.com/api/latest-sensor-block2',
+          'https://iot-vanili-api.permataindonesia.com/api/latest-sensor-block2',
         );
         
         if (!response.ok) {
@@ -206,7 +206,11 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation, route }) => {
 
       const onBackPress = () => {
         // Navigasi berdasarkan dari mana user datang
-        navigation.goBack();
+        if (from === 'AllBlock') {
+          navigation.navigate('AllBlock');
+        } else {
+          navigation.navigate('HomeFix');
+        }
         return true; // cegah default behavior
       };
 

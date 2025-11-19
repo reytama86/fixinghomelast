@@ -84,6 +84,8 @@ export function useControlState({topicPrefix, publish, pageId, isActive = true}:
   const completeWaterProcess = useCallback(() => {
     clearWaterTimer();
     
+    const actualDuration = state.waterDuration - state.remainingWaterTime;
+
     updateState({
       isWaterOn: false,
       remainingWaterTime: 0,
@@ -97,15 +99,17 @@ export function useControlState({topicPrefix, publish, pageId, isActive = true}:
     
     setTimeout(() => {
       publish(`control/water${topicPrefix}`, {valve_status: 'close', duration: 0});
-      publish(`time/water${topicPrefix}`, {timestamp});
+      publish(`time/water${topicPrefix}`, {timestamp, duration: actualDuration});
       publish(`start/water${topicPrefix}`, {startTimestamp: nowTs, duration: 0});
     }, 0);
 
-  }, [clearWaterTimer, updateState, publish, topicPrefix]);
+  }, [clearWaterTimer, updateState, publish, topicPrefix, state.waterDuration, state.remainingWaterTime]);
 
   const completeFertProcess = useCallback(() => {
     clearFertTimer();
     
+    const actualDuration = state.fertDuration - state.remainingFertTime;
+
     updateState({
       isFertilizerOn: false,
       remainingFertTime: 0,
@@ -119,11 +123,11 @@ export function useControlState({topicPrefix, publish, pageId, isActive = true}:
     
     setTimeout(() => {
       publish(`control/fertilizer${topicPrefix}`, {valve_status: 'close', duration: 0});
-      publish(`time/fertilizer${topicPrefix}`, {timestamp});
+      publish(`time/fertilizer${topicPrefix}`, {timestamp, duration: actualDuration});
       publish(`start/fertilizer${topicPrefix}`, {startTimestamp: nowTs, duration: 0});
     }, 0);
 
-  }, [clearFertTimer, updateState, publish, topicPrefix]);
+  }, [clearFertTimer, updateState, publish, topicPrefix, state.fertDuration, state.remainingFertTime]);
 
   const startWaterTimer = useCallback((duration: number) => {
     clearWaterTimer();
@@ -404,6 +408,9 @@ export function useControlState({topicPrefix, publish, pageId, isActive = true}:
     const timestamp = new Date().toISOString();
     
     if (type === 'water') {
+
+      const actualDuration = state.waterDuration - state.remainingWaterTime;
+
       clearWaterTimer();
       updateState({
         remainingWaterTime: 0,
@@ -415,10 +422,13 @@ export function useControlState({topicPrefix, publish, pageId, isActive = true}:
       
       setTimeout(() => {
         publish(`control/water${topicPrefix}`, {valve_status: 'close', duration: 0});
-        publish(`time/water${topicPrefix}`, {timestamp});
+        publish(`time/water${topicPrefix}`, {timestamp, duration: actualDuration});
         publish(`start/water${topicPrefix}`, {startTimestamp: nowTs, duration: 0});
       }, 0);
     } else {
+
+      const actualDuration = state.fertDuration - state.remainingFertTime;
+
       clearFertTimer();
       updateState({
         remainingFertTime: 0,
@@ -430,12 +440,12 @@ export function useControlState({topicPrefix, publish, pageId, isActive = true}:
       
       setTimeout(() => {
         publish(`control/fertilizer${topicPrefix}`, {valve_status: 'close', duration: 0});
-        publish(`time/fertilizer${topicPrefix}`, {timestamp});
+        publish(`time/fertilizer${topicPrefix}`, {timestamp, duration: actualDuration});
         publish(`start/fertilizer${topicPrefix}`, {startTimestamp: nowTs, duration: 0});
       }, 0);
     }
 
-  }, [topicPrefix, publish, clearWaterTimer, clearFertTimer, updateState]);
+  }, [topicPrefix, publish, clearWaterTimer, clearFertTimer, updateState, state]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextState => {

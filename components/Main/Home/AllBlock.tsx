@@ -51,10 +51,10 @@ const AllBlock: React.FC<Props> = ({navigation}) => {
 
         // Mapping sensor ID ke block
         const blockSensorMap = {
-          3: 'block3', // Block 3
+          5: 'block3', // Block 3
           2: 'block4', // Block 4 (sensor ID 2)
           6: 'block6', // Block 6 (sensor ID 5)
-          5: 'block7', // Block 7 (sensor ID 6)
+          3: 'block7', // Block 7 (sensor ID 6)
           7: 'block8', // Block 8 (sensor ID 7)
         };
 
@@ -258,7 +258,8 @@ const AllBlock: React.FC<Props> = ({navigation}) => {
       humidity: isNaN(Number(sensorDataBlocks.block3.humidity))
         ? '0'
         : Math.round(Number(sensorDataBlocks.block3.humidity)).toString(),
-      svgPath: 'block3',
+      navigationTarget: 'DetailBlockTwo',
+      svgPath: 'block2',
     },
     {
       id: 4,
@@ -294,7 +295,7 @@ const AllBlock: React.FC<Props> = ({navigation}) => {
         ? '0'
         : Math.round(Number(sensorDataBlocks.block7.humidity)).toString(),
       navigationTarget: 'DetailBlockTwo',
-      svgPath: 'block2',
+      svgPath: 'block3',
     },
     {
       id: 8,

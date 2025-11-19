@@ -99,28 +99,28 @@ const ReadSoilDetail: React.FC<Props> = ({ navigation, route }) => {
 
     switch (sensorType.toLowerCase()) {
       case 'ph':
-        if (numValue < 5.5) return { status: 'Low', color: 'red', icon: 'arrow-down' };
-        if (numValue > 6.5) return { status: 'High', color: 'red', icon: 'arrow-up' };
+        if (numValue < 4.5) return { status: 'Low', color: 'red', icon: 'arrow-down' };
+        if (numValue > 8) return { status: 'High', color: 'red', icon: 'arrow-up' };
         return { status: 'Good', color: 'green', icon: 'arrow-up' };
       
       case 'ec':
-        if (numValue < 200) return { status: 'Low', color: 'red', icon: 'arrow-down' };
-        if (numValue > 1000) return { status: 'High', color: 'red', icon: 'arrow-up' };
+        if (numValue < 0) return { status: 'Low', color: 'red', icon: 'arrow-down' };
+        if (numValue > 4000) return { status: 'High', color: 'red', icon: 'arrow-up' };
         return { status: 'Good', color: 'green', icon: 'arrow-up' };
       
       case 'nitrogen':
-        if (numValue < 50) return { status: 'Low', color: 'red', icon: 'arrow-down' };
-        if (numValue > 150) return { status: 'High', color: 'red', icon: 'arrow-up' };
+        if (numValue < 0.1) return { status: 'Low', color: 'red', icon: 'arrow-down' };
+        if (numValue > 20) return { status: 'High', color: 'red', icon: 'arrow-up' };
         return { status: 'Good', color: 'green', icon: 'arrow-up' };
       
       case 'phosphorus':
-        if (numValue < 10) return { status: 'Low', color: 'red', icon: 'arrow-down' };
-        if (numValue > 25) return { status: 'High', color: 'red', icon: 'arrow-up' };
+        if (numValue < 0.1) return { status: 'Low', color: 'red', icon: 'arrow-down' };
+        if (numValue > 10) return { status: 'High', color: 'red', icon: 'arrow-up' };
         return { status: 'Good', color: 'green', icon: 'arrow-up' };
       
       case 'kalium':
-        if (numValue < 150) return { status: 'Low', color: 'red', icon: 'arrow-down' };
-        if (numValue > 250) return { status: 'High', color: 'red', icon: 'arrow-up' };
+        if (numValue < 0.1) return { status: 'Low', color: 'red', icon: 'arrow-down' };
+        if (numValue > 15) return { status: 'High', color: 'red', icon: 'arrow-up' };
         return { status: 'Good', color: 'green', icon: 'arrow-up' };
       
       default:

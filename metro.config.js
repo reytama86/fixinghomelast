@@ -12,5 +12,6 @@ const config = {
     sourceExts: [...sourceExts, 'svg'],
   },
 };
+config.resolver.unstable_enablePackageExports = false;
 
 module.exports = mergeConfig(defaultConfig, config);

@@ -122,15 +122,15 @@ const SensorItem = React.memo<{
 
 const getSensorStatus = (value: number, sensorType: string) => {
   const thresholds = {
-    Kalium: {good: [10, 15], unit: 'mg/kg'},
-    EC: {good: [30, 50], unit: ''},
-    PH: {good: [6, 7.5], unit: ''},
-    Nitrogen: {good: [10, 20], unit: 'mg/kg'},
-    Phosphor: {good: [5, 15], unit: 'mg/kg'},
-    'Soil Humidity': {good: [40, 60], unit: '%'},
-    'Soil Temperature': {good: [20, 30], unit: '°'},
-    Temperature: {good: [25, 35], unit: '°'},
-    Humidity: {good: [60, 80], unit: '%'},
+    Kalium: {good: [0.1, 15], unit: 'mg/kg'},
+    EC: {good: [0, 4000], unit: 'µS/cm'},
+    PH: {good: [4.5, 8], unit: ''},
+    Nitrogen: {good: [0.1, 20], unit: 'mg/kg'},
+    Phosphor: {good: [0.1, 10], unit: 'mg/kg'},
+    'Soil Humidity': {good: [20, 80], unit: '%'},
+    'Soil Temperature': {good: [20, 32], unit: '°'},
+    Temperature: {good: [20, 30], unit: '°'},
+    Humidity: {good: [70, 85], unit: '%'},
     Light: {good: [10000, 15000], unit: 'Lux'},
   };
 
@@ -710,7 +710,7 @@ const DetailBlockTwo: React.FC<Props> = ({ navigation, route }) => {
               fontFamily: 'SpaceGrotesk-Medium',
               right: 5,
               textAlign: 'center',
-            }}>Block 7</Text>
+            }}>Block 3</Text>
             <ArrowLeft2
               color="black"
               variant="Linear"
@@ -1296,9 +1296,13 @@ const styles = StyleSheet.create({
   },
 
   gridItemEmpty: {
-    width: 155,
-    // Empty placeholder - no styling needed
-  },
+  flex: 1,
+  paddingHorizontal: 10,  
+  paddingVertical: 8,      
+  borderRadius: 8,
+  borderWidth: 1,
+  borderColor: 'transparent', 
+},
   cardThree: {
     width: '100%',
     height: 470,

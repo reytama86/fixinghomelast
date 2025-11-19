@@ -126,37 +126,49 @@ const ReadSoil: React.FC<Props> = ({navigation}) => {
 
     switch (type) {
       case 'temperature':
-        if (value >= 20 && value <= 30) {
+        if (value >= 20 && value <= 32) {
           status = 'Good';
           color = 'green';
           icon = 'arrow-up';
         }
         break;
       case 'humidity':
-        if (value >= 70 && value <= 85) {
+        if (value >= 20 && value <= 80) {
           status = 'Good';
           color = 'green';
           icon = 'arrow-up';
         }
         break;
       case 'ph':
-        if (value >= 5.5 && value <= 6.5) {
+        if (value >= 4.5 && value <= 8) {
           status = 'Good';
           color = 'green';
           icon = 'arrow-up';
         }
         break;
       case 'ec':
-        if (value >= 200 && value <= 1000) {
+        if (value >= 0 && value <= 4000) {
           status = 'Good';
           color = 'green';
           icon = 'arrow-up';
         }
         break;
       case 'nitrogen':
+        if (value >= 0.1 && value <= 20) {
+          status = 'Good';
+          color = 'green';
+          icon = 'arrow-up';
+        }
+        break;
       case 'phosphorus':
+        if (value >= 0.1 && value <= 10) {
+          status = 'Good';
+          color = 'green';
+          icon = 'arrow-up';
+        }
+        break;
       case 'kalium':
-        if (value >= 150 && value <= 250) {
+        if (value >= 0.1 && value <= 15) {
           status = 'Good';
           color = 'green';
           icon = 'arrow-up';

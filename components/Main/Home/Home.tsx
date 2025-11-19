@@ -266,20 +266,20 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
       PH: {
         low: {
           min: 0,
-          max: 5.4,
+          max: 4.4,
           color: 'red',
           icon: 'arrow-down',
           status: 'Low',
         },
         good: {
-          min: 5.5,
-          max: 6.5,
+          min: 4.5,
+          max: 8.0,
           color: 'green',
           icon: 'arrow-up',
           status: 'Good',
         },
         high: {
-          min: 6.6,
+          min: 8.1,
           max: 14,
           color: 'red',
           icon: 'arrow-up',
@@ -287,16 +287,16 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
         },
       },
       Nitrogen: {
-        low: {min: 0, max: 49, color: 'red', icon: 'arrow-down', status: 'Low'},
+        low: {min: 0, max: 0, color: 'red', icon: 'arrow-down', status: 'Low'},
         good: {
-          min: 50,
-          max: 150,
+          min: 0.1,
+          max: 20,
           color: 'green',
           icon: 'arrow-up',
           status: 'Good',
         },
         high: {
-          min: 151,
+          min: 21,
           max: 1000,
           color: 'red',
           icon: 'arrow-up',
@@ -304,16 +304,16 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
         },
       },
       Phosphor: {
-        low: {min: 0, max: 9, color: 'red', icon: 'arrow-down', status: 'Low'},
+        low: {min: 0, max: 0, color: 'red', icon: 'arrow-down', status: 'Low'},
         good: {
-          min: 10,
-          max: 25,
+          min: 0.1,
+          max: 10,
           color: 'green',
           icon: 'arrow-up',
           status: 'Good',
         },
         high: {
-          min: 26,
+          min: 11,
           max: 1000,
           color: 'red',
           icon: 'arrow-up',
@@ -323,20 +323,20 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
       Kalium: {
         low: {
           min: 0,
-          max: 149,
+          max: 0,
           color: 'red',
           icon: 'arrow-down',
           status: 'Low',
         },
         good: {
-          min: 150,
-          max: 250,
+          min: 0.1,
+          max: 15,
           color: 'green',
           icon: 'arrow-up',
           status: 'Good',
         },
         high: {
-          min: 251,
+          min: 16,
           max: 1000,
           color: 'red',
           icon: 'arrow-up',
@@ -1178,6 +1178,87 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
             <View style={styles.containerBlock}>
               <TouchableOpacity
                 onPress={() => {
+                  navigation.navigate('DetailBlockTwo', {from: 'HomeFix'}); // Tambah parameter from
+                }}>
+                <CornerCutComponent
+                  width={cardWidth}
+                  height={175}
+                  cutSize={40.5}
+                  backgroundColor="#ffffff"
+                  borderRadius={22}>
+                  <View style={styles.cardBlockContent}>
+                    <View style={styles.containerVector}>
+                      {/* Frame notifikasi Fertilizer */}
+                      {/* <View style={styles.notifIconFertilizer}>
+            <Video
+              source={require('./assets/videos/pupuk.mp4')}
+              style={{ width: 24, height: 24 }}
+              resizeMode="cover"
+              repeat
+              muted
+              paused={true}
+            />
+          </View>
+          <View style={styles.notifIconWater}>
+            <Video
+              source={require('./assets/videos/air.mp4')}
+              style={{ width: 24, height: 24 }}
+              resizeMode="cover"
+              repeat
+              muted
+              paused={true}
+            />
+          </View> */}
+                      <View style={styles.svgContainer}>
+                        <Svg
+                          width={102}
+                          height={77}
+                          viewBox="0 0 102 77"
+                          fill="none">
+                          <Path
+                            d="M1.49996 43.5C1.14581 38.8961 14.7443 18.9287 17.8669 14.4109C18.2851 13.8058 18.8567 13.3446 19.5312 13.0509L45.6306 1.68501C47.7332 0.769373 50.1736 1.80538 50.9753 3.95399L62 33.5L97.6325 47.988C101.055 49.3794 100.923 54.2696 97.4307 55.4746L38.7879 75.7105C37.3813 76.1959 35.8216 75.8604 34.739 74.8397L1.49996 43.5Z"
+                            fill="#F0F8DA"
+                          />
+                          <Path
+                            d="M1.49996 43.5C1.14581 38.8961 14.7443 18.9287 17.8669 14.4109C18.2851 13.8058 18.8567 13.3446 19.5312 13.0509L45.6306 1.68501C47.7332 0.769373 50.1736 1.80538 50.9753 3.95399L62 33.5M1.49996 43.5L34.739 74.8397C35.8216 75.8604 37.3813 76.1959 38.7879 75.7105L97.4307 55.4746C100.923 54.2696 101.055 49.3794 97.6325 47.988L62 33.5M1.49996 43.5L62 33.5"
+                            stroke="#A3C73F"
+                            strokeWidth={2}
+                            strokeLinejoin="round"
+                          />
+                        </Svg>
+                      </View>
+                      <Text style={styles.vectorLabel2}>3</Text>
+                    </View>
+                    <View style={styles.containerTextBlock}>
+                      <Text style={styles.textBlockHeader}>Block 3</Text>
+                      <Text style={styles.textBlock}>
+                        Temperature:{' '}
+                        {Math.round(Number(sensorDataBlock.block2.temp))}°
+                      </Text>
+                      <Text style={styles.textBlock}>
+                        Humidity:{' '}
+                        {Math.round(Number(sensorDataBlock.block2.humidity))}%
+                      </Text>
+                    </View>
+                    <View style={styles.cutoutButton}>
+                      <Svg width={36} height={36} viewBox="0 0 36 36">
+                        <Path
+                          d="M18 36C27.9411 36 36 27.9411 36 18C36 8.05888 27.9411 0 18 0C8.05888 0 0 8.05888 0 18C0 27.9411 8.05888 36 18 36Z"
+                          fill="#B4DC45"
+                        />
+                      </Svg>
+                      <ArrowDown
+                        variant="Linear"
+                        size={26}
+                        color="white"
+                        style={styles.arrowIcon}
+                      />
+                    </View>
+                  </View>
+                </CornerCutComponent>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
                   navigation.navigate('DetailBlockOne', {from: 'HomeFix'}); // Tambah parameter from
                 }}>
                 <CornerCutComponent
@@ -1248,88 +1329,6 @@ const HomeFix: React.FC<Props> = ({navigation}) => {
                       <Text style={styles.textBlock}>
                         Humidity:{' '}
                         {Math.round(Number(sensorDataBlock.block1.humidity))}%
-                      </Text>
-                    </View>
-                    <View style={styles.cutoutButton}>
-                      <Svg width={36} height={36} viewBox="0 0 36 36">
-                        <Path
-                          d="M18 36C27.9411 36 36 27.9411 36 18C36 8.05888 27.9411 0 18 0C8.05888 0 0 8.05888 0 18C0 27.9411 8.05888 36 18 36Z"
-                          fill="#B4DC45"
-                        />
-                      </Svg>
-                      <ArrowDown
-                        variant="Linear"
-                        size={26}
-                        color="white"
-                        style={styles.arrowIcon}
-                      />
-                    </View>
-                  </View>
-                </CornerCutComponent>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => {
-                  navigation.navigate('DetailBlockTwo', {from: 'HomeFix'}); // Tambah parameter from
-                }}>
-                <CornerCutComponent
-                  width={cardWidth}
-                  height={175}
-                  cutSize={40.5}
-                  backgroundColor="#ffffff"
-                  borderRadius={22}>
-                  <View style={styles.cardBlockContent}>
-                    <View style={styles.containerVector}>
-                      {/* Frame notifikasi Fertilizer */}
-                      {/* <View style={styles.notifIconFertilizer}>
-            <Video
-              source={require('./assets/videos/pupuk.mp4')}
-              style={{ width: 24, height: 24 }}
-              resizeMode="cover"
-              repeat
-              muted
-              paused={true}
-            />
-          </View>
-          <View style={styles.notifIconWater}>
-            <Video
-              source={require('./assets/videos/air.mp4')}
-              style={{ width: 24, height: 24 }}
-              resizeMode="cover"
-              repeat
-              muted
-              paused={true}
-            />
-          </View> */}
-                      <View style={styles.svgContainer}>
-                        <Svg
-                          width={102}
-                          height={77}
-                          viewBox="0 0 102 77"
-                          fill="none">
-                          <Path
-                            d="M1.49996 43.5C1.14581 38.8961 14.7443 18.9287 17.8669 14.4109C18.2851 13.8058 18.8567 13.3446 19.5312 13.0509L45.6306 1.68501C47.7332 0.769373 50.1736 1.80538 50.9753 3.95399L62 33.5L97.6325 47.988C101.055 49.3794 100.923 54.2696 97.4307 55.4746L38.7879 75.7105C37.3813 76.1959 35.8216 75.8604 34.739 74.8397L1.49996 43.5Z"
-                            fill="#F0F8DA"
-                          />
-                          <Path
-                            d="M1.49996 43.5C1.14581 38.8961 14.7443 18.9287 17.8669 14.4109C18.2851 13.8058 18.8567 13.3446 19.5312 13.0509L45.6306 1.68501C47.7332 0.769373 50.1736 1.80538 50.9753 3.95399L62 33.5M1.49996 43.5L34.739 74.8397C35.8216 75.8604 37.3813 76.1959 38.7879 75.7105L97.4307 55.4746C100.923 54.2696 101.055 49.3794 97.6325 47.988L62 33.5M1.49996 43.5L62 33.5"
-                            stroke="#A3C73F"
-                            strokeWidth={2}
-                            strokeLinejoin="round"
-                          />
-                        </Svg>
-                      </View>
-                      <Text style={styles.vectorLabel2}>7</Text>
-                    </View>
-                    <View style={styles.containerTextBlock}>
-                      <Text style={styles.textBlockHeader}>Block 7</Text>
-                      <Text style={styles.textBlock}>
-                        Temperature:{' '}
-                        {Math.round(Number(sensorDataBlock.block2.temp))}°
-                      </Text>
-                      <Text style={styles.textBlock}>
-                        Humidity:{' '}
-                        {Math.round(Number(sensorDataBlock.block2.humidity))}%
                       </Text>
                     </View>
                     <View style={styles.cutoutButton}>

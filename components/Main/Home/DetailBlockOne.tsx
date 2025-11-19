@@ -654,13 +654,13 @@ const ExpandableBlock = React.memo<{
 
 const getSensorStatus = (value: number, sensorType: string) => {
   const thresholds = {
-    Kalium: {good: [150, 250], unit: 'mg/kg'},
-    EC: {good: [200, 1000], unit: 'µS/cm'},
-    PH: {good: [5.5, 6.5], unit: ''},
-    Nitrogen: {good: [50, 150], unit: 'mg/kg'},
-    Phosphor: {good: [10, 25], unit: 'mg/kg'},
-    'Soil Humidity': {good: [20, 40], unit: '%'},
-    'Soil Temperature': {good: [22, 28], unit: '°'},
+    Kalium: {good: [0.1, 15], unit: 'mg/kg'},
+    EC: {good: [0, 4000], unit: 'µS/cm'},
+    PH: {good: [4.5, 8], unit: ''},
+    Nitrogen: {good: [0.1, 20], unit: 'mg/kg'},
+    Phosphor: {good: [0.1, 10], unit: 'mg/kg'},
+    'Soil Humidity': {good: [20, 80], unit: '%'},
+    'Soil Temperature': {good: [20, 32], unit: '°'},
     Temperature: {good: [20, 30], unit: '°'},
     Humidity: {good: [70, 85], unit: '%'},
     Light: {good: [10000, 15000], unit: 'Lux'},
@@ -1469,8 +1469,19 @@ const styles = StyleSheet.create({
   },
 
   gridItemEmpty: {
-    width: 155,
-  },
+  flex: 1,
+  paddingHorizontal: 10,  
+  paddingVertical: 8,      
+  borderRadius: 8,
+  borderWidth: 1,
+  borderColor: 'transparent', 
+},
+gridRowSingle: {
+  flexDirection: 'row',
+  gap: 8,
+  height: 44,
+  paddingRight: 8 + (100 / 2), 
+},
   cardThree: {
     width: '100%',
     height: 470,

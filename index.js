@@ -1,4 +1,3 @@
-// index.js
 import './shim';
 import 'react-native-reanimated';
 import React from 'react';

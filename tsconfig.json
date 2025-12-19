@@ -1,4 +1,16 @@
 {
   "extends": "@react-native/typescript-config/tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@Atom/*": ["src/Components/Atom/*"],
+      "@Molecule/*": ["src/Components/Molecule/*"],
+      "@Organism/*": ["src/Components/Organism/*"],
+      "@Containers/*": ["src/Containers/*"],
+      "@Helpers/*": ["src/Helpers/*"],
+      "@Assets/*": ["src/Assets/*"],
+      "@Context/*": ["src/Context/*"],
+    }
+  },
   "include": ["declaration.d.ts", "src/**/*"]
 }

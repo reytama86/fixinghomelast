@@ -1,12 +1,12 @@
 // HomeStack.tsx - Updated with navigation params
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import HomeFix from './components/Main/Home/Home';
-import DetailBlockOne from './components/Main/Home/DetailBlockOne';
-import DetailBlockTwo from './components/Main/Home/DetailBlockTwo';
-import ReadSoilDetail from './components/Main/ReadSoil/ReadSoilDetail';
-import AllPortableTools from './components/Main/ReadSoil/AllPortableTools';
-import AllBlock from './components/Main/Home/AllBlock';
+import HomeFix from './src/Containers/Main/Home/Home';
+import DetailBlockOne from './src/Containers/Main/Home/DetailBlockOne';
+import DetailBlockTwo from './src/Containers/Main/Home/DetailBlockTwo';
+import ReadSoilDetail from './src/Containers/Main/ReadSoil/ReadSoilDetail';
+import AllPortableTools from './src/Containers/Main/ReadSoil/AllPortableTools';
+import AllBlock from './src/Containers/Main/Home/AllBlock';
 
 // Define the sensor data structure
 export type SensorData = {

@@ -9,6 +9,10 @@ import ChartMain from '@Containers/Main/Chart/ChartMain';
 import ImgLoadPortable from '@Assets/svg/ImgLoadPortable';
 import ReadSoil from '@Containers/Main/ReadSoil/ReadSoil';
 import styles from './styles';
+import BackgroundVideo from '@Containers/Main/BackgroundVideo';
+
+const backgroundAnimation = require('@Assets/videos/bgtypography.json');
+
 
 import { BleManager, Device } from 'react-native-ble-plx';
 const SERVICE_UUID = '5900f86c-57d7-422c-8aa8-fd6216fa496b';
@@ -462,6 +466,10 @@ const MainTabs: React.FC = () => {
   const loadingText = `Gathering Data${'.'.repeat(dotCount)}`;
   
   return (
+    <BackgroundVideo
+    animationSource={backgroundAnimation}
+    opacity={0.4}
+  >
     <>
       <Tab.Navigator
         tabBar={(props) => <AnimatedTabBar {...props} />}
@@ -526,6 +534,7 @@ const MainTabs: React.FC = () => {
         </View>
       </Modal>
     </>
+     </BackgroundVideo>
   );
 };
 

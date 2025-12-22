@@ -102,11 +102,12 @@ export function useMqtt(): UseMqttResult {
       }
     }
 
-    
+    const clientId = `clientId_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
     const client = new Paho.Client(
       'mqtt.permataindonesia.com',
       8038,
-      `clientId_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      '/ws',
     );
 
     clientRef.current = client;
@@ -134,7 +135,8 @@ export function useMqtt(): UseMqttResult {
 
     const connectOptions = {
       useSSL: true,
-      cleanSession: false,
+      cleanSession: true,
+      // clientId: clientId,
       userName: 'superAdmNyamuk1',
       password: 'hYqS9+*zDTxYN3bQSTPzistq',
       timeout: 20,

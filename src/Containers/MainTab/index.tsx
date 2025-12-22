@@ -4,7 +4,7 @@ import { View, Modal, Text, Pressable, StyleSheet, Animated } from 'react-native
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { getFocusedRouteNameFromRoute, NavigatorScreenParams } from '@react-navigation/native';
 import { Home, Chart, Scan } from 'iconsax-react-native';
-import HomeStack, {HomeStackParamList} from 'HomeStack';
+import HomeStack, {HomeStackParamList} from '../../../HomeStack'
 import ChartMain from '@Containers/Main/Chart/ChartMain';
 import ImgLoadPortable from '@Assets/svg/ImgLoadPortable';
 import ReadSoil from '@Containers/Main/ReadSoil/ReadSoil';

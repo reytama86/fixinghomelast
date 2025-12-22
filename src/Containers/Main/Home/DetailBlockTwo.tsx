@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import React, {useCallback, useMemo, useState} from 'react';
 import {ArrowLeft2} from 'iconsax-react-native';
-import GaugeSvg from '../../../../components/GaugeComponent';
+import GaugeSvg from '@Atom/Gauge';
 import EllipseIndicator from '../../../../components/EllipsIndicator';
 import {useRef, useEffect} from 'react';
 import {Animated} from 'react-native';
@@ -25,7 +25,7 @@ import {Video, VideoRef} from 'react-native-video';
 import Ellips from '../../../Assets/svg/Ellips';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {HomeStackParamList} from '../../../../HomeStack'; 
-import {useMqtt} from '../../../Hooks/UseMqtt';
+import { useMqtt } from 'src/Hooks/UseMqtt';
 import {AppState, AppStateStatus} from 'react-native';
 import ConfirmModal from './Modal/ConfirmModal';
 import {useControlState} from '../../../Hooks/useControlState';

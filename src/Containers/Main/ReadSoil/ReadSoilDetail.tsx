@@ -12,8 +12,8 @@ import {
   } from 'react-native';
   import React, {useCallback, useState} from 'react';
   import {ArrowLeft2} from 'iconsax-react-native';
-  import GaugeSvg from '../../../../components/GaugeComponent';
-  import EllipseIndicator from '../../../../components/EllipsIndicator';
+  import GaugeSvg from '@Atom/Gauge';
+  import EllipseIndicator from '@Atom/EllipsIndicator';
   import {useRef, useEffect} from 'react';
   import {Animated} from 'react-native';
   import Ionicons from 'react-native-vector-icons/Ionicons';

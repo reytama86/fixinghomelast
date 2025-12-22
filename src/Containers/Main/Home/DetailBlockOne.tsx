@@ -23,7 +23,7 @@ import {useFocusEffect} from '@react-navigation/native';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import { HomeStackParamList } from 'HomeStack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import GaugeSvg from 'src/Components/Atom/Gauge';
+import GaugeSvg from '@Atom/Gauge';
 import Ellips from '@Assets/svg/Ellips';
 import {BackHandler} from 'react-native';
 
@@ -1043,7 +1043,7 @@ const DetailBlockOne: React.FC<Props> = ({navigation, route}) => {
       <>
         <ExpandableBlock
           title="Water"
-          animationSource={require('../../../assets/videos/air.mp4.lottie.json')}
+          animationSource={require('@Assets/videos/air.mp4.lottie.json')}
           blockCount={2}
           blockType="water"
           mainControl={block1Control}
@@ -1054,7 +1054,7 @@ const DetailBlockOne: React.FC<Props> = ({navigation, route}) => {
 
         <ExpandableBlock
           title="Fertilizer"
-          animationSource={require('../../../assets/videos/pupuk.mp4.lottie.json')}
+          animationSource={require('@Assets/videos/pupuk.mp4.lottie.json')}
           blockCount={2}
           blockType="fertilizer"
           mainControl={block1Control}

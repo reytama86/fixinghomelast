@@ -1,20 +1,18 @@
-// HomeStack.tsx - Updated with navigation params
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import HomeFix from './src/Containers/Main/Home/Home';
+import Home from '@Containers/Main/Home';
 import DetailBlockOne from './src/Containers/Main/Home/DetailBlockOne';
 import DetailBlockTwo from './src/Containers/Main/Home/DetailBlockTwo';
 import ReadSoilDetail from './src/Containers/Main/ReadSoil/ReadSoilDetail';
 import AllPortableTools from './src/Containers/Main/ReadSoil/AllPortableTools';
 import AllBlock from './src/Containers/Main/Home/AllBlock';
 
-// Define the sensor data structure
+
 export type SensorData = {
   keterangan_sensor: string;
   nilai_sensor: number;
 };
 
-// Define the portable tool data structure
 export type PortableToolData = {
   id: number;
   keterangan_portable: string;
@@ -23,12 +21,12 @@ export type PortableToolData = {
 };
 
 export type HomeStackParamList = {
-  HomeFix: undefined;
+  Home: undefined;
   DetailBlockOne: {
-    from?: 'HomeFix' | 'AllBlock'; // Parameter untuk mengetahui dari mana datang
+    from?: 'Home' | 'AllBlock'; 
   } | undefined;
   DetailBlockTwo: {
-    from?: 'HomeFix' | 'AllBlock'; // Parameter untuk mengetahui dari mana datang
+    from?: 'Home' | 'AllBlock';
   } | undefined;
   ReadSoilDetail: {
     portableData: PortableToolData;
@@ -48,7 +46,7 @@ export default function HomeStack() {
         animationTypeForReplace: 'pop',
       }}
     >
-      <Stack.Screen name="HomeFix" component={HomeFix} />
+      <Stack.Screen name="Home" component={Home} />
       <Stack.Screen name="DetailBlockOne" component={DetailBlockOne} />
       <Stack.Screen name="DetailBlockTwo" component={DetailBlockTwo} />
       <Stack.Screen 

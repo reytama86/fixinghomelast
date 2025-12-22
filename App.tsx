@@ -4,9 +4,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthContext } from './src/Context/AuthContext';
 import BackgroundVideo from '@Containers/Main/BackgroundVideo'
-import Intro from './Intro';
+import Intro from '@Containers/SplashScreen';
 import Login from '@Containers/Auth/Login';
-import MainTabs from './MainTabs';
+import MainTabs from '@Containers/MainTab';
 
 export type RootStackParamList = {
   Intro: undefined;
@@ -14,11 +14,11 @@ export type RootStackParamList = {
   Main: undefined;
 };
 
-const backgroundAnimation = require('./assets/videos/topography.mp4.lottie.json');
+const backgroundAnimation = require('@Assets/videos/topography.mp4.lottie.json');
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const AppTest: React.FC = () => {
+const App: React.FC = () => {
   const { isLoading, userToken } = useContext(AuthContext);
 
   if (isLoading) {
@@ -49,4 +49,4 @@ const AppTest: React.FC = () => {
   );
 };
 
-export default AppTest;
+export default App;

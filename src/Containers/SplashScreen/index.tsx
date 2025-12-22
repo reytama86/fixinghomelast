@@ -18,7 +18,7 @@ const Intro: React.FC<Props> = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Image
-        source={require('./assets/images/agrofiliaaa.png')}
+        source={require('@Assets/images/agrofiliaaa.png')}
         style={styles.image}
         resizeMode="contain"
       />

@@ -8,8 +8,8 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {useMqtt} from '../components/Main/Home/Services/UseMqtt';
-import {useControlState} from '../components/Main/Home/Services/useControlState';
+import { useMqtt } from '../Hooks/UseMqtt';
+import { useControlState } from '../Hooks/useControlState';
 import * as Paho from 'paho-mqtt';
 
 const TOPIC_CONFIG = {

@@ -35,7 +35,7 @@ const BLOCK_CONFIGS: Record<string, BlockConfig> = {
   },
 };
 
-export const useDetailBlock = (route: any) => {
+export const useDetailBlock = (route: any, navigation: any) => {
   const routeName = route.name;
   const config = BLOCK_CONFIGS[routeName];
   const from = route.params?.from || 'HomeFix';
@@ -54,6 +54,14 @@ export const useDetailBlock = (route: any) => {
   const [confirmType, setConfirmType] = useState<'water' | 'fertilizer' | null>(null);
   const [inputMinutes, setInputMinutes] = useState('1');
   const [inputSeconds, setInputSeconds] = useState('0');
+
+  const handleGoBack = useCallback(() => {
+    if (from === 'AllBlock') {
+      navigation.navigate('AllBlock');
+    } else {
+      navigation.navigate('HomeFix');
+    }
+  }, [from, navigation]);
 
   const blockControls = useMemo(() => {
     if (config.blockNumber === 1) {
@@ -125,7 +133,7 @@ export const useDetailBlock = (route: any) => {
       fetchSensorData();
 
       const onBackPress = () => {
-        handleGoBack();
+        handleGoBack(); 
         return true;
       };
 
@@ -134,23 +142,14 @@ export const useDetailBlock = (route: any) => {
       return () => {
         subscription.remove();
       };
-    }, [config.blockNumber, fetchSensorData]),
+    }, [config.blockNumber, fetchSensorData, handleGoBack, setActivePage]), 
   );
-
-  const handleGoBack = useCallback((navigation: any) => {
-    if (from === 'AllBlock') {
-      navigation.navigate('AllBlock');
-    } else {
-      navigation.navigate('HomeFix');
-    }
-  }, [from]);
 
   const handleToggle = useCallback(
     (type: 'water' | 'fertilizer', target?: 'main' | 'row1' | 'row2') => {
       const control = blockControls.main;
-      
-      const isCurrentlyActive =
-        type === 'water' ? control.isWaterOn : control.isFertilizerOn;
+
+      const isCurrentlyActive = type === 'water' ? control.isWaterOn : control.isFertilizerOn;
 
       if (isCurrentlyActive) {
         setConfirmType(type);
@@ -211,24 +210,24 @@ export const useDetailBlock = (route: any) => {
     blockTitle: config.blockTitle,
     blockControls,
     apiEndpoint: config.apiEndpoint,
-    
+
     sensorData,
     loading,
-    
+
     showDurationModal,
     showConfirm,
     currentProcess,
     confirmType,
     inputMinutes,
     inputSeconds,
-    
+
     handleToggle,
     handleStartProcess,
-    handleConfirmStop: handleConfirmStop,
+    handleConfirmStop,
     setShowDurationModal,
     setShowConfirm,
     handleMinutesChange,
     handleSecondsChange,
-    handleGoBack,
+    handleGoBack, 
   };
 };

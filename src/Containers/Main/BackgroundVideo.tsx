@@ -17,7 +17,7 @@ const BackgroundVideo: React.FC<BackgroundVideoProps> = ({
   animationSource,
   speed = 1,
   loop = true,
-  opacity = 0.7,
+  opacity = 0.3,
 }) => {
   return (
     <View style={styles.container}>

@@ -14,7 +14,7 @@ export type RootStackParamList = {
   Main: undefined;
 };
 
-const backgroundAnimation = require('@Assets/videos/bgtypography.json');
+const backgroundAnimation = require('@Assets/videos/topography.mp4.lottie.json');
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -32,22 +32,21 @@ const App: React.FC = () => {
   }
 
   return (
-  <NavigationContainer>
-    <BackgroundVideo animationSource={backgroundAnimation}>
+    <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {userToken == null ? (
+          // Flow sebelum login
           <>
             <Stack.Screen name="Intro" component={Intro} />
             <Stack.Screen name="Login" component={Login} />
           </>
         ) : (
+          // Flow setelah login
           <Stack.Screen name="Main" component={MainTabs} />
         )}
       </Stack.Navigator>
-    </BackgroundVideo>
-  </NavigationContainer>
-);
-
+    </NavigationContainer>
+  );
 };
 
 export default App;

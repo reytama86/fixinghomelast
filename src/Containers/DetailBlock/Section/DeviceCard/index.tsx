@@ -134,3 +134,5 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({deviceNumber, sensorData}
     </View>
   );
 };
+
+export default DeviceCard

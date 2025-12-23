@@ -5,7 +5,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
   Modal,
   ActivityIndicator,
   SafeAreaView,
@@ -14,7 +13,9 @@ import {
   PermissionsAndroid,
   Platform,
   KeyboardAvoidingView,
-  BackHandler
+  BackHandler,
+  Dimensions,
+  ScrollView,
 } from 'react-native';
 import {Animated} from 'react-native';
 import {BleManager, Device} from 'react-native-ble-plx';
@@ -28,18 +29,20 @@ import {Buffer} from 'buffer';
 import ImgLoadPortable from '../../../Assets/svg/ImgLoadPortable';
 import {useControl} from '../../../Context/ControlContext';
 
+const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
+
 const SERVICE_UUID = '5900f86c-57d7-422c-8aa8-fd6216fa496b';
 const CHARACTERISTIC_UUID = 'a0863556-7065-46e6-96ee-99e3f693cb7f';
 const REQUEST_CHAR_UUID = 'b1974667-8166-57f7-a7bb-0e7327ab507c';
 
 type CompactSensorData = {
-  H: number; // Humidity
-  T: number; // Temperature
-  E: number; // EC
-  P: number; // pH
-  N: number; // Nitrogen
-  K: number; // Phosphorus
-  L: number; // Kalium
+  H: number;
+  T: number;
+  E: number;
+  P: number;
+  N: number;
+  K: number;
+  L: number;
 };
 
 type ReadSoilRouteProp = RouteProp<MainTabParamList, 'ReadSoil'>;
@@ -83,7 +86,6 @@ const ReadSoil: React.FC<Props> = ({navigation}) => {
     const id_portable = '4';
 
     const payload = {
-      // id_portable: id_portable,
       resultName: resultName.trim(),
       timestamp: new Date().toISOString(),
       deviceId: deviceId || connectedDevice?.id || 'portable_sensor',
@@ -114,57 +116,57 @@ const ReadSoil: React.FC<Props> = ({navigation}) => {
 
   const getStatusIndicator = (value: number, type: string) => {
     let status = 'Low';
-    let color = 'red';
+    let color = '#EF4444';
     let icon = 'arrow-down';
 
     switch (type) {
       case 'temperature':
         if (value >= 20 && value <= 32) {
           status = 'Good';
-          color = 'green';
-          icon = 'arrow-up';
+          color = '#22C55E';
+          icon = 'checkmark-circle';
         }
         break;
       case 'humidity':
         if (value >= 20 && value <= 80) {
           status = 'Good';
-          color = 'green';
-          icon = 'arrow-up';
+          color = '#22C55E';
+          icon = 'checkmark-circle';
         }
         break;
       case 'ph':
         if (value >= 4.5 && value <= 8) {
           status = 'Good';
-          color = 'green';
-          icon = 'arrow-up';
+          color = '#22C55E';
+          icon = 'checkmark-circle';
         }
         break;
       case 'ec':
         if (value >= 0 && value <= 4000) {
           status = 'Good';
-          color = 'green';
-          icon = 'arrow-up';
+          color = '#22C55E';
+          icon = 'checkmark-circle';
         }
         break;
       case 'nitrogen':
         if (value >= 0.1 && value <= 20) {
           status = 'Good';
-          color = 'green';
-          icon = 'arrow-up';
+          color = '#22C55E';
+          icon = 'checkmark-circle';
         }
         break;
       case 'phosphorus':
         if (value >= 0.1 && value <= 10) {
           status = 'Good';
-          color = 'green';
-          icon = 'arrow-up';
+          color = '#22C55E';
+          icon = 'checkmark-circle';
         }
         break;
       case 'kalium':
         if (value >= 0.1 && value <= 15) {
           status = 'Good';
-          color = 'green';
-          icon = 'arrow-up';
+          color = '#22C55E';
+          icon = 'checkmark-circle';
         }
         break;
     }
@@ -465,22 +467,25 @@ const ReadSoil: React.FC<Props> = ({navigation}) => {
   }, []);
 
   useFocusEffect(
-      useCallback(() => {
-        const onBackPress = () => {
-          navigation.goBack(); 
-          return true; 
-        };
-  
-        const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-        return () => subscription.remove();
-      }, [navigation])
-    );
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.goBack();
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress,
+      );
+      return () => subscription.remove();
+    }, [navigation]),
+  );
 
   const openModal = () => {
     setIsModalVisible(true);
     Animated.timing(modalAnimation, {
       toValue: 1,
-      duration: 900,
+      duration: 300,
       useNativeDriver: true,
     }).start();
   };
@@ -488,7 +493,7 @@ const ReadSoil: React.FC<Props> = ({navigation}) => {
   const closeModal = () => {
     Animated.timing(modalAnimation, {
       toValue: 0,
-      duration: 900,
+      duration: 300,
       useNativeDriver: true,
     }).start(() => setIsModalVisible(false));
   };
@@ -556,285 +561,220 @@ const ReadSoil: React.FC<Props> = ({navigation}) => {
 
   const tempIndicator = currentSensorData
     ? getStatusIndicator(currentSensorData.Temp, 'temperature')
-    : {status: 'No Data', color: 'gray', icon: 'remove'};
+    : {status: 'No Data', color: '#9CA3AF', icon: 'remove'};
   const humidityIndicator = currentSensorData
     ? getStatusIndicator(currentSensorData.Humidity, 'humidity')
-    : {status: 'No Data', color: 'gray', icon: 'remove'};
+    : {status: 'No Data', color: '#9CA3AF', icon: 'remove'};
   const phIndicator = currentSensorData
     ? getStatusIndicator(currentSensorData.pH, 'ph')
-    : {status: 'No Data', color: 'gray', icon: 'remove'};
+    : {status: 'No Data', color: '#9CA3AF', icon: 'remove'};
   const ecIndicator = currentSensorData
     ? getStatusIndicator(currentSensorData.EC, 'ec')
-    : {status: 'No Data', color: 'gray', icon: 'remove'};
+    : {status: 'No Data', color: '#9CA3AF', icon: 'remove'};
   const nitrogenIndicator = currentSensorData
     ? getStatusIndicator(currentSensorData.Nitrogen, 'nitrogen')
-    : {status: 'No Data', color: 'gray', icon: 'remove'};
+    : {status: 'No Data', color: '#9CA3AF', icon: 'remove'};
   const phosphorusIndicator = currentSensorData
     ? getStatusIndicator(currentSensorData.Phosphorus, 'phosphorus')
-    : {status: 'No Data', color: 'gray', icon: 'remove'};
+    : {status: 'No Data', color: '#9CA3AF', icon: 'remove'};
   const kaliumIndicator = currentSensorData
     ? getStatusIndicator(currentSensorData.Kalium, 'kalium')
-    : {status: 'No Data', color: 'gray', icon: 'remove'};
+    : {status: 'No Data', color: '#9CA3AF', icon: 'remove'};
 
   const loadingText = `Gathering Data${'.'.repeat(dotCount)}`;
 
+  const StatCard = ({
+    label,
+    value,
+    indicator,
+  }: {
+    label: string;
+    value: string;
+    indicator: {status: string; color: string; icon: string};
+  }) => (
+    <View style={styles.statCard}>
+      <View style={styles.statCardContent}>
+        <Text style={styles.statLabel}>{label}</Text>
+        <Text style={styles.statValue}>{value}</Text>
+      </View>
+      <View style={styles.statIndicator}>
+        <Ionicons name={indicator.icon} size={16} color={indicator.color} />
+        <Text style={[styles.statStatus, {color: indicator.color}]}>
+          {indicator.status}
+        </Text>
+      </View>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleGoBack}>
-          <ArrowLeft2
-            color="black"
-            variant="Linear"
-            size={24}
-            style={{transform: [{rotate: '360deg'}]}}
-          />
+        <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
+          <ArrowLeft2 color="#1F2937" variant="Linear" size={24} />
         </TouchableOpacity>
-        <Text
-          style={{
-            fontSize: 18,
-            fontWeight: 600,
-            fontFamily: 'SpaceGrotesk-Regular',
-            right: 5,
-          }}>
-          Portable Tools Result
-        </Text>
-        <ArrowLeft2
-          color="black"
-          variant="Linear"
-          size={24}
-          style={{transform: [{rotate: '360deg'}]}}
-          opacity={0}
-        />
+        <Text style={styles.headerTitle}>Portable Tools Result</Text>
+        <View style={styles.placeholderButton} />
       </View>
 
-      <View style={styles.cardTwo}>
-        <Text style={styles.soilTitle}>Soil Statistic</Text>
+      {/* Content */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Soil Statistic</Text>
 
-        <View style={styles.soilStatisticOne}>
-          <View style={styles.detailStatisticOne}>
-            <View style={styles.statContent}>
-              <Text style={styles.statLabel}>Soil Temperature</Text>
-              <Text style={styles.statValue}>
-                {currentSensorData ? `${currentSensorData.Temp}°C` : 'No Data'}
-              </Text>
-            </View>
-            <View style={styles.statExtra}>
-              <Ionicons
-                name={tempIndicator.icon}
-                size={18}
-                color={tempIndicator.color}
-              />
-              <Text style={[styles.statStatus, {color: tempIndicator.color}]}>
-                {tempIndicator.status}
-              </Text>
-            </View>
+          {/* Row 1 */}
+          <View style={styles.statRow}>
+            <StatCard
+              label="Soil Temperature"
+              value={currentSensorData ? `${currentSensorData.Temp}°C` : 'No Data'}
+              indicator={tempIndicator}
+            />
+            <StatCard
+              label="Soil Moisture"
+              value={
+                currentSensorData ? `${currentSensorData.Humidity}%` : 'No Data'
+              }
+              indicator={humidityIndicator}
+            />
           </View>
 
-          <View style={styles.detailStatisticOne}>
-            <View style={styles.statContent}>
-              <Text style={styles.statLabel}>Soil Moisture</Text>
-              <Text style={styles.statValue}>
-                {currentSensorData
-                  ? `${currentSensorData.Humidity}%`
-                  : 'No Data'}
-              </Text>
-            </View>
-            <View style={styles.statExtra}>
-              <Ionicons
-                name={humidityIndicator.icon}
-                size={18}
-                color={humidityIndicator.color}
-              />
-              <Text
-                style={[styles.statStatus, {color: humidityIndicator.color}]}>
-                {humidityIndicator.status}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.soilStatisticTwo}>
-          <View style={styles.detailStatisticOne}>
-            <View style={styles.statContent}>
-              <Text style={styles.statLabel}>PH</Text>
-              <Text style={styles.statValue}>
-                {currentSensorData ? `${currentSensorData.pH}` : 'No Data'}
-              </Text>
-            </View>
-            <View style={styles.statExtra}>
-              <Ionicons
-                name={phIndicator.icon}
-                size={18}
-                color={phIndicator.color}
-              />
-              <Text style={[styles.statStatus, {color: phIndicator.color}]}>
-                {phIndicator.status}
-              </Text>
-            </View>
+          {/* Row 2 */}
+          <View style={styles.statRow}>
+            <StatCard
+              label="PH"
+              value={currentSensorData ? `${currentSensorData.pH}` : 'No Data'}
+              indicator={phIndicator}
+            />
+            <StatCard
+              label="Conductivity"
+              value={
+                currentSensorData ? `${currentSensorData.EC} μS/cm` : 'No Data'
+              }
+              indicator={ecIndicator}
+            />
           </View>
 
-          <View style={styles.detailStatisticOne}>
-            <View style={styles.statContent}>
-              <Text style={styles.statLabel}>Conductivity</Text>
-              <Text style={styles.statValue}>
-                {currentSensorData
-                  ? `${currentSensorData.EC} μS/cm`
-                  : 'No Data'}
-              </Text>
-            </View>
-            <View style={styles.statExtra}>
-              <Ionicons
-                name={ecIndicator.icon}
-                size={18}
-                color={ecIndicator.color}
-              />
-              <Text style={[styles.statStatus, {color: ecIndicator.color}]}>
-                {ecIndicator.status}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.soilStatisticTwo}>
-          <View style={styles.detailStatisticOne}>
-            <View style={styles.statContent}>
-              <Text style={styles.statLabel}>Nitrogen</Text>
-              <Text style={styles.statValue}>
-                {currentSensorData
+          {/* Row 3 */}
+          <View style={styles.statRow}>
+            <StatCard
+              label="Nitrogen"
+              value={
+                currentSensorData
                   ? `${currentSensorData.Nitrogen} mg/kg`
-                  : 'No Data'}
-              </Text>
-            </View>
-            <View style={styles.statExtra}>
-              <Ionicons
-                name={nitrogenIndicator.icon}
-                size={18}
-                color={nitrogenIndicator.color}
-              />
-              <Text
-                style={[styles.statStatus, {color: nitrogenIndicator.color}]}>
-                {nitrogenIndicator.status}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.detailStatisticOne}>
-            <View style={styles.statContent}>
-              <Text style={styles.statLabel}>Phosphorus</Text>
-              <Text style={styles.statValue}>
-                {currentSensorData
+                  : 'No Data'
+              }
+              indicator={nitrogenIndicator}
+            />
+            <StatCard
+              label="Phosphorus"
+              value={
+                currentSensorData
                   ? `${currentSensorData.Phosphorus} mg/kg`
-                  : 'No Data'}
-              </Text>
-            </View>
-            <View style={styles.statExtra}>
-              <Ionicons
-                name={phosphorusIndicator.icon}
-                size={18}
-                color={phosphorusIndicator.color}
-              />
-              <Text
-                style={[styles.statStatus, {color: phosphorusIndicator.color}]}>
-                {phosphorusIndicator.status}
-              </Text>
-            </View>
+                  : 'No Data'
+              }
+              indicator={phosphorusIndicator}
+            />
           </View>
-        </View>
 
-        <View style={styles.soilStatisticTwo}>
-          <View style={styles.detailStatisticOneKal}>
-            <View style={styles.statContent}>
-              <Text style={styles.statLabel}>Kalium</Text>
-              <Text style={styles.statValue}>
-                {currentSensorData
+          {/* Row 4 - Single Card */}
+          <View style={styles.statRow}>
+            <StatCard
+              label="Kalium"
+              value={
+                currentSensorData
                   ? `${currentSensorData.Kalium} mg/kg`
-                  : 'No Data'}
-              </Text>
-            </View>
-            <View style={styles.statExtra}>
-              <Ionicons
-                name={kaliumIndicator.icon}
-                size={18}
-                color={kaliumIndicator.color}
-              />
-              <Text style={[styles.statStatus, {color: kaliumIndicator.color}]}>
-                {kaliumIndicator.status}
-              </Text>
-            </View>
+                  : 'No Data'
+              }
+              indicator={kaliumIndicator}
+            />
+            <View style={styles.statCardPlaceholder} />
           </View>
         </View>
-      </View>
+      </ScrollView>
 
+      {/* Bottom Buttons */}
       <View style={styles.bottomContainer}>
-        <View style={styles.containerButton}>
-          <TouchableOpacity style={styles.cancelButton} onPress={handleRescan}>
-            <Text style={styles.textButton}>Scan Ulang</Text>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity style={styles.outlineButton} onPress={handleRescan}>
+            <Text style={styles.outlineButtonText}>Scan Ulang</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.confirmButton} onPress={openModal}>
-            <Text style={styles.textButton}>Save Result</Text>
+          <TouchableOpacity style={styles.primaryButton} onPress={openModal}>
+            <Text style={styles.primaryButtonText}>Save Result</Text>
           </TouchableOpacity>
         </View>
       </View>
 
+      {/* Save Modal */}
       {isModalVisible && (
-        <View style={styles.modalOverlay}>
+        <Modal
+          visible={isModalVisible}
+          transparent
+          animationType="none"
+          onRequestClose={closeModal}>
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.keyboardAvoidingView}>
+            style={styles.modalOverlay}>
+            <TouchableOpacity
+              style={styles.modalBackdrop}
+              activeOpacity={1}
+              onPress={closeModal}
+            />
             <Animated.View
               style={[
-                styles.modalContainer,
+                styles.modalContent,
                 {transform: [{translateY: modalTranslateY}]},
               ]}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Save Result</Text>
-              </View>
-              <Text style={styles.nameResultText}>Name the result</Text>
+              <Text style={styles.modalTitle}>Save Result</Text>
+              <Text style={styles.modalSubtitle}>Name the result</Text>
               <TextInput
-                style={styles.inputField}
+                style={styles.textInput}
                 placeholder="Enter your result name"
-                placeholderTextColor="#999"
+                placeholderTextColor="#9CA3AF"
                 value={resultName}
                 onChangeText={setResultName}
                 editable={!isSaving}
+                autoFocus
               />
-              <View style={styles.resultOption}>
+              <View style={styles.modalButtonRow}>
                 <TouchableOpacity
-                  style={styles.cancelResult}
+                  style={styles.modalOutlineButton}
                   onPress={closeModal}
                   disabled={isSaving}>
-                  <Text style={styles.textButton}>Cancel</Text>
+                  <Text style={styles.modalOutlineButtonText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.confirmResult, isSaving && {opacity: 0.6}]}
+                  style={[
+                    styles.modalPrimaryButton,
+                    isSaving && styles.modalButtonDisabled,
+                  ]}
                   onPress={handleSaveResult}
                   disabled={isSaving}>
                   {isSaving ? (
                     <ActivityIndicator color="white" size="small" />
                   ) : (
-                    <Text style={styles.textButton}>Save</Text>
+                    <Text style={styles.modalPrimaryButtonText}>Save</Text>
                   )}
                 </TouchableOpacity>
               </View>
             </Animated.View>
           </KeyboardAvoidingView>
-        </View>
+        </Modal>
       )}
 
+      {/* Rescan Loading Modal */}
       {isRescanPopupVisible && (
         <Modal
           visible={isRescanPopupVisible}
           transparent
           animationType="fade"
           onRequestClose={() => setIsRescanPopupVisible(false)}>
-          <View style={styles.modalRescanOverlay}>
-            <View style={styles.modalRescanBox}>
-              <View style={styles.containerRescanImage}>
-                <ImgLoadPortable />
-              </View>
-              <View style={styles.containerRescanText}>
-                <Text style={styles.modalRescanText}>{loadingText}</Text>
-              </View>
+          <View style={styles.loadingModalOverlay}>
+            <View style={styles.loadingModalContent}>
+              <ImgLoadPortable />
+              <Text style={styles.loadingText}>{loadingText}</Text>
             </View>
           </View>
         </Modal>
@@ -844,246 +784,251 @@ const ReadSoil: React.FC<Props> = ({navigation}) => {
 };
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#F4F6FA', padding: 16},
+  container: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+  },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    fontFamily: 'SpaceGrotesk-Regular',
+  },
+  placeholderButton: {
+    width: 40,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 100,
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 16,
+    fontFamily: 'SpaceGrotesk-Regular',
+  },
+  statRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  statCard: {
+    flex: 1,
+    borderRadius: 12,
+    padding: 6,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    width: 375,
-    height: 32,
-    paddingTop: 4,
-    paddingBottom: 4,
-    marginTop: 6,
+    minHeight: 50
   },
-  cardTwo: {
-    width: '100%',
-    height: 282,
-    borderRadius: 16,
-    overflow: 'hidden',
-    padding: 12,
-    marginTop: 12,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    backgroundColor: 'white',
-    marginBottom: 8,
-  },
-  soilStatisticOne: {
-    height: 52,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 9,
-    marginHorizontal: 1,
-    gap: 8,
-  },
-  soilStatisticTwo: {
-    height: 52,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-    marginHorizontal: 1,
-    gap: 8,
-  },
-  detailStatisticOne: {
-    paddingHorizontal: 8,
+  statCardPlaceholder: {
     flex: 1,
-    height: 52,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#DEE2E7',
-    justifyContent: 'space-between',
-    flexDirection: 'row',
+    opacity: 0,
   },
-  detailStatisticOneKal: {
-    paddingHorizontal: 8,
-    flex: 0.47,
-    height: 52,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#DEE2E7',
-    justifyContent: 'space-between',
-    flexDirection: 'row',
-  },
-  statContent: {
+  statCardContent: {
     flex: 1,
-    justifyContent: 'center',
   },
   statLabel: {
     fontSize: 12,
-    fontWeight: '400',
+    color: '#6B7280',
+    marginBottom: 4,
     fontFamily: 'SpaceGrotesk-Regular',
   },
   statValue: {
     fontSize: 14,
     fontWeight: '600',
+    color: '#1F2937',
     fontFamily: 'SpaceGrotesk-Regular',
   },
-  statExtra: {
-    flexDirection: 'column',
-    marginTop: 10,
+  statIndicator: {
     alignItems: 'center',
     marginLeft: 8,
   },
   statStatus: {
-    fontSize: 12.5,
-    marginLeft: 4,
-  },
-  soilTitle: {
-    fontSize: 14,
-    fontWeight: 600,
+    fontSize: 10,
+    marginTop: 2,
+    fontWeight: '500',
     fontFamily: 'SpaceGrotesk-Regular',
   },
   bottomContainer: {
     position: 'absolute',
     bottom: 0,
-    left: -20,
-    right: -20,
-    height: 81,
-    paddingTop: 16,
-    paddingHorizontal: 25,
+    left: 0,
+    right: 0,
     backgroundColor: '#FFFFFF',
+    paddingHorizontal: 18,
+    paddingTop: 12,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: -4},
-    shadowOpacity: 0.04,
+    shadowOffset: {width: 0, height: -2},
+    shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 8,
   },
-  containerButton: {
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    paddingHorizontal: 10,
+  buttonRow: {
     flexDirection: 'row',
-    right: 4,
-    top: 1,
+    gap: 12,
   },
-  cancelButton: {
-    width: 180,
-    height: 36,
-    borderRadius: 8,
+  outlineButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1.5,
     borderColor: '#B4DC45',
-    borderWidth: 1,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  textButton: {
-    alignItems: 'center',
-    textAlign: 'center',
-    top: 6,
-    fontSize: 14,
-    fontWeight: 500,
+  outlineButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#374151',
     fontFamily: 'SpaceGrotesk-Regular',
   },
-  confirmButton: {
-    width: 180,
-    height: 36,
-    borderRadius: 8,
+  primaryButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
     backgroundColor: '#B4DC45',
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1F2937',
+    fontFamily: 'SpaceGrotesk-Regular',
   },
   modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
-  modalContainer: {
-    width: 364,
-    height: 172,
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 14,
-    paddingBottom: 30,
-    marginBottom: 20,
-    alignSelf: 'center',
+  modalBackdrop: {
+    flex: 1,
   },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
   },
   modalTitle: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 8,
     fontFamily: 'SpaceGrotesk-Regular',
   },
-  nameResultText: {
+  modalSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: '#6B7280',
+    marginBottom: 16,
     fontFamily: 'SpaceGrotesk-Regular',
-    marginTop: -17,
-    marginBottom: 10,
   },
-  inputField: {
-    height: 44,
+  textInput: {
+    height: 48,
     borderWidth: 1,
-    borderColor: '#DEE2E7',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    marginBottom: 10,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 15,
+    color: '#1F2937',
+    backgroundColor: '#F9FAFB',
+    marginBottom: 20,
     fontFamily: 'SpaceGrotesk-Regular',
-    backgroundColor: '#F9F9F9',
   },
-  resultOption: {
+  modalButtonRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 12,
   },
-  cancelResult: {
-    width: 162.5,
-    height: 36,
+  modalOutlineButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1.5,
     borderColor: '#B4DC45',
-    borderWidth: 1,
-    borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  confirmResult: {
-    width: 162.5,
-    height: 36,
-    borderRadius: 8,
+  modalOutlineButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#374151',
+    fontFamily: 'SpaceGrotesk-Regular',
+  },
+  modalPrimaryButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
     backgroundColor: '#B4DC45',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  containerText: {
-    alignItems: 'center',
+  modalPrimaryButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1F2937',
+    fontFamily: 'SpaceGrotesk-Regular',
   },
-  keyboardAvoidingView: {
+  modalButtonDisabled: {
+    opacity: 0.5,
+  },
+  loadingModalOverlay: {
     flex: 1,
-    justifyContent: 'flex-end',
-  },
-  modalRescanOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modalRescanBox: {
-    width: 141,
-    height: 121,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 20,
+  loadingModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
     alignItems: 'center',
-    position: 'relative',
+    minWidth: 160,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  containerRescanImage: {
-    alignItems: 'center',
-    width: 67,
-    height: 53,
-  },
-  containerRescanText: {
-    width: 141,
-    borderRadius: 1,
-    alignItems: 'center',
-  },
-  modalRescanText: {
+  loadingText: {
     fontSize: 14,
-    fontWeight: 400,
+    color: '#374151',
+    marginTop: 16,
     fontFamily: 'SpaceGrotesk-Regular',
-    marginTop: 13,
   },
 });
 
-export default ReadSoil;
+export default ReadSoil

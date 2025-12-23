@@ -2,7 +2,7 @@ import React, {useCallback} from 'react';
 import {View, Text} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import styles from './styles';
-import { getSoilStatus } from '@Helpers/getSoilStatus';
+import { getSoilStatus } from '@Helpers/getSensorStatus';
 
 type SensorMedianData = {
   median: number;

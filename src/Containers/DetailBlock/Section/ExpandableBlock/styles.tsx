@@ -1,0 +1,112 @@
+import {StyleSheet} from 'react-native';
+
+export const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+    backgroundColor: 'white',
+    borderRadius: 16,
+    marginTop: 15,
+    overflow: 'hidden',
+  },
+  content: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 5,
+  },
+  infoWater: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  lottie: {
+    width: 40,
+    height: 40,
+    opacity: 0.5,
+  },
+  infoDetails: {
+    marginLeft: 8,
+  },
+  waterText: {
+    fontSize: 16,
+    fontWeight: '500',
+    fontFamily: 'SpaceGrotesk-Regular',
+  },
+  blockText: {
+    fontSize: 12,
+    color: '#C5C5C5',
+    marginTop: -2,
+    fontFamily: 'SpaceGrotesk-Regular',
+  },
+  toggleButton: {
+    position: 'absolute',
+    bottom: 8,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  toggleText: {
+    fontFamily: 'SpaceGrotesk-Regular',
+    fontSize: 12,
+    fontWeight: '400',
+    marginRight: 6,
+  },
+  lineTop: {
+    height: 1,
+    backgroundColor: '#DEE2E7',
+    width: '90%',
+    alignSelf: 'center',
+    marginVertical: 10,
+    marginTop: 1,
+  },
+  containerBaris: {
+    width: '90%',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  boxBaris: {
+    width: '48%',
+    backgroundColor: 'white',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#EDEFF2',
+    padding: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  boxBarisOn: {
+    width: '48%',
+    backgroundColor: 'white',
+    borderRadius: 8,
+    borderWidth: 2.5,
+    borderColor: '#B4DC45',
+    padding: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  infoSpraying: {
+    flex: 1,
+  },
+  barisTitle: {
+    fontFamily: 'SpaceGrotesk-Medium',
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#353D48',
+  },
+  infoText: {
+    fontFamily: 'SpaceGrotesk-Regular',
+    fontSize: 12,
+    fontWeight: '400',
+    color: '#BBC3CE',
+  },
+  infoTextBold: {
+    fontFamily: 'SpaceGrotesk-Regular',
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#BBC3CE',
+  },
+});

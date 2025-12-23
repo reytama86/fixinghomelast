@@ -2,12 +2,12 @@ import React from 'react';
 import {View, Text, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator} from 'react-native';
 import {ArrowLeft2} from 'iconsax-react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {HomeStackParamList} from '@/HomeStack';
+import {HomeStackParamList} from 'HomeStack';
 import {useDetailBlock} from './useDetailBlock';
-import {ExpandableBlock} from './Section/ExpandableBlock';
+import { ExpandableBlock } from './Section/ExpandableBlock';
 import {DeviceCard} from './Section/DeviceCard';
-import {DurationModal} from './Section/DurationModal';
-import {ConfirmModal} from './Section/ConfirmModal';
+import DurationModal from './Section/DurationModal';
+import ConfirmModal from '@Containers/Main/Home/Modal/ConfirmModal';
 import {styles} from './styles';
 
 type DetailBlockProps = NativeStackScreenProps<HomeStackParamList, 'DetailBlockOne' | 'DetailBlockTwo'>;
@@ -37,7 +37,7 @@ const DetailBlock: React.FC<DetailBlockProps> = ({navigation, route}) => {
     handleMinutesChange,
     handleSecondsChange,
     handleGoBack,
-  } = useDetailBlock(route);
+  } = useDetailBlock(route, navigation);
 
   if (loading && !sensorData) {
     return (

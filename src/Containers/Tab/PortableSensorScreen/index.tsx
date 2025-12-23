@@ -22,7 +22,7 @@ import {BleManager, Device} from 'react-native-ble-plx';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {HomeStackParamList} from '../../../../HomeStack';
 import {ArrowLeft2} from 'iconsax-react-native';
-import {MainTabParamList, SoilSensorData} from '../../../../MainTabs';
+import {MainTabParamList, SoilSensorData} from 'src/Navigators/Tab'
 import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {RouteProp, useFocusEffect, useRoute} from '@react-navigation/native';
 import {Buffer} from 'buffer';
@@ -31,6 +31,14 @@ import {useControl} from '../../../Context/ControlContext';
 import GaugeSvg from '@Atom/Gauge';
 import Ellips from '../../../Assets/svg/Ellips';
 import styles from './styles';
+import {
+  getSoilStatus,
+  getSensorUnit,
+  getSensorValue,
+  getSoilIndicator,
+  isSensorValueGood,
+  SoilIndicator,
+} from '@Helpers/getSensorStatus';
 
 const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 
@@ -69,6 +77,32 @@ type Props = BottomTabScreenProps<MainTabParamList, 'ReadSoil'> & {
   };
 };
 
+function mapSensorNameForHelper(localName: string) {
+  switch (localName) {
+    case 'Temp':
+      return 'Soil Temperature';
+    case 'Humidity':
+      return 'Soil Humidity';
+    case 'pH':
+      return 'PH'; 
+    case 'EC':
+      return 'EC';
+    case 'Nitrogen':
+      return 'Nitrogen';
+    case 'Phosphorus':
+      return 'Phosphor'; 
+    case 'Kalium':
+      return 'Kalium';
+    default:
+      return localName;
+  }
+}
+
+const makeIndicatorFromValue = (localKey: string, value: number): SoilIndicator => {
+  const helperName = mapSensorNameForHelper(localKey);
+  return getSoilStatus(helperName, value);
+};
+
 const PortableSensorScreen: React.FC<Props> = ({navigation, route}) => {
   const {
     bleStatus: initialBleStatus,
@@ -98,7 +132,6 @@ const PortableSensorScreen: React.FC<Props> = ({navigation, route}) => {
   const monitoringSubscription = useRef<any>(null);
   const isScanning = useRef(false);
 
-  // Jika mode history, convert portableData ke SoilSensorData
   useEffect(() => {
     if (isHistoryMode && portableData) {
       const convertedData = convertPortableDataToSensorData(portableData);
@@ -164,65 +197,6 @@ const PortableSensorScreen: React.FC<Props> = ({navigation, route}) => {
     }
   };
 
-  const getStatusIndicator = (value: number, type: string) => {
-    let status = 'Low';
-    let color = '#EF4444';
-    let icon = 'arrow-down';
-
-    switch (type) {
-      case 'temperature':
-        if (value >= 20 && value <= 32) {
-          status = 'Good';
-          color = '#22C55E';
-          icon = 'checkmark-circle';
-        }
-        break;
-      case 'humidity':
-        if (value >= 20 && value <= 80) {
-          status = 'Good';
-          color = '#22C55E';
-          icon = 'checkmark-circle';
-        }
-        break;
-      case 'ph':
-        if (value >= 4.5 && value <= 8) {
-          status = 'Good';
-          color = '#22C55E';
-          icon = 'checkmark-circle';
-        }
-        break;
-      case 'ec':
-        if (value >= 0 && value <= 4000) {
-          status = 'Good';
-          color = '#22C55E';
-          icon = 'checkmark-circle';
-        }
-        break;
-      case 'nitrogen':
-        if (value >= 0.1 && value <= 20) {
-          status = 'Good';
-          color = '#22C55E';
-          icon = 'checkmark-circle';
-        }
-        break;
-      case 'phosphorus':
-        if (value >= 0.1 && value <= 10) {
-          status = 'Good';
-          color = '#22C55E';
-          icon = 'checkmark-circle';
-        }
-        break;
-      case 'kalium':
-        if (value >= 0.1 && value <= 15) {
-          status = 'Good';
-          color = '#22C55E';
-          icon = 'checkmark-circle';
-        }
-        break;
-    }
-
-    return {status, color, icon};
-  };
 
   const resetBLEState = async () => {
     console.log('Resetting BLE state...');
@@ -601,27 +575,33 @@ const PortableSensorScreen: React.FC<Props> = ({navigation, route}) => {
     return `${datePart} at ${timePart}`;
   };
 
-  const tempIndicator = currentSensorData
-    ? getStatusIndicator(currentSensorData.Temp, 'temperature')
-    : {status: 'No Data', color: '#9CA3AF', icon: 'remove'};
-  const humidityIndicator = currentSensorData
-    ? getStatusIndicator(currentSensorData.Humidity, 'humidity')
-    : {status: 'No Data', color: '#9CA3AF', icon: 'remove'};
-  const phIndicator = currentSensorData
-    ? getStatusIndicator(currentSensorData.pH, 'ph')
-    : {status: 'No Data', color: '#9CA3AF', icon: 'remove'};
-  const ecIndicator = currentSensorData
-    ? getStatusIndicator(currentSensorData.EC, 'ec')
-    : {status: 'No Data', color: '#9CA3AF', icon: 'remove'};
-  const nitrogenIndicator = currentSensorData
-    ? getStatusIndicator(currentSensorData.Nitrogen, 'nitrogen')
-    : {status: 'No Data', color: '#9CA3AF', icon: 'remove'};
-  const phosphorusIndicator = currentSensorData
-    ? getStatusIndicator(currentSensorData.Phosphorus, 'phosphorus')
-    : {status: 'No Data', color: '#9CA3AF', icon: 'remove'};
-  const kaliumIndicator = currentSensorData
-    ? getStatusIndicator(currentSensorData.Kalium, 'kalium')
-    : {status: 'No Data', color: '#9CA3AF', icon: 'remove'};
+const tempIndicator = currentSensorData
+  ? makeIndicatorFromValue('Temp', currentSensorData.Temp)
+  : { color: '#9CAAF', icon: 'remove', status: 'N/A' };
+
+const humidityIndicator = currentSensorData
+  ? makeIndicatorFromValue('Humidity', currentSensorData.Humidity)
+  : { color: '#9CAAF', icon: 'remove', status: 'N/A' };
+
+const phIndicator = currentSensorData
+  ? makeIndicatorFromValue('pH', currentSensorData.pH)
+  : { color: '#9CAAF', icon: 'remove', status: 'N/A' };
+
+const ecIndicator = currentSensorData
+  ? makeIndicatorFromValue('EC', currentSensorData.EC)
+  : { color: '#9CAAF', icon: 'remove', status: 'N/A' };
+
+const nitrogenIndicator = currentSensorData
+  ? makeIndicatorFromValue('Nitrogen', currentSensorData.Nitrogen)
+  : { color: '#9CAAF', icon: 'remove', status: 'N/A' };
+
+const phosphorusIndicator = currentSensorData
+  ? makeIndicatorFromValue('Phosphorus', currentSensorData.Phosphorus)
+  : { color: '#9CAAF', icon: 'remove', status: 'N/A' };
+
+const kaliumIndicator = currentSensorData
+  ? makeIndicatorFromValue('Kalium', currentSensorData.Kalium)
+  : { color: '#9CAAF', icon: 'remove', status: 'N/A' };
 
   const loadingText = `Gathering Data${'.'.repeat(dotCount)}`;
 
@@ -646,7 +626,6 @@ const PortableSensorScreen: React.FC<Props> = ({navigation, route}) => {
     </View>
   );
 
-  // Render mode history dengan gauge
   if (isHistoryMode && portableData) {
     return (
       <SafeAreaView style={styles.container}>
@@ -666,7 +645,6 @@ const PortableSensorScreen: React.FC<Props> = ({navigation, route}) => {
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}>
-          {/* Gauge Cards */}
           <View style={styles.containerTransmisi}>
             <View style={[styles.cardTransmisi, {marginRight: 12}]}>
               <View style={styles.cardDetailTransmisi}>
@@ -695,7 +673,6 @@ const PortableSensorScreen: React.FC<Props> = ({navigation, route}) => {
             </View>
           </View>
 
-          {/* Soil Statistics */}
           <View style={styles.cardTwo}>
             <Text style={styles.soilTitle}>Soil Statistic</Text>
 
@@ -803,7 +780,6 @@ const PortableSensorScreen: React.FC<Props> = ({navigation, route}) => {
     );
   }
 
-  // Render mode scan baru
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -890,43 +866,48 @@ const PortableSensorScreen: React.FC<Props> = ({navigation, route}) => {
           transparent
           animationType="none"
           onRequestClose={closeModal}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.modalOverlay}>
-            <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={closeModal} />
-            <Animated.View
-              style={[styles.modalContent, {transform: [{translateY: modalTranslateY}]}]}>
-              <Text style={styles.modalTitle}>Save Result</Text>
-              <Text style={styles.modalSubtitle}>Name the result</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Enter your result name"
-                placeholderTextColor="#9CA3AF"
-                value={resultName}
-                onChangeText={setResultName}
-                editable={!isSaving}
-                autoFocus
-              />
-              <View style={styles.modalButtonRow}>
-                <TouchableOpacity
-                  style={styles.modalOutlineButton}
-                  onPress={closeModal}
-                  disabled={isSaving}>
-                  <Text style={styles.modalOutlineButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modalPrimaryButton, isSaving && styles.modalButtonDisabled]}
-                  onPress={handleSaveResult}
-                  disabled={isSaving}>
-                  {isSaving ? (
-                    <ActivityIndicator color="white" size="small" />
-                  ) : (
-                    <Text style={styles.modalPrimaryButtonText}>Save</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </Animated.View>
-          </KeyboardAvoidingView>
+          <View style={styles.modalOverlay}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={styles.keyboardAvoidingView}>
+              <Animated.View
+                style={[
+                  styles.modalContainer,
+                  {transform: [{translateY: modalTranslateY}]},
+                ]}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Save Result</Text>
+                </View>
+                <Text style={styles.nameResultText}>Name the result</Text>
+                <TextInput
+                  style={styles.inputField}
+                  placeholder="Enter your result name"
+                  placeholderTextColor="#999"
+                  value={resultName}
+                  onChangeText={setResultName}
+                  editable={!isSaving}
+                />
+                <View style={styles.resultOption}>
+                  <TouchableOpacity
+                    style={styles.cancelResult}
+                    onPress={closeModal}
+                    disabled={isSaving}>
+                    <Text style={styles.textButton}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.confirmResult, isSaving && {opacity: 0.6}]}
+                    onPress={handleSaveResult}
+                    disabled={isSaving}>
+                    {isSaving ? (
+                      <ActivityIndicator color="white" size="small" />
+                    ) : (
+                      <Text style={styles.textButton}>Save</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </Animated.View>
+            </KeyboardAvoidingView>
+          </View>
         </Modal>
       )}
 

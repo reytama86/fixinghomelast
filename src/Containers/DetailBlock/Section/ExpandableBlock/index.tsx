@@ -43,7 +43,6 @@ export const ExpandableBlock: React.FC<ExpandableBlockProps> = ({
     [rotateAnim],
   );
 
-  // Derive state from controls
   const deriveState = useCallback(
     (ctrl: any) => ({
       isActive: blockType === 'water' ? ctrl.isWaterOn : ctrl.isFertilizerOn,
@@ -63,7 +62,6 @@ export const ExpandableBlock: React.FC<ExpandableBlockProps> = ({
     [deriveState, row2Control],
   );
 
-  // Control lottie animation
   useEffect(() => {
     const isAnyActive =
       mainState.isActive ||

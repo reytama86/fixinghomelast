@@ -38,7 +38,6 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({deviceNumber, sensorData}
     <View style={hasGauge ? styles.cardThree : styles.cardTwo}>
       <Text style={styles.soilTitle}>Statistic Device {deviceNumber}</Text>
 
-      {/* Temperature & Humidity Gauges (Device 2 only) */}
       {hasGauge && (
         <View style={styles.containerTransmisi}>
           <View style={[styles.cardTransmisi, {marginRight: 12}]}>
@@ -65,7 +64,6 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({deviceNumber, sensorData}
         </View>
       )}
 
-      {/* Soil Statistics */}
       <View style={styles.cardContentTwo}>
         <Text style={styles.soilSubTitle}>Soil Statistic</Text>
 

@@ -2,7 +2,7 @@ import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import HomeScreen from '@Containers/Tab/HomeScreen';
 import DetailBlock from '@Containers/DetailBlock';
-import ReadSoilDetail from './src/Containers/Tab/PortableSensorScreen/ReadSoilDetail';
+import PortableSensorScreen from '@Containers/Tab/PortableSensorScreen';
 import AllPortableTools from './src/Containers/Tab/PortableSensorScreen/AllPortableTools';
 import AllBlock from './src/Containers/Tab/HomeScreen/AllBlock';
 
@@ -50,7 +50,7 @@ export default function HomeStack() {
       
       <Stack.Screen
         name="ReadSoilDetail"
-        component={ReadSoilDetail}
+        component={PortableSensorScreen}
         options={{
           animation: 'slide_from_right',
         }}

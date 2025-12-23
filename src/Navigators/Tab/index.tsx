@@ -7,7 +7,7 @@ import { Home, Chart, Scan } from 'iconsax-react-native';
 import HomeStack, {HomeStackParamList} from '../../../HomeStack'
 import ChartMain from '@Containers/Tab/ChartScreen/ChartMain';
 import ImgLoadPortable from '@Assets/svg/ImgLoadPortable';
-import ReadSoil from '@Containers/Tab/PortableSensorScreen/ReadSoil';
+import PortableSensorScreen from '@Containers/Tab/PortableSensorScreen';
 import styles from './styles';
 
 import { BleManager, Device } from 'react-native-ble-plx';
@@ -489,13 +489,13 @@ const MainTabs: React.FC = () => {
           listeners={({ navigation }) => ({
             tabPress: e => {
               e.preventDefault();
-              navigation.navigate('HomeStack', { screen: 'HomeFix' });
+              navigation.navigate('HomeStack', { screen: 'Home' });
             },
           })}
         />
         <Tab.Screen
           name="ReadSoil"
-          component={ReadSoil}
+          component={PortableSensorScreen}
           options={{ tabBarLabel: '' }}
           listeners={({ navigation: nav }) => ({
             tabPress: e => {

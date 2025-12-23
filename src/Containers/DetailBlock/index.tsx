@@ -7,7 +7,7 @@ import {useDetailBlock} from './useDetailBlock';
 import { ExpandableBlock } from './Section/ExpandableBlock';
 import {DeviceCard} from './Section/DeviceCard';
 import DurationModal from './Section/DurationModal';
-import ConfirmModal from '@Containers/Main/Home/Modal/ConfirmModal';
+import ConfirmModal from '@Containers/Tab/HomeScreen/Modal/ConfirmModal';
 import {styles} from './styles';
 
 type DetailBlockProps = NativeStackScreenProps<HomeStackParamList, 'DetailBlockOne' | 'DetailBlockTwo'>;

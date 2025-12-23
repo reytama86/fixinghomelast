@@ -21,7 +21,7 @@ import { useHomeData } from '@Hooks/useHomeData';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'Home'>;
 
-const Home: React.FC<Props> = ({navigation}) => {
+const HomeScreen: React.FC<Props> = ({navigation}) => {
   const {setActivePage} = usePageControl();
   const {homeControl, block1Control, block1RowWater1Control, block1RowWater2Control, block1RowFertilizer1Control, block1RowFertilizer2Control} = useControl();
 
@@ -152,4 +152,4 @@ const Home: React.FC<Props> = ({navigation}) => {
   );
 };
 
-export default Home;
+export default HomeScreen;

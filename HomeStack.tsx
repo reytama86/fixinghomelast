@@ -1,10 +1,10 @@
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import Home from '@Containers/Main/Home';
+import HomeScreen from '@Containers/Tab/HomeScreen';
 import DetailBlock from '@Containers/DetailBlock';
-import ReadSoilDetail from './src/Containers/Main/ReadSoil/ReadSoilDetail';
-import AllPortableTools from './src/Containers/Main/ReadSoil/AllPortableTools';
-import AllBlock from './src/Containers/Main/Home/AllBlock';
+import ReadSoilDetail from './src/Containers/Tab/PortableSensorScreen/ReadSoilDetail';
+import AllPortableTools from './src/Containers/Tab/PortableSensorScreen/AllPortableTools';
+import AllBlock from './src/Containers/Tab/HomeScreen/AllBlock';
 
 export type SensorData = {
   keterangan_sensor: string;
@@ -43,7 +43,7 @@ export default function HomeStack() {
         animation: 'slide_from_left',
         animationTypeForReplace: 'pop',
       }}>
-      <Stack.Screen name="Home" component={Home} />
+      <Stack.Screen name="Home" component={HomeScreen} />
       
       <Stack.Screen name="DetailBlockOne" component={DetailBlock} />
       <Stack.Screen name="DetailBlockTwo" component={DetailBlock} />

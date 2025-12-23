@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import BackgroundService from 'react-native-background-actions';
-import { useMqtt } from '../components/Main/Home/Services/UseMqtt';
+import { useMqtt } from './UseMqtt';
 
 type ProcessType = 'water' | 'fertilizer';
 

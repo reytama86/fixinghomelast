@@ -3,10 +3,10 @@ import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthContext } from './src/Context/AuthContext';
-import BackgroundVideo from '@Containers/Main/BackgroundVideo'
+import BackgroundVideo from '@Containers/Tab/BackgroundVideo'
 import Intro from '@Containers/SplashScreen';
 import Login from '@Containers/Auth/Login';
-import MainTabs from '@Containers/MainTab';
+import MainTabs from '../fixinghomelast/src/Navigators/Tab/index'
 
 export type RootStackParamList = {
   Intro: undefined;

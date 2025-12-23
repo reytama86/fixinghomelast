@@ -5,9 +5,9 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { getFocusedRouteNameFromRoute, NavigatorScreenParams } from '@react-navigation/native';
 import { Home, Chart, Scan } from 'iconsax-react-native';
 import HomeStack, {HomeStackParamList} from '../../../HomeStack'
-import ChartMain from '@Containers/Main/Chart/ChartMain';
+import ChartMain from '@Containers/Tab/ChartScreen/ChartMain';
 import ImgLoadPortable from '@Assets/svg/ImgLoadPortable';
-import ReadSoil from '@Containers/Main/ReadSoil/ReadSoil';
+import ReadSoil from '@Containers/Tab/PortableSensorScreen/ReadSoil';
 import styles from './styles';
 
 import { BleManager, Device } from 'react-native-ble-plx';

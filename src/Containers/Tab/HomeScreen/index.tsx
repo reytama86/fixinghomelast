@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback, useRef} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {View, ScrollView, BackHandler} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -12,18 +12,24 @@ import SoilStatistic from './Section/SoilStatistic';
 import ControlCentre from './Section/ControlCentre';
 import FieldList from './Section/FieldList';
 import PortableToolsList from './Section/PortableToolsList';
-import DurationModal from './Section/Modals/DurationModal';
+import DurationModal from '@Organism/DurationModal'; 
 import ConfirmModal from './Modal/ConfirmModal';
 
 import {styles} from './styles';
-
-import { useHomeData } from '@Hooks/useHomeData';
+import {useHomeData} from '@Hooks/useHomeData';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'Home'>;
 
 const HomeScreen: React.FC<Props> = ({navigation}) => {
   const {setActivePage} = usePageControl();
-  const {homeControl, block1Control, block1RowWater1Control, block1RowWater2Control, block1RowFertilizer1Control, block1RowFertilizer2Control} = useControl();
+  const {
+    homeControl,
+    block1Control,
+    block1RowWater1Control,
+    block1RowWater2Control,
+    block1RowFertilizer1Control,
+    block1RowFertilizer2Control,
+  } = useControl();
 
   const [showDurationModal, setShowDurationModal] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -68,7 +74,30 @@ const HomeScreen: React.FC<Props> = ({navigation}) => {
     return () => backHandler.remove();
   }, [showDurationModal, showConfirm]);
 
-  const isBlock1WaterActive = 
+  const handleMinutesChange = useCallback((text: string) => {
+    const numericValue = text.replace(/[^0-9]/g, '');
+    setInputMinutes(numericValue);
+  }, []);
+
+  const handleSecondsChange = useCallback((text: string) => {
+    const numericValue = text.replace(/[^0-9]/g, '');
+    setInputSeconds(numericValue);
+  }, []);
+
+  const handleStartProcess = useCallback(
+    (totalSeconds: number) => {
+      if (currentProcess) {
+        homeControl.startProcess(currentProcess, totalSeconds);
+      }
+      setShowDurationModal(false);
+      setInputMinutes('1');
+      setInputSeconds('0');
+      setCurrentProcess(null);
+    },
+    [currentProcess, homeControl]
+  );
+
+  const isBlock1WaterActive =
     block1Control.isWaterOn ||
     block1RowWater1Control.isWaterOn ||
     block1RowWater2Control.isWaterOn;
@@ -85,36 +114,33 @@ const HomeScreen: React.FC<Props> = ({navigation}) => {
       <View style={styles.home}>
         <ScrollView showsVerticalScrollIndicator={false} bounces={true}>
           <Header />
-          
+
           <WeatherCard sensorData={sensorData} />
-          
+
           <SoilStatistic sensorData={sensorData} />
-          
+
           <ControlCentre
             controlState={homeControl}
             isBlock1AnyActive={isBlock1AnyActive}
-            onToggle={(type) => {
+            onToggle={type => {
               setCurrentProcess(type);
               setShowDurationModal(true);
             }}
-            onStop={(type) => {
+            onStop={type => {
               setConfirmType(type);
               setShowConfirm(true);
             }}
           />
-          
-          <FieldList
-            sensorDataBlock={sensorDataBlock}
-            navigation={navigation}
-          />
-          
+
+          <FieldList sensorDataBlock={sensorDataBlock} navigation={navigation} />
+
           <PortableToolsList
             portableData={portableData}
             loading={loading}
             navigation={navigation}
             onRefresh={fetchPortableData}
           />
-          
+
           <View style={{height: 20}} />
         </ScrollView>
       </View>
@@ -124,17 +150,14 @@ const HomeScreen: React.FC<Props> = ({navigation}) => {
         currentProcess={currentProcess}
         inputMinutes={inputMinutes}
         inputSeconds={inputSeconds}
-        onMinutesChange={setInputMinutes}
-        onSecondsChange={setInputSeconds}
-        onCancel={() => setShowDurationModal(false)}
-        onStart={(duration) => {
-          if (currentProcess) {
-            homeControl.startProcess(currentProcess, duration);
-          }
+        onMinutesChange={handleMinutesChange}
+        onSecondsChange={handleSecondsChange}
+        onCancel={() => {
           setShowDurationModal(false);
           setInputMinutes('1');
           setInputSeconds('0');
         }}
+        onStart={handleStartProcess}
       />
 
       <ConfirmModal

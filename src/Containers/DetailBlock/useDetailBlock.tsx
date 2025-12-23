@@ -1,4 +1,4 @@
-import {useState, useCallback, useEffect, useMemo} from 'react';
+import {useState, useCallback, useMemo} from 'react';
 import {Alert, BackHandler} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import {useControl, usePageControl} from '@Context/ControlContext';
@@ -47,10 +47,12 @@ export const useDetailBlock = (route: any, navigation: any) => {
   const [loading, setLoading] = useState(true);
   const [showDurationModal, setShowDurationModal] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  
   const [currentProcess, setCurrentProcess] = useState<{
     type: 'water' | 'fertilizer';
     target?: 'main' | 'row1' | 'row2';
   } | null>(null);
+  
   const [confirmType, setConfirmType] = useState<'water' | 'fertilizer' | null>(null);
   const [inputMinutes, setInputMinutes] = useState('1');
   const [inputSeconds, setInputSeconds] = useState('0');
@@ -133,7 +135,7 @@ export const useDetailBlock = (route: any, navigation: any) => {
       fetchSensorData();
 
       const onBackPress = () => {
-        handleGoBack(); 
+        handleGoBack();
         return true;
       };
 
@@ -142,13 +144,12 @@ export const useDetailBlock = (route: any, navigation: any) => {
       return () => {
         subscription.remove();
       };
-    }, [config.blockNumber, fetchSensorData, handleGoBack, setActivePage]), 
+    }, [config.blockNumber, fetchSensorData, handleGoBack, setActivePage])
   );
 
   const handleToggle = useCallback(
     (type: 'water' | 'fertilizer', target?: 'main' | 'row1' | 'row2') => {
       const control = blockControls.main;
-
       const isCurrentlyActive = type === 'water' ? control.isWaterOn : control.isFertilizerOn;
 
       if (isCurrentlyActive) {
@@ -159,15 +160,8 @@ export const useDetailBlock = (route: any, navigation: any) => {
         setShowDurationModal(true);
       }
     },
-    [blockControls],
+    [blockControls]
   );
-
-  const validateTimeInput = useCallback((value: string, max: number): string => {
-    const numValue = parseInt(value);
-    if (isNaN(numValue) || numValue < 0) return '0';
-    if (numValue > max) return max.toString();
-    return numValue.toString();
-  }, []);
 
   const handleMinutesChange = useCallback((text: string) => {
     const numericValue = text.replace(/[^0-9]/g, '');
@@ -179,23 +173,20 @@ export const useDetailBlock = (route: any, navigation: any) => {
     setInputSeconds(numericValue);
   }, []);
 
-  const handleStartProcess = useCallback(() => {
-    if (!currentProcess) return;
+  const handleStartProcess = useCallback(
+    (totalSeconds: number) => {
+      if (!currentProcess) return;
 
-    const validatedMinutes = validateTimeInput(inputMinutes, 120);
-    const validatedSeconds = validateTimeInput(inputSeconds, 59);
+      const control = blockControls.main;
+      control.startProcess(currentProcess.type, totalSeconds);
 
-    const totalDurationInSeconds =
-      parseInt(validatedMinutes, 10) * 60 + parseInt(validatedSeconds, 10);
-
-    const control = blockControls.main;
-    control.startProcess(currentProcess.type, totalDurationInSeconds);
-
-    setShowDurationModal(false);
-    setInputMinutes('1');
-    setInputSeconds('0');
-    setCurrentProcess(null);
-  }, [currentProcess, inputMinutes, inputSeconds, validateTimeInput, blockControls]);
+      setShowDurationModal(false);
+      setInputMinutes('1');
+      setInputSeconds('0');
+      setCurrentProcess(null);
+    },
+    [currentProcess, blockControls]
+  );
 
   const handleConfirmStop = useCallback(() => {
     if (confirmType) {
@@ -228,6 +219,6 @@ export const useDetailBlock = (route: any, navigation: any) => {
     setShowConfirm,
     handleMinutesChange,
     handleSecondsChange,
-    handleGoBack, 
+    handleGoBack,
   };
 };

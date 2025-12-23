@@ -127,7 +127,6 @@ const ControlCentre: React.FC<ControlCentreProps> = ({
     <View style={styles.controlCentre}>
       <Text style={styles.controlCentreText}>Control Centre</Text>
       <View style={styles.controlCentreBox}>
-        {/* Water Control */}
         <View style={styles.boxControl}>
           <View style={styles.frameTopControl}>
             <Text style={styles.titleControl}>Water</Text>
@@ -178,7 +177,6 @@ const ControlCentre: React.FC<ControlCentreProps> = ({
           </View>
         </View>
 
-        {/* Fertilizer Control */}
         <View style={styles.boxControl}>
           <View style={styles.frameTopControl}>
             <Text style={styles.titleControl}>Fertilizer</Text>

@@ -47,7 +47,6 @@ export default function StackNavigator() {
           component={SplashScreen}
         /> */}
 
-        {/* Auth Flow atau Main App */}
         {!userToken ? (
           <Stack.Group>
             <Stack.Screen
@@ -61,7 +60,6 @@ export default function StackNavigator() {
           </Stack.Group>
         ) : (
           <>
-            {/* Tab Navigator */}
             <Stack.Screen
               name={RouteName.TabNavigation}
               component={TabNavigator}
@@ -84,7 +82,6 @@ export default function StackNavigator() {
               }}
             />
 
-            {/* Authorized Screens */}
             <Stack.Group
               screenOptions={{
                 presentation: 'card',

@@ -1,52 +1,29 @@
-import React, { useContext } from 'react';
-import { View, ActivityIndicator } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { AuthContext } from './src/Context/AuthContext';
-import BackgroundVideo from '@Containers/Tab/BackgroundVideo'
-import Intro from '@Containers/SplashScreen';
-import Login from '@Containers/Auth/Login';
-import MainTabs from '../fixinghomelast/src/Navigators/Tab/index'
+import { storage } from '@Hooks/useMmkv';
+import StackNavigator from '../fixinghomelast/src/Navigators/Stack'
+// import ModalNoInternet from '@Organism/General/ModalNoInternet';
+// import RootLoading from '@Organism/General/RootLoading';
+// import ToastMessages from '@Organism/General/Toast';
+import React from 'react';
+// import { LogLevel, OneSignal } from 'react-native-onesignal';
+import {
+  SafeAreaProvider,
+  initialWindowMetrics,
+} from 'react-native-safe-area-context';
+// import { RecoilRoot } from 'recoil';
 
-export type RootStackParamList = {
-  Intro: undefined;
-  Login: undefined;
-  Main: undefined;
-};
-
-const backgroundAnimation = require('@Assets/videos/topography.mp4.lottie.json');
-
-const Stack = createNativeStackNavigator<RootStackParamList>();
-
-const App: React.FC = () => {
-  const { isLoading, userToken } = useContext(AuthContext);
-
-  if (isLoading) {
-    return (
-      <BackgroundVideo animationSource={backgroundAnimation}>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color="#B4DC45" />
-        </View>
-      </BackgroundVideo>
-    );
-  }
+function App(): React.JSX.Element {
+  // OneSignal.Debug.setLogLevel(LogLevel.Verbose);
+  // OneSignal.initialize('35331465-6cfd-4b30-a3e1-5b84fb5c9ebb');
+  // const permission = OneSignal.Notifications.requestPermission(true);
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {userToken == null ? (
-          // Flow sebelum login
-          <>
-            <Stack.Screen name="Intro" component={Intro} />
-            <Stack.Screen name="Login" component={Login} />
-          </>
-        ) : (
-          // Flow setelah login
-          <Stack.Screen name="Main" component={MainTabs} />
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+    
+      
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+        <StackNavigator />
+      </SafeAreaProvider>
+    
   );
-};
+}
 
 export default App;

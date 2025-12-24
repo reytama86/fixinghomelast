@@ -57,6 +57,8 @@
     "react-native-gesture-handler": "^2.25.0",
     "react-native-gifted-charts": "^1.4.61",
     "react-native-linear-gradient": "^2.8.3",
+    "react-native-mmkv": "^4.1.0",
+    "react-native-nitro-modules": "^0.32.0",
     "react-native-paho-mqtt": "^0.1.1",
     "react-native-reanimated": "^3.17.5",
     "react-native-restart": "^0.0.27",

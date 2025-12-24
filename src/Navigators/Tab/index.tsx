@@ -1,16 +1,16 @@
 import { Buffer } from 'buffer';
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Modal, Text, Pressable, StyleSheet, Animated } from 'react-native';
+import { View, Modal, Text, Pressable, Animated } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { getFocusedRouteNameFromRoute, NavigatorScreenParams } from '@react-navigation/native';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { Home, Chart, Scan } from 'iconsax-react-native';
-import HomeStack, {HomeStackParamList} from '../../../HomeStack'
+import HomeScreen from '@Containers/Tab/HomeScreen';
 import ChartMain from '@Containers/Tab/ChartScreen/ChartMain';
 import ImgLoadPortable from '@Assets/svg/ImgLoadPortable';
 import PortableSensorScreen from '@Containers/Tab/PortableSensorScreen';
 import styles from './styles';
-
 import { BleManager, Device } from 'react-native-ble-plx';
+
 const SERVICE_UUID = '5900f86c-57d7-422c-8aa8-fd6216fa496b';
 const CHARACTERISTIC_UUID = 'a0863556-7065-46e6-96ee-99e3f693cb7f';
 const REQUEST_CHAR_UUID = 'b1974667-8166-57f7-a7bb-0e7327ab507c';
@@ -26,19 +26,19 @@ export type SoilSensorData = {
 };
 
 type CompactSensorData = {
-  H: number;  // Humidity
-  T: number;  // Temperature
-  E: number;  // EC
-  P: number;  // pH
-  N: number;  // Nitrogen
-  K: number;  // Phosphorus
-  L: number;  // Kalium
+  H: number;
+  T: number;
+  E: number;
+  P: number;
+  N: number;
+  K: number;
+  L: number;
 };
 
 export type MainTabParamList = {
-  HomeStack: NavigatorScreenParams<HomeStackParamList>;
-  ReadSoil: { 
-    bleStatus: 'scanning'|'connecting'|'connected'|'disconnected';
+  Home: undefined;
+  ReadSoil: {
+    bleStatus: 'scanning' | 'connecting' | 'connected' | 'disconnected';
     sensorData?: SoilSensorData;
   };
   ChartMain: undefined;
@@ -46,22 +46,25 @@ export type MainTabParamList = {
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
+// Animated Tab Bar Component
 const AnimatedTabBar = (props: any) => {
   const tabBarAnimation = useRef(new Animated.Value(0)).current;
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
-    const { state, descriptors } = props;
+    const { state } = props;
     const currentRoute = state.routes[state.index];
-    const routeName = getFocusedRouteNameFromRoute(currentRoute) ?? currentRoute.name;
-    const hideTabScreens = ['ReadSoil', 'DetailBlockOne', 'DetailBlockTwo', 'ReadSoilDetail', 'ChartMain', 'AllPortableTools', 'AllBlock'];
+    const routeName = currentRoute.name;
     
+    // Screens di mana tab bar harus disembunyikan
+    const hideTabScreens = ['ReadSoil'];
+
     const shouldHide = hideTabScreens.includes(routeName);
-    
+
     if (shouldHide && isVisible) {
       setIsVisible(false);
       Animated.timing(tabBarAnimation, {
-        toValue: 60, 
+        toValue: 100,
         duration: 300,
         useNativeDriver: true,
       }).start();
@@ -114,16 +117,18 @@ const AnimatedTabBar = (props: any) => {
               onPress={onPress}
               style={styles.tabBarItem}
             >
-              <Icon 
-                focused={isFocused} 
-                color={isFocused ? '#B4DC45' : 'gray'} 
-                size={24} 
+              <Icon
+                focused={isFocused}
+                color={isFocused ? '#B4DC45' : 'gray'}
+                size={24}
               />
               {route.name !== 'ReadSoil' && (
-                <Text style={[
-                  styles.tabBarLabel, 
-                  { color: isFocused ? '#B4DC45' : 'gray' }
-                ]}>
+                <Text
+                  style={[
+                    styles.tabBarLabel,
+                    { color: isFocused ? '#B4DC45' : 'gray' }
+                  ]}
+                >
                   {label}
                 </Text>
               )}
@@ -135,21 +140,21 @@ const AnimatedTabBar = (props: any) => {
   );
 };
 
-const MainTabs: React.FC = () => {
+const TabNavigator: React.FC = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [dotCount, setDotCount] = useState(0);
   const [navigation, setNavigation] = useState<any>(null);
-
-  const [bleStatus, setBleStatus] = useState<'scanning'|'connecting'|'connected'|'disconnected'>('scanning');
+  const [bleStatus, setBleStatus] = useState<'scanning' | 'connecting' | 'connected' | 'disconnected'>('scanning');
   const [bleManager] = useState(() => new BleManager());
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [sensorData, setSensorData] = useState<SoilSensorData | null>(null);
-  
+
   const monitoringSubscription = useRef<any>(null);
   const isScanning = useRef(false);
 
+  // Animated dots untuk loading
   useEffect(() => {
-    let dotInterval;
+    let dotInterval: NodeJS.Timeout;
     if (showPopup) {
       dotInterval = setInterval(() => {
         setDotCount(prev => (prev + 1) % 4);
@@ -160,35 +165,29 @@ const MainTabs: React.FC = () => {
     return () => clearInterval(dotInterval);
   }, [showPopup]);
 
+  // BLE Functions
   const resetBLEState = async () => {
     console.log('Resetting BLE state...');
-    
     try {
       if (monitoringSubscription.current) {
         monitoringSubscription.current.remove();
         monitoringSubscription.current = null;
       }
-      
       if (isScanning.current) {
         bleManager.stopDeviceScan();
         isScanning.current = false;
       }
-      
       if (connectedDevice) {
         try {
           await connectedDevice.cancelConnection();
-          console.log('Device disconnected successfully');
         } catch (error) {
           console.log('Device already disconnected:', error);
         }
       }
-      
       setConnectedDevice(null);
       setSensorData(null);
       setBleStatus('scanning');
-      
       await new Promise(resolve => setTimeout(resolve, 500));
-      
     } catch (error) {
       console.error('Error during BLE reset:', error);
     }
@@ -201,38 +200,34 @@ const MainTabs: React.FC = () => {
       EC: compactData.E,
       pH: compactData.P,
       Nitrogen: compactData.N,
-      Phosphorus: compactData.K,  
-      Kalium: compactData.L       
+      Phosphorus: compactData.K,
+      Kalium: compactData.L
     };
   };
 
   const requestSensorData = async (device: Device) => {
     try {
-      console.log('Requesting sensor data from ESP32...');
-      
+      console.log('Requesting sensor data...');
       try {
         const mtu = await device.requestMTU(200);
         console.log('MTU negotiated:', mtu);
       } catch (mtuError) {
-        console.log('MTU negotiation failed, using default:', mtuError);
+        console.log('MTU negotiation failed:', mtuError);
       }
-      
       await device.writeCharacteristicWithoutResponseForService(
         SERVICE_UUID,
         REQUEST_CHAR_UUID,
         Buffer.from('READ_SENSOR').toString('base64')
       );
-      
       console.log('Sensor data request sent');
     } catch (error) {
-      console.error('Error sending sensor data request:', error);
+      console.error('Error sending request:', error);
     }
   };
 
   const startDataCollection = async (device: Device) => {
     try {
       console.log('Starting data collection...');
-      
       if (monitoringSubscription.current) {
         monitoringSubscription.current.remove();
       }
@@ -241,98 +236,65 @@ const MainTabs: React.FC = () => {
         SERVICE_UUID,
         CHARACTERISTIC_UUID,
         (error, characteristic) => {
-          // if (error) {
-          //   console.error('Monitor error:', error);
-          //   return;
-          // }
-          
           if (characteristic?.value) {
             try {
               const jsonString = Buffer.from(characteristic.value, 'base64').toString('utf-8');
-              console.log('Raw received data:', jsonString);
-              console.log('Data length:', jsonString.length);
+              console.log('Raw data:', jsonString);
               
               if (!jsonString || jsonString.trim().length === 0) {
-                console.error('Empty JSON string received');
+                console.error('Empty JSON received');
                 return;
               }
               
               const trimmedJson = jsonString.trim();
               if (!trimmedJson.startsWith('{') || !trimmedJson.endsWith('}')) {
-                console.error('Invalid JSON format - not properly formatted:', trimmedJson);
-                console.log('First 50 chars:', trimmedJson.substring(0, 50));
-                console.log('Last 50 chars:', trimmedJson.substring(Math.max(0, trimmedJson.length - 50)));
-                
-                console.log('Data appears truncated, requesting again...');
-                setTimeout(() => {
-                  requestSensorData(device);
-                }, 1000);
+                console.error('Invalid JSON format');
+                setTimeout(() => requestSensorData(device), 1000);
                 return;
               }
               
               let data: SoilSensorData;
               try {
                 const compactData: CompactSensorData = JSON.parse(trimmedJson);
-                
                 if (compactData.H !== undefined && compactData.T !== undefined) {
-                  console.log('Received compact format data:', compactData);
                   data = convertCompactToFull(compactData);
                 } else {
                   data = JSON.parse(trimmedJson) as SoilSensorData;
                 }
               } catch (parseError) {
-                console.error('JSON parsing failed:', parseError);
-                console.error('Failed to parse:', trimmedJson);
-                
-                setTimeout(() => {
-                  requestSensorData(device);
-                }, 2000);
+                console.error('Parse failed:', parseError);
+                setTimeout(() => requestSensorData(device), 2000);
                 return;
               }
               
               const requiredFields = ['Humidity', 'Temp', 'EC', 'pH', 'Nitrogen', 'Phosphorus', 'Kalium'];
-              const missingFields = requiredFields.filter(field => data[field] === undefined || data[field] === null);
-              
-              if (missingFields.length > 0) {
-                console.error('Missing fields in sensor data:', missingFields);
-                console.error('Received data:', data);
-                return;
-              }
-              
-              const invalidFields = requiredFields.filter(field => 
-                typeof data[field] !== 'number' || isNaN(data[field])
+              const missingFields = requiredFields.filter(field => 
+                data[field] === undefined || data[field] === null
               );
               
-              if (invalidFields.length > 0) {
-                console.error('Invalid numeric values:', invalidFields);
-                console.error('Received data:', data);
+              if (missingFields.length > 0) {
+                console.error('Missing fields:', missingFields);
                 return;
               }
               
               setSensorData(data);
-              console.log('Successfully parsed sensor data:', data);
+              console.log('Sensor data received:', data);
               
             } catch (error) {
-              console.error('Error processing sensor data:', error);
-              
-              setTimeout(() => {
-                console.log('Retrying sensor data request...');
-                requestSensorData(device);
-              }, 1500);
+              console.error('Error processing data:', error);
+              setTimeout(() => requestSensorData(device), 1500);
             }
-          } else {
-            console.log('No data received from characteristic');
           }
         }
       );
-  
+
       await requestSensorData(device);
-      
     } catch (error) {
-      console.error('Error starting data collection:', error);
+      console.error('Error starting collection:', error);
     }
   };
 
+  // BLE Scanning Effect
   useEffect(() => {
     if (!showPopup) return;
     
@@ -341,7 +303,7 @@ const MainTabs: React.FC = () => {
     const startBLEProcess = async () => {
       await resetBLEState();
       
-      console.log('Starting fresh BLE scan...');
+      console.log('Starting BLE scan...');
       setBleStatus('scanning');
       setSensorData(null);
       isScanning.current = true;
@@ -354,22 +316,20 @@ const MainTabs: React.FC = () => {
           return;
         }
         
-        console.log('Found device:', device?.name, device?.id);
-        
         if (device?.name?.includes('Smart-Soil-Sensor')) {
-          console.log('Found target device, stopping scan...');
+          console.log('Found device:', device.name);
           bleManager.stopDeviceScan();
           isScanning.current = false;
           setBleStatus('connecting');
           
           device.connect()
             .then(connectedDevice => {
-              console.log('Device connected, discovering services...');
+              console.log('Device connected');
               setConnectedDevice(connectedDevice);
               return connectedDevice.discoverAllServicesAndCharacteristics();
             })
             .then(deviceWithServices => {
-              console.log('Services discovered, starting data collection...');
+              console.log('Services discovered');
               setBleStatus('connected');
               return startDataCollection(deviceWithServices);
             })
@@ -402,6 +362,7 @@ const MainTabs: React.FC = () => {
     };
   }, [showPopup]);
 
+  // Navigate when data ready or timeout
   useEffect(() => {
     if (!showPopup) return;
     
@@ -421,7 +382,7 @@ const MainTabs: React.FC = () => {
 
       const dataTimeout = setTimeout(() => {
         clearInterval(checkDataInterval);
-        console.log('Data timeout - proceeding without data');
+        console.log('Data timeout');
         setShowPopup(false);
         navigation.navigate('ReadSoil', { 
           bleStatus: 'disconnected',
@@ -433,7 +394,6 @@ const MainTabs: React.FC = () => {
         clearInterval(checkDataInterval);
         clearTimeout(dataTimeout);
       };
-
     } else if (bleStatus === 'disconnected') {
       setTimeout(() => {
         setShowPopup(false);
@@ -445,22 +405,20 @@ const MainTabs: React.FC = () => {
     }
   }, [bleStatus, showPopup, navigation, sensorData]);
 
+  // Cleanup on unmount
   useEffect(() => {
-    return () => {
-      resetBLEState();
-    };
+    return () => resetBLEState();
   }, []);
 
+  // Reset when popup closes
   useEffect(() => {
     if (!showPopup) {
-      setTimeout(() => {
-        resetBLEState();
-      }, 500);
+      setTimeout(() => resetBLEState(), 500);
     }
   }, [showPopup]);
 
   const loadingText = `Gathering Data${'.'.repeat(dotCount)}`;
-  
+
   return (
     <>
       <Tab.Navigator
@@ -468,7 +426,7 @@ const MainTabs: React.FC = () => {
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarIcon: ({ color, size, focused }) => {
-            if (route.name === 'HomeStack') {
+            if (route.name === 'Home') {
               return <Home color={focused ? '#B4DC45' : color} variant="Bold" size={size} />;
             }
             if (route.name === 'ReadSoil') {
@@ -483,15 +441,9 @@ const MainTabs: React.FC = () => {
         })}
       >
         <Tab.Screen
-          name="HomeStack"
-          component={HomeStack}
+          name="Home"
+          component={HomeScreen}
           options={{ tabBarLabel: 'Home' }}
-          listeners={({ navigation }) => ({
-            tabPress: e => {
-              e.preventDefault();
-              navigation.navigate('HomeStack', { screen: 'Home' });
-            },
-          })}
         />
         <Tab.Screen
           name="ReadSoil"
@@ -505,9 +457,14 @@ const MainTabs: React.FC = () => {
             },
           })}
         />
-        <Tab.Screen name="ChartMain" component={ChartMain} options={{ tabBarLabel: 'History' }} />
+        <Tab.Screen
+          name="ChartMain"
+          component={ChartMain}
+          options={{ tabBarLabel: 'History' }}
+        />
       </Tab.Navigator>
 
+      {/* BLE Loading Modal */}
       <Modal
         visible={showPopup}
         transparent
@@ -517,10 +474,10 @@ const MainTabs: React.FC = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <View style={styles.containerImage}>
-              <ImgLoadPortable/>
+              <ImgLoadPortable />
             </View>
             <View style={styles.containerText}>
-            <Text style={styles.modalText}>{loadingText}</Text>
+              <Text style={styles.modalText}>{loadingText}</Text>
             </View>
           </View>
         </View>
@@ -529,4 +486,4 @@ const MainTabs: React.FC = () => {
   );
 };
 
-export default MainTabs;
+export default TabNavigator;

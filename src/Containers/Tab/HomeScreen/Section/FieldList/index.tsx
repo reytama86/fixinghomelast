@@ -4,6 +4,7 @@ import {Maximize1, ArrowDown} from 'iconsax-react-native';
 import Svg, {Path} from 'react-native-svg';
 import { CornerCutComponent } from './CornerCutComponent';
 import {styles} from './styles';
+import RouteName from '@Constants/RouteName.constants';
 
 const {width: screenWidth} = Dimensions.get('window');
 const cardWidth = (screenWidth - 45.5) / 2;
@@ -91,7 +92,7 @@ const FieldList: React.FC<FieldListProps> = ({sensorDataBlock, navigation}) => {
         {/* Block 4 */}
         <TouchableOpacity
           onPress={() => {
-            navigation.navigate('DetailBlockOne', {from: 'HomeFix'});
+            navigation.navigate(RouteName.DetailBlockNavigation);
           }}>
           <CornerCutComponent
             width={cardWidth}

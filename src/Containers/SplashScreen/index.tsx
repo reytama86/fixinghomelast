@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet, Dimensions, Image } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from 'App'; 
+import { RootStackParamList } from '@Constants/RouteParamsList.constants';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Intro'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'SplashScreen'>;
 
 const { width, height } = Dimensions.get('window');
 
-const Intro: React.FC<Props> = ({ navigation }) => {
+const SplashScreen: React.FC<Props> = ({ navigation }) => {
   useEffect(() => {
     const timeout = setTimeout(() => {
       navigation.replace('Login');
@@ -39,4 +39,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Intro;
+export default SplashScreen;

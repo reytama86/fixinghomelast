@@ -5,6 +5,7 @@ import Svg, {Path} from 'react-native-svg';
 import { CornerCutComponent } from '../FieldList/CornerCutComponent';
 import {PortableToolData, SensorData} from 'HomeStack';
 import {styles} from './styles';
+import RouteName from '@Constants/RouteName.constants';
 
 interface PortableToolsListProps {
   portableData: PortableToolData[];
@@ -71,7 +72,7 @@ const PortableToolsList: React.FC<PortableToolsListProps> = ({
         <View style={[styles.containerBlockPortable, {marginRight: 23}]}>
           <TouchableOpacity
             onPress={() =>
-              navigation.navigate('ReadSoilDetail', {portableData: item})
+              navigation.navigate(RouteName.PortableSensorScreenNavigation, {portableData: item, isHistoryMode: true})
             }>
             <CornerCutComponent
               width={254}

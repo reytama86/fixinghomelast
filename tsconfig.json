@@ -11,6 +11,7 @@
       "@Assets/*": ["src/Assets/*"],
       "@Context/*": ["src/Context/*"],
       "@Hooks/*": ["src/Hooks/*"],
+      "@Constants/*": ["src/Constants/*"],
     }
   },
   "include": ["declaration.d.ts", "src/**/*"]

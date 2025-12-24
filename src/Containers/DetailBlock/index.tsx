@@ -10,12 +10,8 @@ import DurationModal from '@Organism/DurationModal';
 import ConfirmModal from '@Containers/Tab/HomeScreen/Modal/ConfirmModal';
 import {styles} from './styles';
 
-type DetailBlockProps = NativeStackScreenProps<
-  HomeStackParamList,
-  'DetailBlockOne' | 'DetailBlockTwo'
->;
 
-const DetailBlock: React.FC<DetailBlockProps> = ({navigation, route}) => {
+const DetailBlock: React.FC = ({}) => {
   const {
     blockNumber,
     blockTitle,
@@ -37,7 +33,7 @@ const DetailBlock: React.FC<DetailBlockProps> = ({navigation, route}) => {
     handleMinutesChange,
     handleSecondsChange,
     handleGoBack,
-  } = useDetailBlock(route, navigation);
+  } = useDetailBlock();
 
   if (loading && !sensorData) {
     return (

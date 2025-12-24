@@ -1,9 +1,12 @@
 import Login from "@Containers/Auth/Login";
 import DetailBlock from "@Containers/DetailBlock";
+import SplashScreen from "@Containers/SplashScreen";
 import ChartScreen from "@Containers/Tab/ChartScreen";
 import HomeScreen from "@Containers/Tab/HomeScreen";
+import AllBlock from "@Containers/Tab/HomeScreen/AllBlock";
 import PortableSensorScreen from "@Containers/Tab/PortableSensorScreen";
-import RouteName from "src/Constants/RouteName.constants";
+import AllPortableTools from "@Containers/Tab/PortableSensorScreen/AllPortableTools";
+import RouteName from "../Constants/RouteName.constants"
 
 interface IScreen {
     name: string;
@@ -18,7 +21,14 @@ export const UnauthorizedScreens: IScreen[] = [
         options: {
             headerShown: false,
         },
-    }
+    },
+    {
+        name: RouteName.SplashScreenNavigation,
+        component: SplashScreen,
+        options: {
+            headerShown: false,
+        },
+    },
 ]
 
 export const AuthorizedScreens: IScreen[] = [
@@ -36,9 +46,16 @@ export const AuthorizedScreens: IScreen[] = [
             headerShown: false,
         },
     },
+    // {
+    //     name: RouteName.ListBlockScreenNavigation,
+    //     component: AllBlock,
+    //     options: {
+    //         headerShown: false,
+    //     },
+    // },
     {
-        name: RouteName.ChartScreenNavigation,
-        component: ChartScreen,
+        name: RouteName.ListPortableScreenNavigation,
+        component: AllPortableTools,
         options: {
             headerShown: false,
         },

@@ -539,7 +539,7 @@ const AllPortableTools: React.FC<Props> = ({navigation}) => {
       <PortableItem
         item={item}
         onPress={() =>
-          navigation.navigate('ReadSoilDetail', {portableData: item})
+          navigation.navigate('ReadSoilDetail', {portableData: item, isHistoryMode: true})
         }
       />
     ),

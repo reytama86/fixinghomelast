@@ -1,22 +1,29 @@
 import React from 'react';
-import {View, Text, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator} from 'react-native';
-import {ArrowLeft2} from 'iconsax-react-native';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {HomeStackParamList} from 'HomeStack';
+import {View, Text, SafeAreaView, ScrollView, ActivityIndicator} from 'react-native';
 import {useDetailBlock} from './useDetailBlock';
 import {ExpandableBlock} from './Section/ExpandableBlock';
 import {DeviceCard} from './Section/DeviceCard';
 import DurationModal from '@Organism/DurationModal';
 import ConfirmModal from '@Containers/Tab/HomeScreen/Modal/ConfirmModal';
 import {styles} from './styles';
+import HeaderBack from '@Molecule/HeaderBack';
+import {useHeaderMode} from '@Hooks/useHeaderMode'; 
+import { RouteProp, useRoute } from '@react-navigation/native';
+import { RootStackParamList } from '@Constants/RouteParamsList.constants';
+
+type DetailBlockRouteProp = RouteProp<
+  RootStackParamList,
+  'DetailBlock'
+>;
 
 
-const DetailBlock: React.FC = ({}) => {
+const DetailBlock: React.FC<any> = ({}) => {
+  const route = useRoute<DetailBlockRouteProp>();
+  const { blockId } = route.params;
+
   const {
-    blockNumber,
     blockTitle,
     blockControls,
-    apiEndpoint,
     sensorData,
     loading,
     showDurationModal,
@@ -32,8 +39,9 @@ const DetailBlock: React.FC = ({}) => {
     setShowConfirm,
     handleMinutesChange,
     handleSecondsChange,
-    handleGoBack,
-  } = useDetailBlock();
+  } = useDetailBlock(blockId);
+
+  const {handleScroll, headMode: headerMode} = useHeaderMode();
 
   if (loading && !sensorData) {
     return (
@@ -46,24 +54,27 @@ const DetailBlock: React.FC = ({}) => {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <HeaderBack
+        back={true}
+        title={blockTitle}
+        animated={true}
+        mode={headerMode}
+      />
+
       <View style={styles.main}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-          bounces={true}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={handleGoBack}>
-              <ArrowLeft2 color="black" variant="Linear" size={24} />
-            </TouchableOpacity>
-            <Text style={styles.title}>{blockTitle}</Text>
-            <View style={{width: 24}} />
-          </View>
+          bounces={true}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}>
+          <View style={{height: 30}} />
 
           {blockControls.expandableBlocks?.map((block, index) => (
             <ExpandableBlock key={index} {...block} onToggle={handleToggle} />
           ))}
-
-          {blockControls.devices.map((device, index) => (
+          
+          {blockControls.devices?.map((device, index) => (
             <DeviceCard key={index} deviceNumber={device} sensorData={sensorData} />
           ))}
         </ScrollView>
@@ -76,9 +87,7 @@ const DetailBlock: React.FC = ({}) => {
         inputSeconds={inputSeconds}
         onMinutesChange={handleMinutesChange}
         onSecondsChange={handleSecondsChange}
-        onCancel={() => {
-          setShowDurationModal(false);
-        }}
+        onCancel={() => setShowDurationModal(false)}
         onStart={handleStartProcess}
       />
 

@@ -22,6 +22,7 @@ import {
 import {Svg, Path} from 'react-native-svg';
 import {useFocusEffect} from '@react-navigation/native';
 import {LineChart, BarChart} from 'react-native-chart-kit';
+import RouteName from '@Constants/RouteName.constants';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'AllPortableTools'>;
 
@@ -535,16 +536,24 @@ const AllPortableTools: React.FC<Props> = ({navigation}) => {
   );
 
   const renderPortableItem = useCallback(
-    ({item}: {item: PortableToolData}) => (
-      <PortableItem
-        item={item}
-        onPress={() =>
-          navigation.navigate('ReadSoilDetail', {portableData: item, isHistoryMode: true})
-        }
-      />
-    ),
-    [navigation],
-  );
+  ({item}: {item: PortableToolData}) => (
+    <PortableItem
+      item={item}
+      onPress={() => {
+        console.log('Item pressed:', item);
+        // Navigate to Tab Navigator, then to ReadSoil screen
+        navigation.navigate('Tab' as any, {
+          screen: 'ReadSoil',
+          params: {
+            portableData: item,
+            isHistoryMode: true,
+          }
+        });
+      }}
+    />
+  ),
+  [navigation],
+);
 
   const keyExtractor = useCallback(
     (item: PortableToolData) => item.id.toString(),
@@ -569,13 +578,13 @@ const AllPortableTools: React.FC<Props> = ({navigation}) => {
         <View style={{width: 24}} />
       </View>
 
-      <View style={styles.segmentedControlContainer}>
+      {/* <View style={styles.segmentedControlContainer}>
         <SegmentedControl
           options={['List Data', 'Average Analysis']}
           selectedIndex={selectedTab}
           onSelectIndex={setSelectedTab}
         />
-      </View>
+      </View> */}
 
       {selectedTab === 0 ? (
         loading ? (

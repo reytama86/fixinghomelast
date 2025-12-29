@@ -38,8 +38,10 @@ type CompactSensorData = {
 export type MainTabParamList = {
   Home: undefined;
   ReadSoil: {
-    bleStatus: 'scanning' | 'connecting' | 'connected' | 'disconnected';
+    bleStatus?: 'scanning' | 'connecting' | 'connected' | 'disconnected';
     sensorData?: SoilSensorData;
+    portableData?: any; // tambahkan ini
+    isHistoryMode?: boolean; // tambahkan ini
   };
   ChartMain: undefined;
 };

@@ -12,18 +12,7 @@ export const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 20,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    height: 32,
-    marginTop: 20,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-    fontFamily: 'SpaceGrotesk-Medium',
-  },
+  // Header style tidak dipakai lagi karena pakai HeaderBack
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',

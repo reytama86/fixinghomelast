@@ -71,9 +71,14 @@ const PortableToolsList: React.FC<PortableToolsListProps> = ({
       return (
         <View style={[styles.containerBlockPortable, {marginRight: 23}]}>
           <TouchableOpacity
-            onPress={() =>
-              navigation.navigate(RouteName.PortableSensorScreenNavigation, {portableData: item, isHistoryMode: true})
-            }>
+          onPress={() => {
+            console.log('Card pressed, item:', item);
+            // Karena sudah di dalam Tab Navigator, navigate langsung
+            navigation.navigate('ReadSoil', {
+              portableData: item,
+              isHistoryMode: true,
+            });
+          }}>
             <CornerCutComponent
               width={254}
               height={140}
@@ -130,7 +135,7 @@ const PortableToolsList: React.FC<PortableToolsListProps> = ({
         <Text style={styles.headerText}>Portable Tools Scanning History</Text>
         <TouchableOpacity
           onPress={() => {
-            navigation.navigate('AllPortableTools');
+            navigation.navigate(RouteName.ListPortableScreenNavigation);
           }}>
           <View style={styles.showAll}>
             <Text style={styles.showAllText}>Show All</Text>

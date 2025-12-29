@@ -1,4 +1,4 @@
-import React, {useMemo} from 'react';
+import React from 'react';
 import {View, Text, TouchableOpacity, Dimensions} from 'react-native';
 import {Maximize1, ArrowDown} from 'iconsax-react-native';
 import Svg, {Path} from 'react-native-svg';
@@ -14,6 +14,7 @@ interface SensorDataBlock {
   block2: {temp: string; humidity: string};
 }
 
+
 interface FieldListProps {
   sensorDataBlock: SensorDataBlock;
   navigation: any;
@@ -24,7 +25,7 @@ const FieldList: React.FC<FieldListProps> = ({sensorDataBlock, navigation}) => {
     <View style={styles.fieldList}>
       <View style={styles.headerFieldList}>
         <Text style={styles.headerText}>Field List</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('AllBlock')}>
+        <TouchableOpacity onPress={() => navigation.navigate(RouteName.ListBlockScreenNavigation)}>
           <View style={styles.showAll}>
             <Text style={styles.showAllText}>Show All</Text>
             <Maximize1 color="#B4DC45" variant="Broken" size={24} />
@@ -36,7 +37,10 @@ const FieldList: React.FC<FieldListProps> = ({sensorDataBlock, navigation}) => {
         {/* Block 3 */}
         <TouchableOpacity
           onPress={() => {
-            navigation.navigate('DetailBlockTwo', {from: 'HomeFix'});
+            navigation.navigate(RouteName.DetailBlockNavigation, {
+              blockId: 3,
+              from: 'HomeFix'
+            });
           }}>
           <CornerCutComponent
             width={cardWidth}
@@ -92,7 +96,10 @@ const FieldList: React.FC<FieldListProps> = ({sensorDataBlock, navigation}) => {
         {/* Block 4 */}
         <TouchableOpacity
           onPress={() => {
-            navigation.navigate(RouteName.DetailBlockNavigation);
+            navigation.navigate(RouteName.DetailBlockNavigation, {
+              blockId: 4,
+              from: 'HomeFix'
+            });
           }}>
           <CornerCutComponent
             width={cardWidth}

@@ -12,6 +12,7 @@ import { BottomActionsSection } from './Section/BottomAction';
 import { SaveModal } from './Section/SaveModal';
 import { RescanModal } from './Section/RescanModal';
 import styles from './styles';
+import HeaderBack from '@Molecule/HeaderBack';
 
 type PortableData = {
   keterangan_portable: string;
@@ -22,17 +23,7 @@ type PortableData = {
   }>;
 };
 
-type ReadSoilRouteProp = RouteProp<MainTabParamList, 'ReadSoil'>;
-type Props = BottomTabScreenProps<MainTabParamList, 'ReadSoil'> & {
-  route: {
-    params: {
-      bleStatus?: 'scanning' | 'connecting' | 'connected' | 'disconnected';
-      sensorData?: SoilSensorData;
-      portableData?: PortableData;
-      isHistoryMode?: boolean;
-    };
-  };
-};
+
 
 function mapSensorNameForHelper(localName: string) {
   switch (localName) {
@@ -60,7 +51,11 @@ const makeIndicatorFromValue = (localKey: string, value: number): SoilIndicator 
   return getSoilStatus(helperName, value);
 };
 
-const PortableSensorScreen: React.FC<Props> = ({navigation, route}) => {
+type Props = BottomTabScreenProps<MainTabParamList, 'ReadSoil'>;
+
+const PortableSensorScreen: React.FC<Props> = ({route, navigation}) => {
+  console.log('PortableSensorScreen - Route params:', route.params);
+  
   const {
     bleStatus: initialBleStatus,
     sensorData: initialSensorData,
@@ -166,18 +161,6 @@ const PortableSensorScreen: React.FC<Props> = ({navigation, route}) => {
     }
   }, [bleStatus, isRescanPopupVisible, currentSensorData]);
 
-  useFocusEffect(
-    useCallback(() => {
-      const onBackPress = () => {
-        navigation.goBack();
-        return true;
-      };
-
-      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-      return () => subscription.remove();
-    }, [navigation])
-  );
-
   const openModal = () => {
     setIsModalVisible(true);
     Animated.timing(modalAnimation, {
@@ -195,12 +178,6 @@ const PortableSensorScreen: React.FC<Props> = ({navigation, route}) => {
     }).start(() => setIsModalVisible(false));
   };
 
-  const handleGoBack = async () => {
-    if (!isHistoryMode) {
-      await resetBLEState();
-    }
-    navigation.goBack();
-  };
 
   useEffect(() => {
     async function requestPermissions() {
@@ -290,12 +267,13 @@ const indicators = {
 };
   return (
   <SafeAreaView style={styles.container}>
-    <Header 
+    <HeaderBack
       title={isHistoryMode && portableData 
         ? portableData.keterangan_portable 
         : "Portable Tools Result"
-      } 
-      onBackPress={handleGoBack} 
+      }
+      back
+      
     />
     
     {isHistoryMode && portableData && (

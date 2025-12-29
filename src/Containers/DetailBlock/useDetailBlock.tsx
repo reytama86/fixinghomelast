@@ -8,26 +8,23 @@ interface BlockConfig {
   blockTitle: string;
   apiEndpoint: string;
   devices: number[];
-  expandableBlocks?: Array<{
-    title: string;
-    animationSource: any;
-    blockCount: number;
-    blockType: 'water' | 'fertilizer';
-    mainControl: any;
-    row1Control?: any;
-    row2Control?: any;
-    isDisabled?: boolean;
-  }>;
 }
 
-const BLOCK_CONFIGS: Record<string, BlockConfig> = {
-  DetailBlockOne: {
+interface BlockControls {
+  main: any;
+  devices: number[];
+  expandableBlocks: any[];
+}
+
+
+const BLOCK_CONFIGS: Record<3 | 4, BlockConfig> = {
+  4: {
     blockNumber: 1,
     blockTitle: 'Block 4',
     apiEndpoint: 'https://iot-vanili-api.permataindonesia.com/api/latest-sensor-block1',
     devices: [1, 2, 3],
   },
-  DetailBlockTwo: {
+  3: {
     blockNumber: 2,
     blockTitle: 'Block 3',
     apiEndpoint: 'https://iot-vanili-api.permataindonesia.com/api/latest-sensor-block2',
@@ -35,11 +32,9 @@ const BLOCK_CONFIGS: Record<string, BlockConfig> = {
   },
 };
 
-export const useDetailBlock = (route: any, navigation: any) => {
-  const routeName = route.name;
-  const config = BLOCK_CONFIGS[routeName];
-  const from = route.params?.from || 'HomeFix';
-
+export const useDetailBlock = (blockIdParam?: number) => {
+  const blockId = blockIdParam === 3 ? 3 : 4;
+  const config = BLOCK_CONFIGS[blockId];
   const {setActivePage} = usePageControl();
   const controls = useControl();
 
@@ -57,53 +52,43 @@ export const useDetailBlock = (route: any, navigation: any) => {
   const [inputMinutes, setInputMinutes] = useState('1');
   const [inputSeconds, setInputSeconds] = useState('0');
 
-  const handleGoBack = useCallback(() => {
-    if (from === 'AllBlock') {
-      navigation.navigate('AllBlock');
-    } else {
-      navigation.navigate('HomeFix');
-    }
-  }, [from, navigation]);
+  const blockControls = useMemo<BlockControls>(() => {
+  if (blockId === 4) {
+    return {
+      main: controls.block1Control,
+      devices: config.devices,
+      expandableBlocks: [
+        {
+          title: 'Water',
+          animationSource: require('@Assets/videos/air.mp4.lottie.json'),
+          blockCount: 2,
+          blockType: 'water' as const,
+          mainControl: controls.block1Control,
+          row1Control: controls.block1RowWater1Control,
+          row2Control: controls.block1RowWater2Control,
+          isDisabled: controls.block1Control.isFertilizerOn,
+        },
+        {
+          title: 'Fertilizer',
+          animationSource: require('@Assets/videos/pupuk.mp4.lottie.json'),
+          blockCount: 2,
+          blockType: 'fertilizer' as const,
+          mainControl: controls.block1Control,
+          row1Control: controls.block1RowFertilizer1Control,
+          row2Control: controls.block1RowFertilizer2Control,
+          isDisabled: controls.block1Control.isWaterOn,
+        },
+      ],
+    };
+  }
 
-  const blockControls = useMemo(() => {
-    if (config.blockNumber === 1) {
-      return {
-        main: controls.block1Control,
-        waterRow1: controls.block1RowWater1Control,
-        waterRow2: controls.block1RowWater2Control,
-        fertRow1: controls.block1RowFertilizer1Control,
-        fertRow2: controls.block1RowFertilizer2Control,
-        devices: config.devices,
-        expandableBlocks: [
-          {
-            title: 'Water',
-            animationSource: require('@Assets/videos/air.mp4.lottie.json'),
-            blockCount: 2,
-            blockType: 'water' as const,
-            mainControl: controls.block1Control,
-            row1Control: controls.block1RowWater1Control,
-            row2Control: controls.block1RowWater2Control,
-            isDisabled: controls.block1Control.isFertilizerOn,
-          },
-          {
-            title: 'Fertilizer',
-            animationSource: require('@Assets/videos/pupuk.mp4.lottie.json'),
-            blockCount: 2,
-            blockType: 'fertilizer' as const,
-            mainControl: controls.block1Control,
-            row1Control: controls.block1RowFertilizer1Control,
-            row2Control: controls.block1RowFertilizer2Control,
-            isDisabled: controls.block1Control.isWaterOn,
-          },
-        ],
-      };
-    } else {
-      return {
-        main: controls.block2Control,
-        devices: config.devices,
-      };
-    }
-  }, [config, controls]);
+  return {
+    main: controls.block2Control,
+    devices: config.devices,
+    expandableBlocks: [],
+  };
+}, [blockId, config, controls]);
+
 
   const fetchSensorData = useCallback(async () => {
     try {
@@ -131,20 +116,9 @@ export const useDetailBlock = (route: any, navigation: any) => {
 
   useFocusEffect(
     useCallback(() => {
-      setActivePage(`block${config.blockNumber}`);
+      setActivePage(blockId);
       fetchSensorData();
-
-      const onBackPress = () => {
-        handleGoBack();
-        return true;
-      };
-
-      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-      return () => {
-        subscription.remove();
-      };
-    }, [config.blockNumber, fetchSensorData, handleGoBack, setActivePage])
+    }, [blockId, fetchSensorData, setActivePage])
   );
 
   const handleToggle = useCallback(
@@ -219,6 +193,5 @@ export const useDetailBlock = (route: any, navigation: any) => {
     setShowConfirm,
     handleMinutesChange,
     handleSecondsChange,
-    handleGoBack,
   };
 };

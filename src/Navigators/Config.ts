@@ -41,7 +41,7 @@ export const AuthorizedScreens: IScreen[] = [
     },
     {
         name: RouteName.ListBlockScreenNavigation,
-        component: PortableSensorScreen,
+        component: AllBlock,
         options: {
             headerShown: false,
         },

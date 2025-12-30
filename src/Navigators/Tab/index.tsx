@@ -37,7 +37,7 @@ type CompactSensorData = {
 
 export type MainTabParamList = {
   Home: undefined;
-  ReadSoil: {
+  PortableHistory: {
     bleStatus?: 'scanning' | 'connecting' | 'connected' | 'disconnected';
     sensorData?: SoilSensorData;
     portableData?: any; // tambahkan ini
@@ -59,7 +59,7 @@ const AnimatedTabBar = (props: any) => {
     const routeName = currentRoute.name;
     
     // Screens di mana tab bar harus disembunyikan
-    const hideTabScreens = ['ReadSoil'];
+    const hideTabScreens = ['PortableHistory'];
 
     const shouldHide = hideTabScreens.includes(routeName);
 
@@ -124,7 +124,7 @@ const AnimatedTabBar = (props: any) => {
                 color={isFocused ? '#B4DC45' : 'gray'}
                 size={24}
               />
-              {route.name !== 'ReadSoil' && (
+              {route.name !== 'PortableHistory' && (
                 <Text
                   style={[
                     styles.tabBarLabel,
@@ -374,7 +374,7 @@ const TabNavigator: React.FC = () => {
           clearInterval(checkDataInterval);
           setTimeout(() => {
             setShowPopup(false);
-            navigation.navigate('ReadSoil', { 
+            navigation.navigate('PortableHistory', { 
               bleStatus,
               sensorData 
             });
@@ -386,7 +386,7 @@ const TabNavigator: React.FC = () => {
         clearInterval(checkDataInterval);
         console.log('Data timeout');
         setShowPopup(false);
-        navigation.navigate('ReadSoil', { 
+        navigation.navigate('PortableHistory', { 
           bleStatus: 'disconnected',
           sensorData: null 
         });
@@ -399,7 +399,7 @@ const TabNavigator: React.FC = () => {
     } else if (bleStatus === 'disconnected') {
       setTimeout(() => {
         setShowPopup(false);
-        navigation.navigate('ReadSoil', { 
+        navigation.navigate('PortableHistory', { 
           bleStatus,
           sensorData: null 
         });
@@ -431,7 +431,7 @@ const TabNavigator: React.FC = () => {
             if (route.name === 'Home') {
               return <Home color={focused ? '#B4DC45' : color} variant="Bold" size={size} />;
             }
-            if (route.name === 'ReadSoil') {
+            if (route.name === 'PortableHistory') {
               return (
                 <View style={styles.readIconContainer}>
                   <Scan color="white" variant="Linear" size={20} />
@@ -448,13 +448,15 @@ const TabNavigator: React.FC = () => {
           options={{ tabBarLabel: 'Home' }}
         />
         <Tab.Screen
-          name="ReadSoil"
+          name="PortableHistory"
           component={PortableSensorScreen}
           options={{ tabBarLabel: '' }}
           listeners={({ navigation: nav }) => ({
             tabPress: e => {
+
               e.preventDefault();
               setNavigation(nav);
+              // setSensorData(null);
               setShowPopup(true);
             },
           })}

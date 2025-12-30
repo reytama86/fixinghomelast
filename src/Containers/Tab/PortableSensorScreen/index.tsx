@@ -51,7 +51,7 @@ const makeIndicatorFromValue = (localKey: string, value: number): SoilIndicator 
   return getSoilStatus(helperName, value);
 };
 
-type Props = BottomTabScreenProps<MainTabParamList, 'ReadSoil'>;
+type Props = BottomTabScreenProps<MainTabParamList, 'PortableHistory'>;
 
 const PortableSensorScreen: React.FC<Props> = ({route, navigation}) => {
   console.log('PortableSensorScreen - Route params:', route.params);
@@ -108,6 +108,16 @@ const PortableSensorScreen: React.FC<Props> = ({route, navigation}) => {
     setIsRescanPopupVisible(true);
     setDotCount(0);
   };
+
+//   useFocusEffect(
+//   useCallback(() => {
+//     // Reset data saat screen focus dan bukan history mode
+//     if (!isHistoryMode) {
+//       setCurrentSensorData(null);
+//       setBleStatus(initialBleStatus || 'disconnected');
+//     }
+//   }, [isHistoryMode, initialBleStatus])
+// );
 
   useEffect(() => {
     let dotInterval: ReturnType<typeof setInterval>;

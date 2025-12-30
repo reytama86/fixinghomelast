@@ -96,6 +96,11 @@ export default function StackNavigator() {
                   options={screen.options}
                 />
               ))}
+              {/* <Stack.Screen
+                name="ReadSoil"
+                component={PortableSensorScreen}
+                options={{headerShown: false}}
+              /> */}
             </Stack.Group>
           </>
         )}

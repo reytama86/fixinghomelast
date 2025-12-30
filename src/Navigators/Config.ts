@@ -60,6 +60,13 @@ export const AuthorizedScreens: IScreen[] = [
             headerShown: false,
         },
     },
+    {
+    name: RouteName.PortableSensorScreenNavigation,
+    component: PortableSensorScreen,
+    options: {
+      headerShown: false,
+    },
+  },
 ]
 
 export const TabScreens: IScreen[] = [

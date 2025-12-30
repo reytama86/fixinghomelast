@@ -74,7 +74,7 @@ const PortableToolsList: React.FC<PortableToolsListProps> = ({
           onPress={() => {
             console.log('Card pressed, item:', item);
             // Karena sudah di dalam Tab Navigator, navigate langsung
-            navigation.navigate('ReadSoil', {
+            navigation.navigate(RouteName.PortableSensorScreenNavigation, {
               portableData: item,
               isHistoryMode: true,
             });

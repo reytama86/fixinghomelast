@@ -23,6 +23,9 @@ import {Svg, Path} from 'react-native-svg';
 import {useFocusEffect} from '@react-navigation/native';
 import {LineChart, BarChart} from 'react-native-chart-kit';
 import RouteName from '@Constants/RouteName.constants';
+import HeaderBack from '@Molecule/HeaderBack';
+import { useHeaderMode } from '@Hooks/useHeaderMode'
+
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'AllPortableTools'>;
 
@@ -47,47 +50,48 @@ interface ParameterAverage {
 
 type TimeRange = '1week' | '2weeks' | '1month' | '2months';
 
-const CornerCutComponent = React.memo(({
-  width = '100%',
-  height = 400,
-  cutSize = 50,
-  backgroundColor = '#ffffff',
-  borderRadius = 16,
-  children,
-}: any) => {
-  const safeHeight = Number(height) || 400;
-  const safeCutSize = Number(cutSize) || 50;
-  const safeBorderRadius = Number(borderRadius) || 16;
-  const actualWidth =
-    typeof width === 'string' ? screenWidth - 32 : Number(width) || 300;
+const CornerCutComponent = React.memo(
+  ({
+    width = '100%',
+    height = 400,
+    cutSize = 50,
+    backgroundColor = '#ffffff',
+    borderRadius = 16,
+    children,
+  }: any) => {
+    const safeHeight = Number(height) || 400;
+    const safeCutSize = Number(cutSize) || 50;
+    const safeBorderRadius = Number(borderRadius) || 16;
+    const actualWidth =
+      typeof width === 'string' ? screenWidth - 32 : Number(width) || 300;
 
-  const pathData = useMemo(() => {
-    if (
-      !isFinite(actualWidth) ||
-      !isFinite(safeHeight) ||
-      !isFinite(safeCutSize) ||
-      !isFinite(safeBorderRadius)
-    ) {
-      return `M 0 0 L ${actualWidth} 0 L ${actualWidth} ${safeHeight} L 0 ${safeHeight} Z`;
-    }
+    const pathData = useMemo(() => {
+      if (
+        !isFinite(actualWidth) ||
+        !isFinite(safeHeight) ||
+        !isFinite(safeCutSize) ||
+        !isFinite(safeBorderRadius)
+      ) {
+        return `M 0 0 L ${actualWidth} 0 L ${actualWidth} ${safeHeight} L 0 ${safeHeight} Z`;
+      }
 
-    const coords = {
-      topLeft: safeBorderRadius,
-      topRight: actualWidth - safeBorderRadius,
-      rightTop: safeBorderRadius,
-      rightCutStart: safeHeight - safeCutSize - safeBorderRadius,
-      rightCutEnd: safeHeight - safeCutSize,
-      cutCornerStart: actualWidth - safeCutSize + safeBorderRadius,
-      cutCornerEnd: actualWidth - safeCutSize,
-      cutBottomStart: safeHeight - safeCutSize + safeBorderRadius,
-      cutBottomEnd: safeHeight - safeBorderRadius,
-      bottomRight: actualWidth - safeCutSize - safeBorderRadius,
-      bottomLeft: safeBorderRadius,
-      leftBottom: safeHeight - safeBorderRadius,
-      leftTop: safeBorderRadius,
-    };
+      const coords = {
+        topLeft: safeBorderRadius,
+        topRight: actualWidth - safeBorderRadius,
+        rightTop: safeBorderRadius,
+        rightCutStart: safeHeight - safeCutSize - safeBorderRadius,
+        rightCutEnd: safeHeight - safeCutSize,
+        cutCornerStart: actualWidth - safeCutSize + safeBorderRadius,
+        cutCornerEnd: actualWidth - safeCutSize,
+        cutBottomStart: safeHeight - safeCutSize + safeBorderRadius,
+        cutBottomEnd: safeHeight - safeBorderRadius,
+        bottomRight: actualWidth - safeCutSize - safeBorderRadius,
+        bottomLeft: safeBorderRadius,
+        leftBottom: safeHeight - safeBorderRadius,
+        leftTop: safeBorderRadius,
+      };
 
-    return `
+      return `
       M ${coords.topLeft} 0
       L ${coords.topRight} 0
       Q ${actualWidth} 0 ${actualWidth} ${coords.rightTop}
@@ -103,24 +107,28 @@ const CornerCutComponent = React.memo(({
       Q 0 0 ${coords.topLeft} 0
       Z
     `
-      .replace(/\s+/g, ' ')
-      .trim();
-  }, [actualWidth, safeHeight, safeCutSize, safeBorderRadius]);
+        .replace(/\s+/g, ' ')
+        .trim();
+    }, [actualWidth, safeHeight, safeCutSize, safeBorderRadius]);
 
-  return (
-    <View
-      style={[styles.cornerCutContainer, {width: '100%', height: safeHeight}]}>
-      <Svg
-        width="100%"
-        height={safeHeight}
-        style={StyleSheet.absoluteFillObject}
-        viewBox={`0 0 ${actualWidth} ${safeHeight}`}>
-        <Path d={pathData} fill={backgroundColor} />
-      </Svg>
-      {children}
-    </View>
-  );
-});
+    return (
+      <View
+        style={[
+          styles.cornerCutContainer,
+          {width: '100%', height: safeHeight},
+        ]}>
+        <Svg
+          width="100%"
+          height={safeHeight}
+          style={StyleSheet.absoluteFillObject}
+          viewBox={`0 0 ${actualWidth} ${safeHeight}`}>
+          <Path d={pathData} fill={backgroundColor} />
+        </Svg>
+        {children}
+      </View>
+    );
+  },
+);
 
 const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
@@ -213,10 +221,7 @@ const PortableItem = React.memo(
                   variant="Linear"
                   size={26}
                   color="white"
-                  style={[
-                    styles.arrowIcon,
-                    {transform: [{rotate: '230deg'}]},
-                  ]}
+                  style={[styles.arrowIcon, {transform: [{rotate: '230deg'}]}]}
                 />
               </View>
             </View>
@@ -380,9 +385,7 @@ const AverageAnalysisView = React.memo(
           for (let i = 1; i <= 9; i++) {
             const blockKey = `Block ${i}`;
             blockLabels.push(`B${i}`);
-            blockValues.push(
-              averageData[blockKey]?.[param.parameter] || 0,
-            );
+            blockValues.push(averageData[blockKey]?.[param.parameter] || 0);
           }
 
           return (
@@ -390,8 +393,8 @@ const AverageAnalysisView = React.memo(
               <Text style={styles.chartTitle}>
                 {param.parameter} - Block Comparison
               </Text>
-              <ScrollView 
-                horizontal 
+              <ScrollView
+                horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{paddingRight: 16}}>
                 <BarChart
@@ -536,24 +539,21 @@ const AllPortableTools: React.FC<Props> = ({navigation}) => {
   );
 
   const renderPortableItem = useCallback(
-  ({item}: {item: PortableToolData}) => (
-    <PortableItem
-      item={item}
-      onPress={() => {
-        console.log('Item pressed:', item);
-        // Navigate to Tab Navigator, then to ReadSoil screen
-        navigation.navigate('Tab' as any, {
-          screen: 'ReadSoil',
-          params: {
+    ({item}: {item: PortableToolData}) => (
+      <PortableItem
+        item={item}
+        onPress={() => {
+          console.log('Item pressed:', item);
+          // Navigate to Tab Navigator, then to ReadSoil screen
+          navigation.navigate(RouteName.PortableSensorScreenNavigation, {
             portableData: item,
             isHistoryMode: true,
-          }
-        });
-      }}
-    />
-  ),
-  [navigation],
-);
+          });
+        }}
+      />
+    ),
+    [navigation],
+  );
 
   const keyExtractor = useCallback(
     (item: PortableToolData) => item.id.toString(),
@@ -565,18 +565,16 @@ const AllPortableTools: React.FC<Props> = ({navigation}) => {
     [],
   );
 
+  const { handleScroll, headMode: headerMode } = useHeaderMode();
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          activeOpacity={0.7}
-          style={{marginLeft: 16}}>
-          <ArrowLeft2 color="black" variant="Linear" size={24} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Portable Tools</Text>
-        <View style={{width: 24}} />
-      </View>
+     <HeaderBack
+      title='Portable Tools'
+      back
+      animated
+      mode={headerMode}
+     />
 
       {/* <View style={styles.segmentedControlContainer}>
         <SegmentedControl
@@ -619,6 +617,8 @@ const AllPortableTools: React.FC<Props> = ({navigation}) => {
               offset: 156 * index,
               index,
             })}
+             onScroll={handleScroll}
+            scrollEventThrottle={16}
           />
         )
       ) : (
@@ -701,6 +701,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     padding: 16,
+    paddingTop: 46,
   },
   containerBlockPortableVertical: {
     width: '100%',
@@ -855,7 +856,7 @@ const styles = StyleSheet.create({
   },
   chart: {
     borderRadius: 8,
-    marginLeft: -30
+    marginLeft: -30,
   },
 });
 

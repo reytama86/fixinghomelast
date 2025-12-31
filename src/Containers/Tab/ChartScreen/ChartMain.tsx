@@ -36,6 +36,8 @@ import SoilPh from './SoilPh';
 import SoilNitrogen from './SoilNitrogen';
 import SoilPhospor from './SoilPhospor';
 import SoilKalium from './SoilKalium';
+import HeaderBack from '@Molecule/HeaderBack';
+import { useHeaderMode } from '@Hooks/useHeaderMode';
 
 export default function ChartMain() {
   const navigation = useNavigation();
@@ -72,6 +74,9 @@ export default function ChartMain() {
     'Kalium',
   ];
   const deviceOptions = ['1', '2', '3'];
+
+  
+
 
   // Map sensor untuk API
   const sensorApiMap = {
@@ -439,33 +444,39 @@ export default function ChartMain() {
     setShowDeviceDropdown(false);
   };
 
+  const { handleScroll, headMode } = useHeaderMode();
+
   return (
     <SafeAreaView style={styles.container}>
       {/* STICKY HEADER - Di luar ScrollView */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={{marginLeft: 16}}>
-          <ArrowLeft2 color="black" variant="Linear" size={24} />
-        </TouchableOpacity>
-        <Text style={styles.title}>Summary Sensor</Text>
-        <View style={{width: 24}} />
-      </View>
+     <HeaderBack
+        title="Summary Sensor"
+        back
+        animated
+        mode={headMode}
+      />
+
 
       <ScrollView
-        contentContainerStyle={{
-          paddingBottom: FOOTER_HEIGHT + 16,
-          marginTop: -55
-        }}>
-        <Temperature />
-        <Humidity />
-        <Light />
-        <SoilTemperature />
-        <SoilMoisture />
-        <SoilEc />
-        <SoilPh />
-        <SoilNitrogen />
-        <SoilPhospor />
-        <SoilKalium />
-      </ScrollView>
+      contentContainerStyle={{
+        paddingBottom: FOOTER_HEIGHT + 16, 
+        marginTop: -30
+      }}
+      onScroll={handleScroll}
+      scrollEventThrottle={16}
+    >
+      <Temperature />
+      <Humidity />
+      <Light />
+      <SoilTemperature />
+      <SoilMoisture />
+      <SoilEc />
+      <SoilPh />
+      <SoilNitrogen />
+      <SoilPhospor />
+      <SoilKalium />
+    </ScrollView>
+
 
       {/* FOOTER BUTTON */}
       <View style={styles.footerWrapper}>

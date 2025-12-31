@@ -3,10 +3,11 @@ import DetailBlock from "@Containers/DetailBlock";
 import SplashScreen from "@Containers/SplashScreen";
 import ChartScreen from "@Containers/Tab/ChartScreen";
 import HomeScreen from "@Containers/Tab/HomeScreen";
-import AllBlock from "@Containers/Tab/HomeScreen/AllBlock";
 import PortableSensorScreen from "@Containers/Tab/PortableSensorScreen";
 import AllPortableTools from "@Containers/Tab/PortableSensorScreen/AllPortableTools";
-import RouteName from "../Constants/RouteName.constants"
+import RouteName from "../Constants/RouteName.constants";
+import BlockListScreen from "@Containers/BlockListScreen";
+import PortableListScreen from "@Containers/PortableListScreen";
 
 interface IScreen {
     name: string;
@@ -41,7 +42,7 @@ export const AuthorizedScreens: IScreen[] = [
     },
     {
         name: RouteName.ListBlockScreenNavigation,
-        component: AllBlock,
+        component: BlockListScreen,
         options: {
             headerShown: false,
         },
@@ -54,8 +55,8 @@ export const AuthorizedScreens: IScreen[] = [
     //     },
     // },
     {
-        name: RouteName.ListPortableScreenNavigation,
-        component: AllPortableTools,
+        name: RouteName.PortableListScreenNavigation,
+        component: PortableListScreen,
         options: {
             headerShown: false,
         },

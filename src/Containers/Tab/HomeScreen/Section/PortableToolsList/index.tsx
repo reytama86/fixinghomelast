@@ -2,10 +2,11 @@ import React, {useCallback, useMemo} from 'react';
 import {View, Text, TouchableOpacity, FlatList, ActivityIndicator} from 'react-native';
 import {Maximize1, ArrowDown} from 'iconsax-react-native';
 import Svg, {Path} from 'react-native-svg';
-import { CornerCutComponent } from '../FieldList/CornerCutComponent';
-import {PortableToolData, SensorData} from 'HomeStack';
+import { CornerCutComponent } from '@Atom/CornerCutCard';
+
 import {styles} from './styles';
 import RouteName from '@Constants/RouteName.constants';
+import { PortableToolData, SensorData } from '@Containers/PortableListScreen/usePortableList';
 
 interface PortableToolsListProps {
   portableData: PortableToolData[];
@@ -135,7 +136,7 @@ const PortableToolsList: React.FC<PortableToolsListProps> = ({
         <Text style={styles.headerText}>Portable Tools Scanning History</Text>
         <TouchableOpacity
           onPress={() => {
-            navigation.navigate(RouteName.ListPortableScreenNavigation);
+            navigation.navigate(RouteName.PortableListScreenNavigation);
           }}>
           <View style={styles.showAll}>
             <Text style={styles.showAllText}>Show All</Text>

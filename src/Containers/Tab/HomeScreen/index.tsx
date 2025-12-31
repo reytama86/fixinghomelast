@@ -2,8 +2,7 @@ import React, {useState, useEffect, useCallback} from 'react';
 import {View, ScrollView, BackHandler} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {useFocusEffect} from '@react-navigation/native';
-import {HomeStackParamList} from '../../../../HomeStack';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {useControl, usePageControl} from '../../../Context/ControlContext';
 
 import Header from './Section/Header';
@@ -17,10 +16,11 @@ import ConfirmModal from './Modal/ConfirmModal';
 
 import {styles} from './styles';
 import {useHomeData} from '@Hooks/useHomeData';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '@Constants/RouteParamsList.constants';
 
-type Props = NativeStackScreenProps<HomeStackParamList, 'Home'>;
-
-const HomeScreen: React.FC<Props> = ({navigation}) => {
+const HomeScreen: React.FC = ({}) => {
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const {setActivePage} = usePageControl();
   const {
     homeControl,

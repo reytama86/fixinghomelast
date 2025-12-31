@@ -1,11 +1,24 @@
 import {useState, useEffect, useCallback} from 'react';
+import {BackHandler, Platform} from 'react-native';
+import {useFocusEffect} from '@react-navigation/native';
+import {BlockCardData} from '@Organism/BlockCard';
 
-type SensorBlockValue = {
-  temp: string;
+export interface BlockData {
+  id: number;
+  name: string;
+  temperature: string;
   humidity: string;
-};
+  navigationEnabled?: boolean;
+  svgPath?: 'block1' | 'block2' | 'block3' | 'block7' | 'block8';
+}
 
-type SensorDataBlocks = Record<string, SensorBlockValue>;
+interface SensorDataBlocks {
+  block3: {temp: string; humidity: string};
+  block4: {temp: string; humidity: string};
+  block6: {temp: string; humidity: string};
+  block7: {temp: string; humidity: string};
+  block8: {temp: string; humidity: string};
+}
 
 export const useBlockList = () => {
   const [sensorDataBlocks, setSensorDataBlocks] = useState<SensorDataBlocks>({
@@ -26,7 +39,8 @@ export const useBlockList = () => {
       if (result.success) {
         const data = result.data;
 
-        const blockSensorMap: Record<number, string> = {
+        // Mapping sensor ID ke block
+        const blockSensorMap: Record<number, keyof SensorDataBlocks> = {
           5: 'block3',
           2: 'block4',
           6: 'block6',
@@ -34,33 +48,24 @@ export const useBlockList = () => {
           7: 'block8',
         };
 
-        const newBlockData: SensorDataBlocks = {
-          block3: {temp: '--', humidity: '--'},
-          block4: {temp: '--', humidity: '--'},
-          block6: {temp: '--', humidity: '--'},
-          block7: {temp: '--', humidity: '--'},
-          block8: {temp: '--', humidity: '--'},
-        };
+        const newBlockData = {...sensorDataBlocks};
 
-        Object.entries(blockSensorMap).forEach(([sensorIdStr, blockKey]) => {
-          const sensorId = parseInt(sensorIdStr, 10);
-
+        // Process data untuk setiap block
+        Object.entries(blockSensorMap).forEach(([sensorId, blockKey]) => {
           const tempSensor = data.find(
             (item: any) =>
-              item.id_sensor === sensorId &&
+              item.id_sensor === parseInt(sensorId) &&
               item.keterangan_sensor === 'Temperature',
           );
           const humiditySensor = data.find(
             (item: any) =>
-              item.id_sensor === sensorId &&
+              item.id_sensor === parseInt(sensorId) &&
               item.keterangan_sensor === 'Humidity',
           );
 
           newBlockData[blockKey] = {
-            temp: tempSensor ? String(tempSensor.nilai_sensor) : '--',
-            humidity: humiditySensor
-              ? String(humiditySensor.nilai_sensor)
-              : '--',
+            temp: tempSensor ? tempSensor.nilai_sensor : '--',
+            humidity: humiditySensor ? humiditySensor.nilai_sensor : '--',
           };
         });
 
@@ -77,57 +82,66 @@ export const useBlockList = () => {
     return () => clearInterval(interval);
   }, [fetchAllBlocksData]);
 
-  const formatValue = (v: string) => {
-    const n = Number(v);
-    if (!isFinite(n)) return '--';
-    return Math.round(n).toString();
-  };
-
-  const blocks = [
+  const blocks: BlockCardData[] = [
     {
       id: 3,
       name: 'Block 3',
-      temperature: formatValue(sensorDataBlocks.block3.temp),
-      humidity: formatValue(sensorDataBlocks.block3.humidity),
+      temperature: isNaN(Number(sensorDataBlocks.block3.temp))
+        ? '0'
+        : Math.round(Number(sensorDataBlocks.block3.temp)).toString(),
+      humidity: isNaN(Number(sensorDataBlocks.block3.humidity))
+        ? '0'
+        : Math.round(Number(sensorDataBlocks.block3.humidity)).toString(),
       navigationEnabled: true,
       svgPath: 'block2',
     },
     {
       id: 4,
       name: 'Block 4',
-      temperature: formatValue(sensorDataBlocks.block4.temp),
-      humidity: formatValue(sensorDataBlocks.block4.humidity),
+      temperature: isNaN(Number(sensorDataBlocks.block4.temp))
+        ? '0'
+        : Math.round(Number(sensorDataBlocks.block4.temp)).toString(),
+      humidity: isNaN(Number(sensorDataBlocks.block4.humidity))
+        ? '0'
+        : Math.round(Number(sensorDataBlocks.block4.humidity)).toString(),
       navigationEnabled: true,
       svgPath: 'block1',
     },
     {
       id: 6,
       name: 'Block 6',
-      temperature: formatValue(sensorDataBlocks.block6.temp),
-      humidity: formatValue(sensorDataBlocks.block6.humidity),
-      navigationEnabled: false,
+      temperature: isNaN(Number(sensorDataBlocks.block6.temp))
+        ? '0'
+        : Math.round(Number(sensorDataBlocks.block6.temp)).toString(),
+      humidity: isNaN(Number(sensorDataBlocks.block6.humidity))
+        ? '0'
+        : Math.round(Number(sensorDataBlocks.block6.humidity)).toString(),
       svgPath: 'block7',
     },
     {
       id: 7,
       name: 'Block 7',
-      temperature: formatValue(sensorDataBlocks.block7.temp),
-      humidity: formatValue(sensorDataBlocks.block7.humidity),
-      navigationEnabled: true,
+      temperature: isNaN(Number(sensorDataBlocks.block7.temp))
+        ? '0'
+        : Math.round(Number(sensorDataBlocks.block7.temp)).toString(),
+      humidity: isNaN(Number(sensorDataBlocks.block7.humidity))
+        ? '0'
+        : Math.round(Number(sensorDataBlocks.block7.humidity)).toString(),
+      // navigationTarget: 'DetailBlockTwo',
       svgPath: 'block3',
     },
     {
       id: 8,
       name: 'Block 8',
-      temperature: formatValue(sensorDataBlocks.block8.temp),
-      humidity: formatValue(sensorDataBlocks.block8.humidity),
-      navigationEnabled: false,
+      temperature: isNaN(Number(sensorDataBlocks.block8.temp))
+        ? '0'
+        : Math.round(Number(sensorDataBlocks.block8.temp)).toString(),
+      humidity: isNaN(Number(sensorDataBlocks.block8.humidity))
+        ? '0'
+        : Math.round(Number(sensorDataBlocks.block8.humidity)).toString(),
       svgPath: 'block8',
     },
   ];
 
-  return {
-    blocks,
-    fetchAllBlocksData,
-  };
+  return {blocks};
 };

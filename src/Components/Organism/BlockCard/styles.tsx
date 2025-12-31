@@ -1,14 +1,14 @@
 import {StyleSheet} from 'react-native';
 
 export const styles = StyleSheet.create({
-  container: {
+  blockCard: {
     marginBottom: 0,
   },
-  content: {
+  cardBlockContent: {
     flex: 1,
     position: 'relative',
   },
-  vectorContainer: {
+  containerVector: {
     position: 'absolute',
     width: 147,
     height: 87.5,
@@ -17,25 +17,26 @@ export const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 8,
   },
-  svgWrapper: {
+  svgContainer: {
     width: 100,
     height: 85,
     left: 20,
     top: 0,
+    backgroundColor: '#white',
   },
-  textContainer: {
+  containerTextBlock: {
     alignItems: 'flex-start',
     top: 111,
     paddingHorizontal: 12,
     width: '100%',
     height: 52,
   },
-  headerText: {
+  textBlockHeader: {
     fontSize: 14,
     fontWeight: '600',
     fontFamily: 'SpaceGrotesk-Medium',
   },
-  infoText: {
+  textBlock: {
     fontSize: 14,
     fontFamily: 'SpaceGrotesk-Regular',
   },

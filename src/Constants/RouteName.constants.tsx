@@ -6,7 +6,7 @@ const RouteName = {
     DetailBlockNavigation: 'DetailBlock',
     ListBlockScreenNavigation: 'ListBlockScreen',
     SplashScreenNavigation: 'SplashScreen',
-    ListPortableScreenNavigation: 'ListPortableScreen',
+    PortableListScreenNavigation: 'PortableListScreen',
     TabNavigation: 'Tab',
 } as const;
 

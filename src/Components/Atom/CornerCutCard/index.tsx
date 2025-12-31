@@ -1,9 +1,8 @@
 import React from 'react';
 import {View, StyleSheet} from 'react-native';
 import Svg, {Path} from 'react-native-svg';
-import {styles} from './styles';
 
-interface CornerCutProps {
+interface CornerCutComponentProps {
   width?: number;
   height?: number;
   cutSize?: number;
@@ -12,7 +11,7 @@ interface CornerCutProps {
   children?: React.ReactNode;
 }
 
-export const CornerCut: React.FC<CornerCutProps> = ({
+export const CornerCutComponent: React.FC<CornerCutComponentProps> = ({
   width = 300,
   height = 400,
   cutSize = 50,
@@ -46,3 +45,9 @@ export const CornerCut: React.FC<CornerCutProps> = ({
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    overflow: 'hidden',
+  },
+});

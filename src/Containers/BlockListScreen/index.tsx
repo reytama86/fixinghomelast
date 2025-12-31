@@ -1,41 +1,23 @@
-import React, {useCallback} from 'react';
-import {View, ScrollView, BackHandler, Platform} from 'react-native';
+import React from 'react';
+import {View, ScrollView, Dimensions} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useFocusEffect} from '@react-navigation/native';
-import RouteName from '@Constants/RouteName.constants';
+import type {NativeStackScreenProps} from '@react-navigation/native-stack';
+
 import HeaderBack from '@Molecule/HeaderBack';
-import {BlockCard} from './sections/BlockCard';
+import {BlockCard} from '@Organism/BlockCard'; 
 import {useBlockList} from './useBlockList';
 import {styles} from './styles';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '@Constants/RouteParamsList.constants';
+import { useNavigation } from '@react-navigation/native';
 
-const AllBlock: React.FC<any> = ({navigation}) => {
+const {width: screenWidth} = Dimensions.get('window');
+const cardWidth = (screenWidth - 45.5) / 2;
+
+
+const BlockListScreen: React.FC = ({}) => {
   const {blocks} = useBlockList();
-
-  useFocusEffect(
-    useCallback(() => {
-      if (Platform.OS !== 'android') return;
-
-      const onBackPress = () => {
-        navigation.goBack();
-        return true;
-      };
-
-      const subscription = BackHandler.addEventListener(
-        'hardwareBackPress',
-        onBackPress,
-      );
-
-      return () => subscription.remove();
-    }, [navigation]),
-  );
-
-  const handleBlockPress = (blockId: number) => {
-    navigation.navigate(RouteName.DetailBlockNavigation, {
-      blockId,
-      from: 'AllBlock',
-    });
-  };
-
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   return (
     <SafeAreaView style={styles.container}>
       <HeaderBack title="Field List" back />
@@ -49,7 +31,9 @@ const AllBlock: React.FC<any> = ({navigation}) => {
             <BlockCard
               key={block.id}
               block={block}
-              onPress={handleBlockPress}
+              navigation={navigation}
+              cardWidth={cardWidth}
+              from="AllBlock"
             />
           ))}
         </View>
@@ -58,4 +42,4 @@ const AllBlock: React.FC<any> = ({navigation}) => {
   );
 };
 
-export default AllBlock;
+export default BlockListScreen;

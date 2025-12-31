@@ -15,7 +15,7 @@ export type RootStackParamList = {
     from?: 'HomeFix' | 'AllBlock';
   };
   [RouteName.ListBlockScreenNavigation]: undefined;
-  [RouteName.ListPortableScreenNavigation]: undefined;
+  [RouteName.PortableListScreenNavigation]: undefined;
   [RouteName.SplashScreenNavigation]: undefined;
   [RouteName.TabNavigation]: undefined;
 }

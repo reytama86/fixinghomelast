@@ -17,7 +17,6 @@ import XLSX from 'xlsx';
 import { Calendar, ArrowDown2 } from 'iconsax-react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
-// Import chart components
 import Temperature from './Section/ListSensor/Temperature';
 import Humidity from './Section/ListSensor/Humidity';
 import SoilTemperature from './Section/ListSensor/SoilTemperature';
@@ -41,7 +40,6 @@ export default function ChartMain() {
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Dropdown states
   const [selectedBlock, setSelectedBlock] = useState('Blok 4');
   const [selectedSensor, setSelectedSensor] = useState('Temperature');
   const [selectedDevice, setSelectedDevice] = useState('1');
@@ -51,7 +49,6 @@ export default function ChartMain() {
 
   const FOOTER_HEIGHT = 84;
 
-  // Dropdown options
   const blockOptions = ['Blok 4', 'Blok 7'];
   const sensorOptions = [
     'Temperature',
@@ -67,7 +64,6 @@ export default function ChartMain() {
   ];
   const deviceOptions = ['1', '2', '3'];
 
-  // Map sensor untuk API
   const sensorApiMap = {
     Temperature: 'Temperature',
     Humidity: 'Humidity',
@@ -81,7 +77,6 @@ export default function ChartMain() {
     Kalium: 'Kalium',
   };
 
-  // Request storage permission for Android
   const requestStoragePermission = async () => {
     if (Platform.OS === 'android') {
       try {
@@ -104,7 +99,6 @@ export default function ChartMain() {
     return true;
   };
 
-  // Fetch data dari API
   const fetchReportData = async (
     startDateStr: string,
     endDateStr: string,
@@ -149,7 +143,6 @@ export default function ChartMain() {
     }
   };
 
-  // Format date ke WIB timezone
   const formatDateToWIB = (dateString) => {
     const date = new Date(dateString);
     const wibDate = new Date(date.getTime());
@@ -164,7 +157,6 @@ export default function ChartMain() {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   };
 
-  // Deteksi kolom tanggal/waktu
   const isDateTimeColumn = (columnName) => {
     const dateTimeIndicators = [
       'time',
@@ -184,7 +176,6 @@ export default function ChartMain() {
     );
   };
 
-  // Generate Excel file
   const generateExcelFile = async (data, reportInfo) => {
     try {
       const excelData = [
@@ -260,7 +251,6 @@ export default function ChartMain() {
     }, [navigation])
   );
 
-  // Save file to device storage
   const saveExcelFile = async (excelData: string, filename: string) => {
     try {
       const hasPermission = await requestStoragePermission();

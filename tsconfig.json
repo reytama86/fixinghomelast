@@ -12,6 +12,7 @@
       "@Context/*": ["src/Context/*"],
       "@Hooks/*": ["src/Hooks/*"],
       "@Constants/*": ["src/Constants/*"],
+      "@Types/*": ["src/Types/*"],
     }
   },
   "include": ["declaration.d.ts", "src/**/*"]

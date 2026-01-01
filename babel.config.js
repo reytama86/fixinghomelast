@@ -15,12 +15,13 @@ module.exports = {
           '@Context': './src/Context',
           "@Hooks": './src/Hooks/',
           "@Constants": './src/Constants/',
+          "@Types": './src/Types/',
         },
       },
     ],
     ['@babel/plugin-transform-class-properties', { loose: true }],
     ['@babel/plugin-transform-private-methods', { loose: true }],
     ['@babel/plugin-transform-private-property-in-object', { loose: true }],
-    'react-native-reanimated/plugin', // ⚠️ HARUS PALING BAWAH
+    'react-native-reanimated/plugin', 
   ],
 };

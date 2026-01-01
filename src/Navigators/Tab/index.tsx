@@ -5,11 +5,11 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { Home, Chart, Scan } from 'iconsax-react-native';
 import HomeScreen from '@Containers/Tab/HomeScreen';
-import ChartMain from '@Containers/Tab/ChartScreen/ChartMain';
 import ImgLoadPortable from '@Assets/svg/ImgLoadPortable';
 import PortableSensorScreen from '@Containers/Tab/PortableSensorScreen';
 import styles from './styles';
 import { BleManager, Device } from 'react-native-ble-plx';
+import ChartScreen from '@Containers/Tab/ChartScreen/index';
 
 const SERVICE_UUID = '5900f86c-57d7-422c-8aa8-fd6216fa496b';
 const CHARACTERISTIC_UUID = 'a0863556-7065-46e6-96ee-99e3f693cb7f';
@@ -43,7 +43,7 @@ export type MainTabParamList = {
     portableData?: any; // tambahkan ini
     isHistoryMode?: boolean; // tambahkan ini
   };
-  ChartMain: undefined;
+  ChartScreen: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -462,8 +462,8 @@ const TabNavigator: React.FC = () => {
           })}
         />
         <Tab.Screen
-          name="ChartMain"
-          component={ChartMain}
+          name="ChartScreen"
+          component={ChartScreen}
           options={{ tabBarLabel: 'History' }}
         />
       </Tab.Navigator>

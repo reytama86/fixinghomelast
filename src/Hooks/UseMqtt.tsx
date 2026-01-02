@@ -155,7 +155,7 @@ export function useMqtt(): UseMqttResult {
         processQueue();
 
         
-        const topics = [
+        const topics: string | any[] = [
           // 'control/water1106200396',
           // 'control/fertilizer1106200396',
           // 'time/water1106200396',
@@ -190,7 +190,7 @@ export function useMqtt(): UseMqttResult {
                   subscriptionTimeoutRef.current = setTimeout(subscribeNext, 200); 
                 }
               },
-              onFailure: (err) => {
+              onFailure: (err:any) => {
                 console.error('Failed to subscribe:', topic, err);
                 index++;
                 if (index < topics.length) {

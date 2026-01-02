@@ -1,5 +1,5 @@
 import {useState, useCallback, useEffect} from 'react';
-import { PortableToolData } from 'HomeStack';
+import { PortableToolData } from '@Containers/PortableListScreen/usePortableList';
 
 type SensorMedianData = {
   median: number;
@@ -55,17 +55,17 @@ export const useHomeData = () => {
         const data = result.data;
 
         const block1Temp = data.find(
-          item => item.id_sensor === 2 && item.keterangan_sensor === 'Temperature',
+          ( item: { id_sensor: number; keterangan_sensor: string; }) => item.id_sensor === 2 && item.keterangan_sensor === 'Temperature',
         );
         const block1Humidity = data.find(
-          item => item.id_sensor === 2 && item.keterangan_sensor === 'Humidity',
+          ( item: { id_sensor: number; keterangan_sensor: string; }) => item.id_sensor === 2 && item.keterangan_sensor === 'Humidity',
         );
 
         const block2Temp = data.find(
-          item => item.id_sensor === 5 && item.keterangan_sensor === 'Temperature',
+          ( item: { id_sensor: number; keterangan_sensor: string; }) => item.id_sensor === 5 && item.keterangan_sensor === 'Temperature',
         );
         const block2Humidity = data.find(
-          item => item.id_sensor === 5 && item.keterangan_sensor === 'Humidity',
+          ( item: { id_sensor: number; keterangan_sensor: string; }) => item.id_sensor === 5 && item.keterangan_sensor === 'Humidity',
         );
 
         setSensorDataBlock({

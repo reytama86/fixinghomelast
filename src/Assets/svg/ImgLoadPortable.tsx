@@ -1,4 +1,3 @@
-// ImgLoadPortable.tsx
 import * as React from "react";
 import { useEffect, useRef } from "react";
 import { Animated, Easing } from "react-native";

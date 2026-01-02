@@ -176,7 +176,7 @@ export const usePortableSensor = (initialData?: SoilSensorData, initialStatus?: 
       }
       setConnectedDevice(null);
       setBleStatus('scanning');
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve:any) => setTimeout(resolve, 500));
     } catch (error) {
       console.error('Error during BLE reset:', error);
     }

@@ -40,15 +40,14 @@ export type MainTabParamList = {
   PortableHistory: {
     bleStatus?: 'scanning' | 'connecting' | 'connected' | 'disconnected';
     sensorData?: SoilSensorData;
-    portableData?: any; // tambahkan ini
-    isHistoryMode?: boolean; // tambahkan ini
+    portableData?: any; 
+    isHistoryMode?: boolean;
   };
   ChartScreen: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-// Animated Tab Bar Component
 const AnimatedTabBar = (props: any) => {
   const tabBarAnimation = useRef(new Animated.Value(0)).current;
   const [isVisible, setIsVisible] = useState(true);
@@ -58,8 +57,7 @@ const AnimatedTabBar = (props: any) => {
     const currentRoute = state.routes[state.index];
     const routeName = currentRoute.name;
     
-    // Screens di mana tab bar harus disembunyikan
-    const hideTabScreens = ['PortableHistory'];
+    const hideTabScreens = ['PortableHistory', 'ChartMain', ChartScreen, 'ChartScreen'];
 
     const shouldHide = hideTabScreens.includes(routeName);
 
@@ -154,7 +152,6 @@ const TabNavigator: React.FC = () => {
   const monitoringSubscription = useRef<any>(null);
   const isScanning = useRef(false);
 
-  // Animated dots untuk loading
   useEffect(() => {
     let dotInterval: NodeJS.Timeout;
     if (showPopup) {
@@ -167,7 +164,6 @@ const TabNavigator: React.FC = () => {
     return () => clearInterval(dotInterval);
   }, [showPopup]);
 
-  // BLE Functions
   const resetBLEState = async () => {
     console.log('Resetting BLE state...');
     try {
@@ -189,7 +185,7 @@ const TabNavigator: React.FC = () => {
       setConnectedDevice(null);
       setSensorData(null);
       setBleStatus('scanning');
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve:any) => setTimeout(resolve, 500));
     } catch (error) {
       console.error('Error during BLE reset:', error);
     }
@@ -296,7 +292,6 @@ const TabNavigator: React.FC = () => {
     }
   };
 
-  // BLE Scanning Effect
   useEffect(() => {
     if (!showPopup) return;
     
@@ -364,7 +359,6 @@ const TabNavigator: React.FC = () => {
     };
   }, [showPopup]);
 
-  // Navigate when data ready or timeout
   useEffect(() => {
     if (!showPopup) return;
     
@@ -407,12 +401,10 @@ const TabNavigator: React.FC = () => {
     }
   }, [bleStatus, showPopup, navigation, sensorData]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => resetBLEState();
   }, []);
 
-  // Reset when popup closes
   useEffect(() => {
     if (!showPopup) {
       setTimeout(() => resetBLEState(), 500);
@@ -464,11 +456,13 @@ const TabNavigator: React.FC = () => {
         <Tab.Screen
           name="ChartScreen"
           component={ChartScreen}
-          options={{ tabBarLabel: 'History' }}
+           options={{ 
+    tabBarLabel: 'History',
+    tabBarStyle: { display: 'none' } 
+  }}
         />
       </Tab.Navigator>
 
-      {/* BLE Loading Modal */}
       <Modal
         visible={showPopup}
         transparent

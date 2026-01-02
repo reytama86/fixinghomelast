@@ -2,9 +2,9 @@ import React, {useState, useMemo, useEffect} from 'react';
 import {View, Text, Dimensions} from 'react-native';
 import {LineChart} from 'react-native-gifted-charts';
 import SegmentedControl from '@react-native-segmented-control/segmented-control';
-import {useChartData} from '../../useChartData';
 import {Sensor, Blok, RangeType, SensorType} from '@Types/Chart/Chart.data';
 import styles from './styles';
+import {fetchBlokList, fetchSensorList, useChartData} from '../../useChartData';
 
 const {width: SCREEN_W} = Dimensions.get('window');
 const PADDING = 16;
@@ -37,17 +37,10 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   const selectedRangeIndex = rangeOptions.indexOf(range);
 
   useEffect(() => {
-    fetch('https://iot-vanili-api.permataindonesia.com/api/bloklist')
-      .then(r => r.json())
-      .then((list: Blok[]) => setBlokList(list))
-      .catch(console.error);
+    fetchBlokList().then(setBlokList).catch(console.error);
   }, []);
-
   useEffect(() => {
-    fetch('https://iot-vanili-api.permataindonesia.com/api/sensorlist')
-      .then(r => r.json())
-      .then((list: Sensor[]) => setSensorList(list))
-      .catch(console.error);
+    fetchSensorList().then(setSensorList).catch(console.error);
   }, []);
 
   const uniqueSensors = useMemo(() => {
@@ -267,9 +260,8 @@ export const ChartCard: React.FC<ChartCardProps> = ({
             hidePointer3: false,
             hidePointer4: false,
             hidePointer5: false,
-            pointerLabelComponent: items => {
+            pointerLabelComponent: (items: any[]) => {
               if (!items || !items[0]) return null;
-
               const item = items[0];
               const value = item.value;
               const date = item.date || '';
@@ -280,18 +272,20 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               }
 
               const [d, t] = date.split('\n');
+              const isAboveThreshold = value > tooltipThreshold;
 
               return (
-                <View style={styles.tooltip}>
-                  {value > tooltipThreshold && (
-                    <View style={styles.tooltipArrowUp} />
-                  )}
-                  {value <= tooltipThreshold && (
+                <View
+                  style={[
+                    styles.tooltip,
+                    isAboveThreshold && {marginTop: 100}, 
+                  ]}>
+                  {isAboveThreshold && <View style={styles.tooltipArrowUp} />}
+                  {!isAboveThreshold && (
                     <View style={styles.tooltipArrowDown} />
                   )}
                   <Text style={styles.tooltipText}>
-                    {formatValue(value)}
-                    {unit}
+                    {formatValue(value)} {unit}
                   </Text>
                   <View style={styles.tooltipDivider} />
                   <View style={styles.tooltipDateRow}>

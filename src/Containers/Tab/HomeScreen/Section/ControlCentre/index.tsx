@@ -1,8 +1,8 @@
 import React, {useEffect, useRef, useMemo} from 'react';
 import {View, Text, TouchableOpacity, Alert} from 'react-native';
 import LottieView from 'lottie-react-native';
-import PowerOffIcon from '@Assets/svg/PowerOffIcon';
-import PowerOnIcon from '@Assets/svg/PowerOnIcon';
+import { PowerOffIcon } from '@Assets/svg/Static';
+import { PowerOnIcon } from '@Assets/svg/Static';
 import {styles} from './styles';
 
 interface ControlState {

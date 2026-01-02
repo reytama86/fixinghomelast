@@ -29,6 +29,7 @@
     "@react-navigation/stack": "^7.2.10",
     "@shopify/react-native-skia": "^2.0.0",
     "axios": "^1.9.0",
+    "base-64": "^1.0.0",
     "buffer": "^6.0.3",
     "carousel": "^0.0.3",
     "chalk": "^5.4.1",

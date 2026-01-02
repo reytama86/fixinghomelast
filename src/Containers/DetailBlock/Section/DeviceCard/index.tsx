@@ -2,7 +2,7 @@ import React, {useCallback, useMemo} from 'react';
 import {View, Text} from 'react-native';
 import {SensorItem} from '../SensorItem';
 import GaugeSvg from '@Atom/Gauge';
-import Ellips from '@Assets/svg/Ellips';
+import { Ellips } from '@Assets/svg/Static';
 import {styles} from './styles';
 
 interface DeviceCardProps {

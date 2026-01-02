@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import MaskedView from '@react-native-masked-view/masked-view';  // Masking :contentReference[oaicite:2]{index=2}
 import { BlurView } from '@react-native-community/blur';          // Blur effect :contentReference[oaicite:3]{index=3}
 // import EllipsCloud from './EllipsCloud';
-import EllipsCloud from '../../../Assets/svg/ellipsCloud';
+import { EllipsCloud } from '@Assets/svg/Static';
 
 const CloudBlurMask = () => (
   <View style={styles.container}>

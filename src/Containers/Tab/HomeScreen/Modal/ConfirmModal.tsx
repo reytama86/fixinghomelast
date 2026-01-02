@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import Farmer from '../../../../Assets/svg/Farmer';
+import { Farmer } from '@Assets/svg/Static';
 
 interface ConfirmModalProps {
   visible: boolean;

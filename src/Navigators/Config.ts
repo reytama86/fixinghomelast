@@ -4,7 +4,7 @@ import SplashScreen from "@Containers/SplashScreen";
 import ChartScreen from "@Containers/Tab/ChartScreen";
 import HomeScreen from "@Containers/Tab/HomeScreen";
 import PortableSensorScreen from "@Containers/Tab/PortableSensorScreen";
-import AllPortableTools from "@Containers/Tab/PortableSensorScreen/AllPortableTools";
+// import AllPortableTools from "@Containers/Tab/PortableSensorScreen/AllPortableTools";
 import RouteName from "../Constants/RouteName.constants";
 import BlockListScreen from "@Containers/BlockListScreen";
 import PortableListScreen from "@Containers/PortableListScreen";

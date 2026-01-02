@@ -2,7 +2,7 @@ import React from 'react';
 import {View, Text, ScrollView} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import GaugeSvg from '@Atom/Gauge';
-import Ellips from '@Assets/svg/Ellips';
+import { Ellips } from '@Assets/svg/Static';
 import {SoilSensorData} from 'src/Navigators/Tab';
 import {SoilIndicator} from '@Helpers/getSensorStatus';
 import styles from './styles';

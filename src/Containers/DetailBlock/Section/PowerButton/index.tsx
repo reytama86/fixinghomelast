@@ -1,7 +1,7 @@
 import React from 'react';
 import {TouchableOpacity} from 'react-native';
-import PowerOffIcon from '@Assets/svg/PowerOffIcon';
-import PowerOnIcon from '@Assets/svg/PowerOnIcon';
+import { PowerOffIcon } from '@Assets/svg/Static';
+import { PowerOnIcon } from '@Assets/svg/Static';
 import {styles} from './styles';
 
 interface PowerButtonProps {

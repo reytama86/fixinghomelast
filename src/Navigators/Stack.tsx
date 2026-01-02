@@ -17,7 +17,6 @@ const Stack = createStackNavigator<RootStackParamList>();
 export default function StackNavigator() {
   const { userToken, isLoading } = useContext(AuthContext);
 
-  // Show loading screen while checking token
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>

@@ -1,16 +1,19 @@
 
 import { SvgProps } from "react-native-svg";
-import PartlyCloudy from "../Assets/svg/partlyCloudy";
-import PartlyCloudyNight from "../Assets/svg/PartlyCloudyNight";
-import ModerateRain from "../Assets/svg/ModerateRain";
-import Sunny from "../Assets/svg/Sunny";
-import Overcast from "../Assets/svg/Overcast";
-import LightRain from "../Assets/svg/LightRain";
-import HeavyRain from "../Assets/svg/HeavyRain";
-import Mist from "../Assets/svg/Mist";
-import Thundery from "../Assets/svg/Thundery";
-import Clear from "../Assets/svg/Clear";
-import Scattered from "../Assets/svg/Scattered";
+import {
+  PartlyCloudy,
+  PartlyCloudyNight,
+  ModerateRain,
+  Sunny,
+  Overcast,
+  LightRain,
+  HeavyRain,
+  Mist,
+  Thundery,
+  Clear,
+  Scattered,
+} from '@Assets/svg/Static';
+
 
 export const apiKey = "23bf1c3f16cc21b3cbb39b7218b64bf9";
 

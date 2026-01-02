@@ -1,12 +1,12 @@
-import { View, Text } from 'react-native'
-import React from 'react'
+// import { View, Text } from 'react-native'
+// import React from 'react'
 
-const api = () => {
-  return (
-    <View>
-      <Text>api</Text>
-    </View>
-  )
-}
+// const api = () => {
+//   return (
+//     <View>
+//       <Text>api</Text>
+//     </View>
+//   )
+// }
 
-export default api;
+// export default api;

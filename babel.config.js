@@ -16,6 +16,7 @@ module.exports = {
           "@Hooks": './src/Hooks/',
           "@Constants": './src/Constants/',
           "@Types": './src/Types/',
+          "@Utils": './src/Utils/',
         },
       },
     ],

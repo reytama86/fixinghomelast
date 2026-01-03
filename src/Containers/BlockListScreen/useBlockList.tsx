@@ -39,7 +39,6 @@ export const useBlockList = () => {
       if (result.success) {
         const data = result.data;
 
-        // Mapping sensor ID ke block
         const blockSensorMap: Record<number, keyof SensorDataBlocks> = {
           5: 'block3',
           2: 'block4',
@@ -50,7 +49,6 @@ export const useBlockList = () => {
 
         const newBlockData = {...sensorDataBlocks};
 
-        // Process data untuk setiap block
         Object.entries(blockSensorMap).forEach(([sensorId, blockKey]) => {
           const tempSensor = data.find(
             (item: any) =>

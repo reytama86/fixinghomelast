@@ -14,7 +14,7 @@ interface ExpandableBlockProps {
   row1Control?: any;
   row2Control?: any;
   isDisabled?: boolean;
-  onToggle: (type: 'water' | 'fertilizer', target?: 'main' | 'row1' | 'row2') => void;
+  onToggle: (type: 'water' | 'fertilizer', target: 'main' | 'row1' | 'row2') => void;
 }
 
 export const ExpandableBlock: React.FC<ExpandableBlockProps> = ({
@@ -105,7 +105,7 @@ export const ExpandableBlock: React.FC<ExpandableBlockProps> = ({
   const handleToggleMain = useCallback(() => {
     if (isDisabled) return;
 
-    if (isAnyRowActive) {
+    if (isAnyRowActive && !mainState.isActive) {
       Alert.alert(
         'Cannot Start',
         'Please stop row processes first before starting main control.',
@@ -114,7 +114,7 @@ export const ExpandableBlock: React.FC<ExpandableBlockProps> = ({
     }
 
     onToggle(blockType, 'main');
-  }, [isDisabled, isAnyRowActive, onToggle, blockType]);
+  }, [isDisabled, isAnyRowActive, mainState.isActive, onToggle, blockType]);
 
   const handleToggleRow = useCallback(
     (target: 'row1' | 'row2') => {
@@ -134,18 +134,8 @@ export const ExpandableBlock: React.FC<ExpandableBlockProps> = ({
     () => ({
       formatDate: (d: Date) => {
         const months = [
-          'Jan',
-          'Feb',
-          'Mar',
-          'Apr',
-          'May',
-          'Jun',
-          'Jul',
-          'Aug',
-          'Sept',
-          'Oct',
-          'Nov',
-          'Dec',
+          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+          'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec',
         ];
         return `${d.getDate().toString().padStart(2, '0')} ${
           months[d.getMonth()]
@@ -192,8 +182,6 @@ export const ExpandableBlock: React.FC<ExpandableBlockProps> = ({
     [row1State, row2State],
   );
 
-  const mainInfo = getInfo(mainState);
-
   return (
     <Animated.View style={[styles.container, {height: heightAnim}]}>
       <View style={styles.content}>
@@ -215,7 +203,7 @@ export const ExpandableBlock: React.FC<ExpandableBlockProps> = ({
         <PowerButton
           isActive={mainState.isActive}
           onPress={handleToggleMain}
-          disabled={isDisabled || isAnyRowActive}
+          disabled={isDisabled || (isAnyRowActive && !mainState.isActive)}
         />
       </View>
 

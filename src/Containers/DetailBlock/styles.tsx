@@ -12,7 +12,6 @@ export const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 20,
   },
-  // Header style tidak dipakai lagi karena pakai HeaderBack
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',

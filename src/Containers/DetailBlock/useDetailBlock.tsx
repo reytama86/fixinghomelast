@@ -1,5 +1,5 @@
 import {useState, useCallback, useMemo} from 'react';
-import {Alert, BackHandler} from 'react-native';
+import {Alert} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import {useControl, usePageControl} from '@Context/ControlContext';
 
@@ -9,13 +9,6 @@ interface BlockConfig {
   apiEndpoint: string;
   devices: number[];
 }
-
-interface BlockControls {
-  main: any;
-  devices: number[];
-  expandableBlocks: any[];
-}
-
 
 const BLOCK_CONFIGS: Record<3 | 4, BlockConfig> = {
   4: {
@@ -45,50 +38,34 @@ export const useDetailBlock = (blockIdParam?: number) => {
   
   const [currentProcess, setCurrentProcess] = useState<{
     type: 'water' | 'fertilizer';
-    target?: 'main' | 'row1' | 'row2';
+    target: 'main' | 'row1' | 'row2';
   } | null>(null);
   
-  const [confirmType, setConfirmType] = useState<'water' | 'fertilizer' | null>(null);
+  const [confirmProcess, setConfirmProcess] = useState<{
+    type: 'water' | 'fertilizer';
+    target: 'main' | 'row1' | 'row2';
+  } | null>(null);
+  
   const [inputMinutes, setInputMinutes] = useState('1');
   const [inputSeconds, setInputSeconds] = useState('0');
 
-  const blockControls = useMemo<BlockControls>(() => {
-  if (blockId === 4) {
+  const blockControls = useMemo(() => {
+    if (blockId === 4) {
+      return {
+        main: controls.block1Control,
+        row1Water: controls.block1RowWater1Control,
+        row2Water: controls.block1RowWater2Control,
+        row1Fertilizer: controls.block1RowFertilizer1Control,
+        row2Fertilizer: controls.block1RowFertilizer2Control,
+        devices: config.devices,
+      };
+    }
+
     return {
-      main: controls.block1Control,
+      main: controls.block2Control,
       devices: config.devices,
-      expandableBlocks: [
-        {
-          title: 'Water',
-          animationSource: require('@Assets/videos/air.mp4.lottie.json'),
-          blockCount: 2,
-          blockType: 'water' as const,
-          mainControl: controls.block1Control,
-          row1Control: controls.block1RowWater1Control,
-          row2Control: controls.block1RowWater2Control,
-          isDisabled: controls.block1Control.isFertilizerOn,
-        },
-        {
-          title: 'Fertilizer',
-          animationSource: require('@Assets/videos/pupuk.mp4.lottie.json'),
-          blockCount: 2,
-          blockType: 'fertilizer' as const,
-          mainControl: controls.block1Control,
-          row1Control: controls.block1RowFertilizer1Control,
-          row2Control: controls.block1RowFertilizer2Control,
-          isDisabled: controls.block1Control.isWaterOn,
-        },
-      ],
     };
-  }
-
-  return {
-    main: controls.block2Control,
-    devices: config.devices,
-    expandableBlocks: [],
-  };
-}, [blockId, config, controls]);
-
+  }, [blockId, config, controls]);
 
   const fetchSensorData = useCallback(async () => {
     try {
@@ -116,25 +93,41 @@ export const useDetailBlock = (blockIdParam?: number) => {
 
   useFocusEffect(
     useCallback(() => {
-      setActivePage(blockId);
+      setActivePage(blockId === 4 ? 'block1' : 'block2');
       fetchSensorData();
     }, [blockId, fetchSensorData, setActivePage])
   );
 
+  const getControl = useCallback((type: 'water' | 'fertilizer', target: 'main' | 'row1' | 'row2') => {
+    if (target === 'main') {
+      return blockControls.main;
+    }
+    
+    if (blockId === 4) {
+      if (type === 'water') {
+        return target === 'row1' ? blockControls.row1Water : blockControls.row2Water;
+      } else {
+        return target === 'row1' ? blockControls.row1Fertilizer : blockControls.row2Fertilizer;
+      }
+    }
+    
+    return blockControls.main;
+  }, [blockId, blockControls]);
+
   const handleToggle = useCallback(
-    (type: 'water' | 'fertilizer', target?: 'main' | 'row1' | 'row2') => {
-      const control = blockControls.main;
+    (type: 'water' | 'fertilizer', target: 'main' | 'row1' | 'row2') => {
+      const control = getControl(type, target);
       const isCurrentlyActive = type === 'water' ? control.isWaterOn : control.isFertilizerOn;
 
       if (isCurrentlyActive) {
-        setConfirmType(type);
+        setConfirmProcess({type, target});
         setShowConfirm(true);
       } else {
         setCurrentProcess({type, target});
         setShowDurationModal(true);
       }
     },
-    [blockControls]
+    [getControl]
   );
 
   const handleMinutesChange = useCallback((text: string) => {
@@ -147,11 +140,18 @@ export const useDetailBlock = (blockIdParam?: number) => {
     setInputSeconds(numericValue);
   }, []);
 
+  const validateTimeInput = (value: string, max: number): string => {
+    const numValue = parseInt(value);
+    if (isNaN(numValue) || numValue < 0) return '0';
+    if (numValue > max) return max.toString();
+    return numValue.toString();
+  };
+
   const handleStartProcess = useCallback(
     (totalSeconds: number) => {
       if (!currentProcess) return;
 
-      const control = blockControls.main;
+      const control = getControl(currentProcess.type, currentProcess.target);
       control.startProcess(currentProcess.type, totalSeconds);
 
       setShowDurationModal(false);
@@ -159,16 +159,18 @@ export const useDetailBlock = (blockIdParam?: number) => {
       setInputSeconds('0');
       setCurrentProcess(null);
     },
-    [currentProcess, blockControls]
+    [currentProcess, getControl]
   );
 
   const handleConfirmStop = useCallback(() => {
-    if (confirmType) {
-      const control = blockControls.main;
-      control.stopProcess(confirmType);
-    }
+    if (!confirmProcess) return;
+
+    const control = getControl(confirmProcess.type, confirmProcess.target);
+    control.stopProcess(confirmProcess.type);
+
     setShowConfirm(false);
-  }, [confirmType, blockControls]);
+    setConfirmProcess(null);
+  }, [confirmProcess, getControl]);
 
   return {
     blockNumber: config.blockNumber,
@@ -182,7 +184,7 @@ export const useDetailBlock = (blockIdParam?: number) => {
     showDurationModal,
     showConfirm,
     currentProcess,
-    confirmType,
+    confirmProcess,
     inputMinutes,
     inputSeconds,
 

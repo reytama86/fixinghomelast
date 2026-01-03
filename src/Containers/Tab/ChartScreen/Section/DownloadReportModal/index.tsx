@@ -73,10 +73,8 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
       const startDateStr = startDate.toISOString().split('T')[0];
       const endDateStr = endDate.toISOString().split('T')[0];
 
-      // Get API sensor type
       const apiSensorType = SENSOR_API_MAP[selectedSensor] || selectedSensor;
 
-      // Fetch data from API
       const reportData = await fetchReportData(
         startDateStr,
         endDateStr,
@@ -85,14 +83,12 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
         selectedBlock
       );
 
-      // Generate filename
       const filename = generateFilename(
         selectedSensor,
         startDateStr,
         endDateStr
       );
 
-      // Prepare report info
       const reportInfo: ReportInfo = {
         block: selectedBlock,
         sensor: selectedSensor,
@@ -101,10 +97,8 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
         endDate: endDateStr,
       };
 
-      // Generate Excel file
       const excelData = await generateExcelFile(reportData, reportInfo);
 
-      // Save to device
       const filePath = await saveExcelFile(excelData, filename);
 
       if (filePath) {

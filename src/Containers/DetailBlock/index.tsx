@@ -11,16 +11,12 @@ import {useHeaderMode} from '@Hooks/useHeaderMode';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { RootStackParamList } from '@Constants/RouteParamsList.constants';
 
-type DetailBlockRouteProp = RouteProp<
-  RootStackParamList,
-  'DetailBlock'
->;
+type DetailBlockRouteProp = RouteProp<RootStackParamList, 'DetailBlock'>;
 
-
-const DetailBlock: React.FC<any> = ({}) => {
+const DetailBlock: React.FC = () => {
   const route = useRoute<DetailBlockRouteProp>();
   const { blockId } = route.params;
-
+  
   const {
     blockTitle,
     blockControls,
@@ -29,7 +25,7 @@ const DetailBlock: React.FC<any> = ({}) => {
     showDurationModal,
     showConfirm,
     currentProcess,
-    confirmType,
+    confirmProcess,
     inputMinutes,
     inputSeconds,
     handleToggle,
@@ -40,7 +36,7 @@ const DetailBlock: React.FC<any> = ({}) => {
     handleMinutesChange,
     handleSecondsChange,
   } = useDetailBlock(blockId);
-
+  
   const {handleScroll, headMode: headerMode} = useHeaderMode();
 
   if (loading && !sensorData) {
@@ -52,6 +48,29 @@ const DetailBlock: React.FC<any> = ({}) => {
     );
   }
 
+  const expandableBlocks = blockId === 4 ? [
+    {
+      title: 'Water',
+      animationSource: require('@Assets/videos/air.mp4.lottie.json'),
+      blockCount: 2,
+      blockType: 'water' as const,
+      mainControl: blockControls.main,
+      row1Control: blockControls.row1Water,
+      row2Control: blockControls.row2Water,
+      isDisabled: blockControls.main.isFertilizerOn,
+    },
+    {
+      title: 'Fertilizer',
+      animationSource: require('@Assets/videos/pupuk.mp4.lottie.json'),
+      blockCount: 2,
+      blockType: 'fertilizer' as const,
+      mainControl: blockControls.main,
+      row1Control: blockControls.row1Fertilizer,
+      row2Control: blockControls.row2Fertilizer,
+      isDisabled: blockControls.main.isWaterOn,
+    },
+  ] : [];
+
   return (
     <SafeAreaView style={styles.safe}>
       <HeaderBack
@@ -60,7 +79,6 @@ const DetailBlock: React.FC<any> = ({}) => {
         animated={true}
         mode={headerMode}
       />
-
       <View style={styles.main}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -68,9 +86,10 @@ const DetailBlock: React.FC<any> = ({}) => {
           bounces={true}
           onScroll={handleScroll}
           scrollEventThrottle={16}>
+          
           <View style={{height: 30}} />
-
-          {blockControls.expandableBlocks?.map((block, index) => (
+          
+          {expandableBlocks.map((block, index) => (
             <ExpandableBlock key={index} {...block} onToggle={handleToggle} />
           ))}
           
@@ -93,7 +112,7 @@ const DetailBlock: React.FC<any> = ({}) => {
 
       <ConfirmModal
         visible={showConfirm}
-        type={confirmType || 'water'}
+        type={confirmProcess?.type || 'water'}
         onCancel={() => setShowConfirm(false)}
         onConfirm={handleConfirmStop}
       />

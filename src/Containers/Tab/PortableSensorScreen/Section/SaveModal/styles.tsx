@@ -11,20 +11,20 @@ export default StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    width: 364,
-    height: 172,
+    width: '100%',
+    height: 'auto',
     backgroundColor: 'white',
     borderRadius: 16,
     padding: 14,
-    paddingBottom: 30,
-    marginBottom: 20,
+    paddingBottom: 35,
+    marginBottom: 0,
     alignSelf: 'center',
   },
   modalHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
+    gap: 6
   },
   modalTitle: {
     fontSize: 16,
@@ -35,8 +35,6 @@ export default StyleSheet.create({
     fontSize: 14,
     color: '#666',
     fontFamily: 'SpaceGrotesk-Regular',
-    marginTop: -17,
-    marginBottom: 10,
   },
   inputField: {
     height: 44,
@@ -53,7 +51,7 @@ export default StyleSheet.create({
     justifyContent: 'space-between',
   },
   cancelResult: {
-    width: 162.5,
+    width: '48%',
     height: 36,
     borderColor: '#B4DC45',
     borderWidth: 1,
@@ -61,7 +59,7 @@ export default StyleSheet.create({
     alignItems: 'center',
   },
   confirmResult: {
-    width: 162.5,
+    width: '48%',
     height: 36,
     borderRadius: 8,
     backgroundColor: '#B4DC45',
@@ -75,4 +73,12 @@ export default StyleSheet.create({
     fontWeight: '500',
     fontFamily: 'SpaceGrotesk-Regular',
   },
+  inputLabel: {
+  fontSize: 14,
+  color: '#333',
+  marginBottom: 6,
+  fontWeight: '500',
+  fontFamily: 'SpaceGrotesk-Regular',
+},
+
 })

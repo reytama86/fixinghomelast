@@ -1,8 +1,7 @@
 import React, {useCallback, useMemo} from 'react';
 import {View, Text} from 'react-native';
 import {SensorItem} from '../SensorItem';
-import GaugeSvg from '@Atom/Gauge';
-import { Ellips } from '@Assets/svg/Static';
+import DynamicGauge from '@Organism/DynamicGauge';
 import {styles} from './styles';
 
 interface DeviceCardProps {
@@ -43,10 +42,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({deviceNumber, sensorData}
           <View style={[styles.cardTransmisi, {marginRight: 12}]}>
             <View style={styles.cardDetailTransmisi}>
               <View style={styles.Transmisi}>
-                <GaugeSvg />
-                <View style={{top: -100, right: -105}}>
-                  <Ellips />
-                </View>
+                <DynamicGauge value={temperature} type="temperature" />
               </View>
               <Text style={styles.nameSensorTransmisi}>Temperature</Text>
             </View>
@@ -55,7 +51,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({deviceNumber, sensorData}
           <View style={styles.cardTransmisi}>
             <View style={styles.cardDetailTransmisi}>
               <View style={styles.Transmisi}>
-                <GaugeSvg />
+                <DynamicGauge value={humidity} type="humidity" />
               </View>
               <Text style={styles.nameSensorTransmisi}>Humidity</Text>
             </View>
@@ -133,4 +129,4 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({deviceNumber, sensorData}
   );
 };
 
-export default DeviceCard
+export default DeviceCard;

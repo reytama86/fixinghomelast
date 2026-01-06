@@ -22,11 +22,13 @@ import { fetchReportData, SENSOR_API_MAP } from '../../useChartData'
 interface DownloadReportModalProps {
   visible: boolean;
   onClose: () => void;
+  onScreen?: string;
 }
 
 const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
   visible,
   onClose,
+  onScreen
 }) => {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
@@ -34,14 +36,21 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const [selectedBlock, setSelectedBlock] = useState('Blok 4');
+  // Kondisional default values berdasarkan screen
+  const [selectedBlock, setSelectedBlock] = useState(
+    onScreen === 'Portable' ? 'Block 1' : 'Blok 4'
+  );
   const [selectedSensor, setSelectedSensor] = useState('Temperature');
   const [selectedDevice, setSelectedDevice] = useState('1');
   const [showBlockDropdown, setShowBlockDropdown] = useState(false);
   const [showSensorDropdown, setShowSensorDropdown] = useState(false);
   const [showDeviceDropdown, setShowDeviceDropdown] = useState(false);
 
-  const blockOptions = ['Blok 4', 'Blok 7'];
+  // Kondisional block options berdasarkan screen
+  const blockOptions = onScreen === 'Portable' 
+    ? ['All Block (1-9)','Block 1', 'Block 2', 'Block 3', 'Block 4', 'Block 5', 'Block 6', 'Block 7', 'Block 8', 'Block 9']
+    : ['Blok 4', 'Blok 7'];
+
   const sensorOptions = [
     'Temperature',
     'Humidity',
@@ -125,7 +134,7 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
 
     setStartDate(undefined);
     setEndDate(undefined);
-    setSelectedBlock('Blok 4');
+    setSelectedBlock(onScreen === 'Portable' ? 'Block 1' : 'Blok 4');
     setSelectedSensor('Temperature');
     setSelectedDevice('1');
     setShowBlockDropdown(false);
@@ -223,26 +232,29 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
             </View>
 
             <View style={styles.modalContent}>
-              <View style={[styles.formRow, { zIndex: 10 }]}>
-                <View style={[styles.halfWidth, { zIndex: 3 }]}>
-                  <Text style={styles.inputLabel}>Block</Text>
-                  <TouchableOpacity
-                    style={styles.dropdownWrapper}
-                    onPress={() => {
-                      if (isDownloading) return;
-                      setShowBlockDropdown(!showBlockDropdown);
-                      setShowSensorDropdown(false);
-                      setShowDeviceDropdown(false);
-                      setShowStartDatePicker(false);
-                      setShowEndDatePicker(false);
-                    }}
-                    disabled={isDownloading}
-                  >
-                    <Text style={styles.dropdownText}>{selectedBlock}</Text>
-                    {/* <ArrowDown2 color="#666" variant="Linear" size={16} /> */}
-                  </TouchableOpacity>
-                  {showBlockDropdown && (
-                    <View style={styles.dropdownContainer}>
+              {/* Block Selection - Always visible */}
+              <View style={[styles.inputContainer, { zIndex: 20 }]}>
+                <Text style={styles.inputLabel}>Block</Text>
+                <TouchableOpacity
+                  style={styles.dropdownWrapper}
+                  onPress={() => {
+                    if (isDownloading) return;
+                    setShowBlockDropdown(!showBlockDropdown);
+                    setShowSensorDropdown(false);
+                    setShowDeviceDropdown(false);
+                    setShowStartDatePicker(false);
+                    setShowEndDatePicker(false);
+                  }}
+                  disabled={isDownloading}
+                >
+                  <Text style={styles.dropdownText}>{selectedBlock}</Text>
+                </TouchableOpacity>
+                {showBlockDropdown && (
+                  <View style={styles.dropdownContainer}>
+                    <ScrollView
+                      style={styles.dropdownScrollView}
+                      nestedScrollEnabled={true}
+                    >
                       {blockOptions.map((block, index) => (
                         <TouchableOpacity
                           key={index}
@@ -252,88 +264,94 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
                           <Text style={styles.dropdownItemText}>{block}</Text>
                         </TouchableOpacity>
                       ))}
-                    </View>
-                  )}
-                </View>
-
-                <View style={[styles.halfWidth, { zIndex: 2 }]}>
-                  <Text style={styles.inputLabel}>Sensor</Text>
-                  <TouchableOpacity
-                    style={styles.dropdownWrapper}
-                    onPress={() => {
-                      if (isDownloading) return;
-                      setShowSensorDropdown(!showSensorDropdown);
-                      setShowBlockDropdown(false);
-                      setShowDeviceDropdown(false);
-                      setShowStartDatePicker(false);
-                      setShowEndDatePicker(false);
-                    }}
-                    disabled={isDownloading}
-                  >
-                    <Text style={[styles.dropdownText, { fontSize: 13 }]}>
-                      {selectedSensor}
-                    </Text>
-                    {/* <ArrowDown2 color="#666" variant="Linear" size={16} /> */}
-                  </TouchableOpacity>
-                  {showSensorDropdown && (
-                    <View style={styles.dropdownContainer}>
-                      <ScrollView
-                        style={styles.dropdownScrollView}
-                        nestedScrollEnabled={true}
-                      >
-                        {sensorOptions.map((sensor, index) => (
-                          <TouchableOpacity
-                            key={index}
-                            style={styles.dropdownItem}
-                            onPress={() => handleSensorSelect(sensor)}
-                          >
-                            <Text
-                              style={[
-                                styles.dropdownItemText,
-                                { fontSize: 12 },
-                              ]}
-                            >
-                              {sensor}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
-                    </View>
-                  )}
-                </View>
-              </View>
-
-              <View style={[styles.inputContainer, { zIndex: 1 }]}>
-                <Text style={styles.inputLabel}>Device ID</Text>
-                <TouchableOpacity
-                  style={styles.dropdownWrapper}
-                  onPress={() => {
-                    if (isDownloading) return;
-                    setShowDeviceDropdown(!showDeviceDropdown);
-                    closeAllDropdowns();
-                    setShowDeviceDropdown(true);
-                  }}
-                  disabled={isDownloading}
-                >
-                  <Text style={styles.dropdownText}>{selectedDevice}</Text>
-                  {/* <ArrowDown2 color="#666" variant="Linear" size={16} /> */}
-                </TouchableOpacity>
-                {showDeviceDropdown && (
-                  <View style={styles.dropdownContainer}>
-                    {deviceOptions.map((device, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        style={styles.dropdownItem}
-                        onPress={() => handleDeviceSelect(device)}
-                      >
-                        <Text style={styles.dropdownItemText}>{device}</Text>
-                      </TouchableOpacity>
-                    ))}
+                    </ScrollView>
                   </View>
                 )}
               </View>
 
-              <View style={styles.inputContainer}>
+              {/* Sensor & Device - Only visible in Chart screen */}
+              {onScreen === 'Chart' && (
+                <>
+                  <View style={[styles.formRow, { zIndex: 10 }]}>
+                    <View style={[styles.halfWidth, { zIndex: 2 }]}>
+                      <Text style={styles.inputLabel}>Sensor</Text>
+                      <TouchableOpacity
+                        style={styles.dropdownWrapper}
+                        onPress={() => {
+                          if (isDownloading) return;
+                          setShowSensorDropdown(!showSensorDropdown);
+                          setShowBlockDropdown(false);
+                          setShowDeviceDropdown(false);
+                          setShowStartDatePicker(false);
+                          setShowEndDatePicker(false);
+                        }}
+                        disabled={isDownloading}
+                      >
+                        <Text style={[styles.dropdownText, { fontSize: 13 }]}>
+                          {selectedSensor}
+                        </Text>
+                      </TouchableOpacity>
+                      {showSensorDropdown && (
+                        <View style={styles.dropdownContainer}>
+                          <ScrollView
+                            style={styles.dropdownScrollView}
+                            nestedScrollEnabled={true}
+                          >
+                            {sensorOptions.map((sensor, index) => (
+                              <TouchableOpacity
+                                key={index}
+                                style={styles.dropdownItem}
+                                onPress={() => handleSensorSelect(sensor)}
+                              >
+                                <Text
+                                  style={[
+                                    styles.dropdownItemText,
+                                    { fontSize: 12 },
+                                  ]}
+                                >
+                                  {sensor}
+                                </Text>
+                              </TouchableOpacity>
+                            ))}
+                          </ScrollView>
+                        </View>
+                      )}
+                    </View>
+
+                    <View style={[styles.halfWidth, { zIndex: 1 }]}>
+                      <Text style={styles.inputLabel}>Device ID</Text>
+                      <TouchableOpacity
+                        style={styles.dropdownWrapper}
+                        onPress={() => {
+                          if (isDownloading) return;
+                          setShowDeviceDropdown(!showDeviceDropdown);
+                          closeAllDropdowns();
+                          setShowDeviceDropdown(true);
+                        }}
+                        disabled={isDownloading}
+                      >
+                        <Text style={styles.dropdownText}>{selectedDevice}</Text>
+                      </TouchableOpacity>
+                      {showDeviceDropdown && (
+                        <View style={styles.dropdownContainer}>
+                          {deviceOptions.map((device, index) => (
+                            <TouchableOpacity
+                              key={index}
+                              style={styles.dropdownItem}
+                              onPress={() => handleDeviceSelect(device)}
+                            >
+                              <Text style={styles.dropdownItemText}>{device}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                </>
+              )}
+
+              {/* Date Selection - Always visible */}
+              <View style={[styles.inputContainer, { zIndex: 1 }]}>
                 <Text style={styles.inputLabel}>From</Text>
                 <TouchableOpacity
                   style={styles.dateInputWrapper}
@@ -348,7 +366,6 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
                   >
                     {startDate ? formatDate(startDate) : 'Choose date'}
                   </Text>
-                  {/* <Calendar color="#666" variant="Linear" size={16} /> */}
                 </TouchableOpacity>
               </View>
 
@@ -374,7 +391,7 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
                 </View>
               )}
 
-              <View style={styles.inputContainer}>
+              <View style={[styles.inputContainer, { zIndex: 1 }]}>
                 <Text style={styles.inputLabel}>To</Text>
                 <TouchableOpacity
                   style={styles.dateInputWrapper}
@@ -389,7 +406,6 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
                   >
                     {endDate ? formatDate(endDate) : 'Choose date'}
                   </Text>
-                  {/* <Calendar color="#666" variant="Linear" size={16} /> */}
                 </TouchableOpacity>
               </View>
 

@@ -93,6 +93,7 @@ export default function ChartScreen() {
       <DownloadReportModal
         visible={modalVisible}
         onClose={handleCloseModal}
+        onScreen='Chart'
       />
     </SafeAreaView>
   );

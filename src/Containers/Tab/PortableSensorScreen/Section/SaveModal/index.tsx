@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,12 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  Animated,
 } from 'react-native';
-import {Animated} from 'react-native';
 import styles from './styles';
+import {SavePortableSVG} from '@Assets/svg/Static';
+import { RadioInput } from './Component/RadioInput';
 
 type SaveModalProps = {
   visible: boolean;
@@ -25,48 +28,200 @@ export const SaveModal: React.FC<SaveModalProps> = ({
   onSave,
   modalAnimation,
 }) => {
-  const [resultName, setResultName] = useState('');
+  const [blockNumber, setblockNumber] = useState('');
+  const [rowNumber, setRowNumber] = useState('');
+  const [sectionNumber, setSectionNumber] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [condition, setCondition] = useState('');
+  const [isHealthy, setIsHealthy] = useState('');
+  const [unhealthyReason, setUnhealthyReason] = useState('');
+  const scrollViewRef = useRef<ScrollView>(null);
+  
+  // Animated value untuk smooth transition
+  const [reasonAnimation] = useState(new Animated.Value(0));
 
   const modalTranslateY = modalAnimation.interpolate({
     inputRange: [0, 1],
     outputRange: [300, 0],
   });
 
+  // Handle perubahan kesehatan tanaman
+  const handleHealthChange = (value: string) => {
+  setIsHealthy(value);
+  
+  if (value === 'tidak_sehat') {
+    // Tampilkan dengan animasi
+    Animated.timing(reasonAnimation, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: false,
+    }).start(() => {
+      // Scroll ke bawah setelah animasi selesai
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    });
+  } else {
+    // Sembunyikan dengan animasi
+    Animated.timing(reasonAnimation, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+    setUnhealthyReason('');
+  }
+};
+
   const handleSave = async () => {
-    if (!resultName.trim()) {
+    if (!blockNumber.trim()) {
       return;
     }
 
     setIsSaving(true);
     try {
-      await onSave(resultName);
-      setResultName('');
+      await onSave(blockNumber);
+      setblockNumber('');
+      setRowNumber('');
+      setSectionNumber('');
+      setCondition('');
+      setIsHealthy('');
+      setUnhealthyReason('');
+      reasonAnimation.setValue(0);
     } finally {
       setIsSaving(false);
     }
   };
 
+  // Interpolasi untuk height dan opacity
+  const reasonHeight = reasonAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 300], // Sesuaikan tinggi maksimal
+  });
+
+
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoidingView}>
           <Animated.View
-            style={[styles.modalContainer, {transform: [{translateY: modalTranslateY}]}]}>
+            style={[
+              styles.modalContainer,
+              {transform: [{translateY: modalTranslateY}]},
+            ]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Save Result</Text>
+              <SavePortableSVG />
+              <View style={{flexDirection: 'column'}}>
+                <Text style={styles.modalTitle}>Save Result</Text>
+                <Text style={styles.nameResultText}>Name the result</Text>
+              </View>
             </View>
-            <Text style={styles.nameResultText}>Name the result</Text>
-            <TextInput
-              style={styles.inputField}
-              placeholder="Enter your result name"
-              placeholderTextColor="#999"
-              value={resultName}
-              onChangeText={setResultName}
-              editable={!isSaving}
-            />
+
+            <ScrollView
+            ref={scrollViewRef}
+              showsVerticalScrollIndicator={false}
+              style={{maxHeight: 400}}
+              contentContainerStyle={{paddingBottom: 16}}>
+              
+              <View>
+                <Text style={styles.inputLabel}>
+                  Block number<Text style={{color: 'red'}}> *</Text>
+                </Text>
+                <TextInput
+                  style={styles.inputField}
+                  placeholder="Enter block number"
+                  placeholderTextColor="#999"
+                  value={blockNumber}
+                  onChangeText={setblockNumber}
+                  editable={!isSaving}
+                />
+              </View>
+
+              <View>
+                <Text style={styles.inputLabel}>
+                  Row number<Text style={{color: 'red'}}> *</Text>
+                </Text>
+                <TextInput
+                  style={styles.inputField}
+                  placeholder="Enter row number"
+                  placeholderTextColor="#999"
+                  value={rowNumber}
+                  onChangeText={setRowNumber}
+                  editable={!isSaving}
+                />
+              </View>
+
+              <View>
+                <Text style={styles.inputLabel}>
+                  Section number<Text style={{color: 'red'}}> *</Text>
+                </Text>
+                <TextInput
+                  style={styles.inputField}
+                  placeholder="Enter section number"
+                  placeholderTextColor="#999"
+                  value={sectionNumber}
+                  onChangeText={setSectionNumber}
+                  editable={!isSaving}
+                />
+              </View>
+
+              <Text style={styles.inputLabel}>
+                Score<Text style={{color: 'red'}}> *</Text>
+              </Text>
+              <RadioInput
+                options={[
+                  {label: '0',  sublabel: '(Tidak terdapat bunga)', value: '0'},
+                  {label: '1',  sublabel:'(1-2 tanaman bunga)', value: '1'},
+                  {label: '2', sublabel:'(3-4 tanaman bunga)', value: '2'},
+                  {label: '3', sublabel:'(5-6 tanaman bunga)', value: '3'},
+                  {label: '4', sublabel:'(7-8 tanaman bunga)', value: '4'},
+                  {label: '5', sublabel:'(Bunga lebat >50 tandan)', value: '5'},
+                ]}
+                selectedValue={condition}
+                onChange={setCondition}
+              />
+
+              <Text style={styles.inputLabel}>
+                Apakah Tanaman Sehat?<Text style={{color: 'red'}}> *</Text>
+              </Text>
+              <RadioInput
+                options={[
+                  {label: 'Sehat', value: 'sehat'},
+                  {label: 'Tidak Sehat', value: 'tidak_sehat'},
+                ]}
+                selectedValue={isHealthy}
+                onChange={handleHealthChange}
+                columns={2}
+              />
+
+              {/* Animated View untuk Alasan Tidak Sehat */}
+              <Animated.View
+                style={{
+                  maxHeight: reasonHeight,
+                  overflow: 'hidden',
+                }}>
+                <Text style={styles.inputLabel}>
+                  Alasan Tanaman Tidak Sehat<Text style={{color: 'red'}}> *</Text>
+                </Text>
+                <RadioInput
+                  options={[
+                    {label: 'Pertumbuhan lambat atau terhenti', value: 'lambat'},
+                    {label: 'Daun layu meskipun kondisi tanah lembab', value: 'layu'},
+                    {label: 'Warna daun pucat atau hijau kekuningan (klorosis)', value: 'klorosis'},
+                    {label: 'Batang tampak lemas dan tidak kokoh', value: 'lemas'},
+                    {label: 'Terdapat kebusukan pada batang dan/atau akar', value: 'busuk'},
+                  ]}
+                  selectedValue={unhealthyReason}
+                  onChange={setUnhealthyReason}
+                />
+              </Animated.View>
+            </ScrollView>
+
             <View style={styles.resultOption}>
               <TouchableOpacity
                 style={styles.cancelResult}
@@ -77,7 +232,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
               <TouchableOpacity
                 style={[styles.confirmResult, isSaving && {opacity: 0.6}]}
                 onPress={handleSave}
-                disabled={isSaving || !resultName.trim()}>
+                disabled={isSaving || !blockNumber.trim()}>
                 {isSaving ? (
                   <ActivityIndicator color="white" size="small" />
                 ) : (

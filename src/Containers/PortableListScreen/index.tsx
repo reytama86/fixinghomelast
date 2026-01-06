@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   SafeAreaView,
@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Text,
   RefreshControl,
+  TouchableOpacity,
 } from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '@Constants/RouteParamsList.constants';
@@ -15,11 +16,13 @@ import {useHeaderMode} from '@Hooks/useHeaderMode';
 import {usePortableList} from './usePortableList';
 import { PortableItem } from './Section/PortableItem';
 import {styles} from './styles';
+import DownloadReportModal from '@Containers/Tab/ChartScreen/Section/DownloadReportModal';
 
 type Props = NativeStackScreenProps<RootStackParamList, typeof RouteName.PortableListScreenNavigation>; 
 
 const PortableListScreen: React.FC<Props> = ({navigation}) => {
   const {handleScroll, headMode: headerMode} = useHeaderMode();
+  const [modalVisible, setModalVisible] = useState(false);
 
   const {
     reversedData,
@@ -33,6 +36,14 @@ const PortableListScreen: React.FC<Props> = ({navigation}) => {
   );
 
   const ItemSeparator = () => <View style={styles.separator} />;
+
+  const handleDownload = () => {
+    setModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -74,7 +85,23 @@ const PortableListScreen: React.FC<Props> = ({navigation}) => {
           scrollEventThrottle={16}
         />
       )}
+      <View style={styles.footerWrapper}>
+              <View style={styles.footerBox}>
+                <TouchableOpacity
+                  style={styles.downloadButton}
+                  onPress={handleDownload}
+                >
+                  <Text style={styles.downloadText}>Download Report</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            <DownloadReportModal
+        visible={modalVisible}
+        onClose={handleCloseModal}
+        onScreen='Portable'
+      />
     </SafeAreaView>
+      
   );
 };
 

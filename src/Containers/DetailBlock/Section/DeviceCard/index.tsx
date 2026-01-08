@@ -42,7 +42,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({deviceNumber, sensorData}
           <View style={[styles.cardTransmisi, {marginRight: 12}]}>
             <View style={styles.cardDetailTransmisi}>
               <View style={styles.Transmisi}>
-                <DynamicGauge value={90} type="temperature" />
+                <DynamicGauge value={temperature} type="temperature" />
               </View>
               <Text style={styles.nameSensorTransmisi}>Temperature</Text>
             </View>
@@ -51,7 +51,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({deviceNumber, sensorData}
           <View style={styles.cardTransmisi}>
             <View style={styles.cardDetailTransmisi}>
               <View style={styles.Transmisi}>
-                <DynamicGauge value={20} type="humidity" />
+                <DynamicGauge value={humidity} type="humidity" />
               </View>
               <Text style={styles.nameSensorTransmisi}>Humidity</Text>
             </View>

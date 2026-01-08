@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import {Calendar, ArrowDown2}  from 'iconsax-react-native';
+import Icon  from 'react-native-vector-icons/Ionicons';
 import styles from './styles';
 import {
   generateExcelFile,
@@ -248,6 +248,7 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
                   disabled={isDownloading}
                 >
                   <Text style={styles.dropdownText}>{selectedBlock}</Text>
+                  <Icon name='chevron-down' size={16} color='#666'/>
                 </TouchableOpacity>
                 {showBlockDropdown && (
                   <View style={styles.dropdownContainer}>
@@ -290,6 +291,7 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
                         <Text style={[styles.dropdownText, { fontSize: 13 }]}>
                           {selectedSensor}
                         </Text>
+                        <Icon name='chevron-down' size={16} color='#666'/>
                       </TouchableOpacity>
                       {showSensorDropdown && (
                         <View style={styles.dropdownContainer}>
@@ -331,6 +333,7 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
                         disabled={isDownloading}
                       >
                         <Text style={styles.dropdownText}>{selectedDevice}</Text>
+                        <Icon name='chevron-down' size={16} color='#666'/>
                       </TouchableOpacity>
                       {showDeviceDropdown && (
                         <View style={styles.dropdownContainer}>
@@ -366,6 +369,7 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
                   >
                     {startDate ? formatDate(startDate) : 'Choose date'}
                   </Text>
+                  <Icon name='calendar-outline' size={16} color='#666'/>
                 </TouchableOpacity>
               </View>
 
@@ -406,6 +410,7 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
                   >
                     {endDate ? formatDate(endDate) : 'Choose date'}
                   </Text>
+                  <Icon name='calendar-outline' size={16} color='#666'/>
                 </TouchableOpacity>
               </View>
 

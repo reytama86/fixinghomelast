@@ -1,16 +1,23 @@
 import React, {useState, useEffect, useCallback} from 'react';
-import {SafeAreaView, Text, Alert, BackHandler, PermissionsAndroid, Platform} from 'react-native';
+import {
+  SafeAreaView,
+  Text,
+  Alert,
+  BackHandler,
+  PermissionsAndroid,
+  Platform,
+} from 'react-native';
 import {Animated} from 'react-native';
 import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {RouteProp, useFocusEffect} from '@react-navigation/native';
 import {MainTabParamList, SoilSensorData} from 'src/Navigators/Tab';
 import {getSoilStatus, SoilIndicator} from '@Helpers/getSensorStatus';
-import { usePortableSensor } from './usePortableSensor';
-import { Header } from './Section/Header';
-import { SensorContent } from './Section/SensorContent';
-import { BottomActionsSection } from './Section/BottomAction';
-import { SaveModal } from './Section/SaveModal';
-import { RescanModal } from './Section/RescanModal';
+import {usePortableSensor} from './usePortableSensor';
+import {Header} from './Section/Header';
+import {SensorContent} from './Section/SensorContent';
+import {BottomActionsSection} from './Section/BottomAction';
+import {SaveModal} from './Section/SaveModal';
+import {RescanModal} from './Section/RescanModal';
 import styles from './styles';
 import HeaderBack from '@Molecule/HeaderBack';
 
@@ -22,8 +29,6 @@ type PortableData = {
     nilai_sensor: number;
   }>;
 };
-
-
 
 function mapSensorNameForHelper(localName: string) {
   switch (localName) {
@@ -46,7 +51,10 @@ function mapSensorNameForHelper(localName: string) {
   }
 }
 
-const makeIndicatorFromValue = (localKey: string, value: number): SoilIndicator => {
+const makeIndicatorFromValue = (
+  localKey: string,
+  value: number,
+): SoilIndicator => {
   const helperName = mapSensorNameForHelper(localKey);
   return getSoilStatus(helperName, value);
 };
@@ -55,7 +63,7 @@ type Props = BottomTabScreenProps<MainTabParamList, 'PortableHistory'>;
 
 const PortableSensorScreen: React.FC<Props> = ({route, navigation}) => {
   console.log('PortableSensorScreen - Route params:', route.params);
-  
+
   const {
     bleStatus: initialBleStatus,
     sensorData: initialSensorData,
@@ -85,10 +93,12 @@ const PortableSensorScreen: React.FC<Props> = ({route, navigation}) => {
     }
   }, [isHistoryMode, portableData]);
 
-  const convertPortableDataToSensorData = (data: PortableData): SoilSensorData => {
+  const convertPortableDataToSensorData = (
+    data: PortableData,
+  ): SoilSensorData => {
     const getSensorValue = (type: string): number => {
       const sensor = data.sensors?.find(
-        s => s.keterangan_sensor?.toLowerCase() === type.toLowerCase()
+        s => s.keterangan_sensor?.toLowerCase() === type.toLowerCase(),
       );
       return sensor?.nilai_sensor || 0;
     };
@@ -109,15 +119,15 @@ const PortableSensorScreen: React.FC<Props> = ({route, navigation}) => {
     setDotCount(0);
   };
 
-//   useFocusEffect(
-//   useCallback(() => {
-//     // Reset data saat screen focus dan bukan history mode
-//     if (!isHistoryMode) {
-//       setCurrentSensorData(null);
-//       setBleStatus(initialBleStatus || 'disconnected');
-//     }
-//   }, [isHistoryMode, initialBleStatus])
-// );
+  //   useFocusEffect(
+  //   useCallback(() => {
+  //     // Reset data saat screen focus dan bukan history mode
+  //     if (!isHistoryMode) {
+  //       setCurrentSensorData(null);
+  //       setBleStatus(initialBleStatus || 'disconnected');
+  //     }
+  //   }, [isHistoryMode, initialBleStatus])
+  // );
 
   useEffect(() => {
     let dotInterval: ReturnType<typeof setInterval>;
@@ -188,7 +198,6 @@ const PortableSensorScreen: React.FC<Props> = ({route, navigation}) => {
     }).start(() => setIsModalVisible(false));
   };
 
-
   useEffect(() => {
     async function requestPermissions() {
       if (Platform.OS === 'android' && !isHistoryMode) {
@@ -202,25 +211,40 @@ const PortableSensorScreen: React.FC<Props> = ({route, navigation}) => {
     requestPermissions();
   }, []);
 
-  const handleSaveResult = async (resultName: string) => {
+  const handleSaveResult = async (saveParams: {
+    blockNumber: string;
+    rowNumber: string;
+    sectionNumber: string;
+    flowerScore: string;
+    isHealthy: string;
+    unhealthyReasons: string[];
+  }) => {
     if (!currentSensorData) {
       Alert.alert('Error', 'No sensor data available to save');
       throw new Error('No sensor data');
     }
 
-    if (!resultName.trim()) {
-      Alert.alert('Error', 'Please enter a result name');
-      throw new Error('No result name');
-    }
-
     try {
-      publishSavedResult(currentSensorData, resultName);
-      Alert.alert('Success', 'Result saved and published successfully!', [
-        {text: 'OK', onPress: () => closeModal()},
-      ]);
+      // Generate display name
+      const displayName = `Block ${saveParams.blockNumber} - Row ${saveParams.rowNumber} - Section ${saveParams.sectionNumber}`;
+
+      publishSavedResult(currentSensorData, displayName, saveParams);
+
+      Alert.alert(
+        'Success',
+        `Result saved successfully!\n\nBlock: ${saveParams.blockNumber}\nRow: ${
+          saveParams.rowNumber
+        }\nSection: ${saveParams.sectionNumber}\nScore: ${
+          saveParams.flowerScore
+        }\nStatus: ${
+          saveParams.isHealthy === 'sehat' ? 'Healthy' : 'Unhealthy'
+        }`,
+        [{text: 'OK', onPress: () => closeModal()}],
+      );
+
       console.log('Result saved:', {
-        name: resultName,
-        data: currentSensorData,
+        ...saveParams,
+        sensorData: currentSensorData,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
@@ -247,75 +271,75 @@ const PortableSensorScreen: React.FC<Props> = ({route, navigation}) => {
   };
 
   const defaultIndicator: SoilIndicator = {
-  color: '#9CAAF3',
-  icon: 'remove',
-  status: 'N/A',
-};
+    color: '#9CAAF3',
+    icon: 'remove',
+    status: 'N/A',
+  };
 
-const indicators = {
-  temp: currentSensorData
-    ? makeIndicatorFromValue('Temp', currentSensorData.Temp)
-    : defaultIndicator,
-  humidity: currentSensorData
-    ? makeIndicatorFromValue('Humidity', currentSensorData.Humidity)
-    : defaultIndicator,
-  ph: currentSensorData
-    ? makeIndicatorFromValue('pH', currentSensorData.pH)
-    : defaultIndicator,
-  ec: currentSensorData
-    ? makeIndicatorFromValue('EC', currentSensorData.EC)
-    : defaultIndicator,
-  nitrogen: currentSensorData
-    ? makeIndicatorFromValue('Nitrogen', currentSensorData.Nitrogen)
-    : defaultIndicator,
-  phosphorus: currentSensorData
-    ? makeIndicatorFromValue('Phosphorus', currentSensorData.Phosphorus)
-    : defaultIndicator,
-  kalium: currentSensorData
-    ? makeIndicatorFromValue('Kalium', currentSensorData.Kalium)
-    : defaultIndicator,
-};
+  const indicators = {
+    temp: currentSensorData
+      ? makeIndicatorFromValue('Temp', currentSensorData.Temp)
+      : defaultIndicator,
+    humidity: currentSensorData
+      ? makeIndicatorFromValue('Humidity', currentSensorData.Humidity)
+      : defaultIndicator,
+    ph: currentSensorData
+      ? makeIndicatorFromValue('pH', currentSensorData.pH)
+      : defaultIndicator,
+    ec: currentSensorData
+      ? makeIndicatorFromValue('EC', currentSensorData.EC)
+      : defaultIndicator,
+    nitrogen: currentSensorData
+      ? makeIndicatorFromValue('Nitrogen', currentSensorData.Nitrogen)
+      : defaultIndicator,
+    phosphorus: currentSensorData
+      ? makeIndicatorFromValue('Phosphorus', currentSensorData.Phosphorus)
+      : defaultIndicator,
+    kalium: currentSensorData
+      ? makeIndicatorFromValue('Kalium', currentSensorData.Kalium)
+      : defaultIndicator,
+  };
   return (
-  <SafeAreaView style={styles.container}>
-    <HeaderBack
-      title={isHistoryMode && portableData 
-        ? portableData.keterangan_portable 
-        : "Portable Tools Result"
-      }
-      back
-      
-    />
-    
-    {isHistoryMode && portableData && (
-      <Text style={styles.textInfoTested}>
-        Tested on {formatDate(portableData.created_at)}
-      </Text>
-    )}
-    
-    <SensorContent 
-      sensorData={currentSensorData} 
-      indicators={indicators}
-      isHistoryMode={isHistoryMode}
-    />
-    
-    {!isHistoryMode && (
-      <BottomActionsSection onRescan={handleRescan} onSave={openModal} />
-    )}
+    <SafeAreaView style={styles.container}>
+      <HeaderBack
+        title={
+          isHistoryMode && portableData
+            ? portableData.keterangan_portable
+            : 'Portable Tools Result'
+        }
+        back
+      />
 
-    <SaveModal
-      visible={isModalVisible}
-      onClose={closeModal}
-      onSave={handleSaveResult}
-      modalAnimation={modalAnimation}
-    />
+      {isHistoryMode && portableData && (
+        <Text style={styles.textInfoTested}>
+          Tested on {formatDate(portableData.created_at)}
+        </Text>
+      )}
 
-    <RescanModal
-      visible={isRescanPopupVisible}
-      dotCount={dotCount}
-      onRequestClose={() => setIsRescanPopupVisible(false)}
-    />
-  </SafeAreaView>
-);
+      <SensorContent
+        sensorData={currentSensorData}
+        indicators={indicators}
+        isHistoryMode={isHistoryMode}
+      />
+
+      {!isHistoryMode && (
+        <BottomActionsSection onRescan={handleRescan} onSave={openModal} />
+      )}
+
+      <SaveModal
+        visible={isModalVisible}
+        onClose={closeModal}
+        onSave={handleSaveResult}
+        modalAnimation={modalAnimation}
+      />
+
+      <RescanModal
+        visible={isRescanPopupVisible}
+        dotCount={dotCount}
+        onRequestClose={() => setIsRescanPopupVisible(false)}
+      />
+    </SafeAreaView>
+  );
 };
 
 export default PortableSensorScreen;

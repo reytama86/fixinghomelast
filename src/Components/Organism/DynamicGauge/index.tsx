@@ -133,21 +133,21 @@ const DynamicGauge: React.FC<DynamicGaugeProps> = ({
         const rotation = 45 + (progress * 10);
         return `${rotation}deg`;
       }
-       else if (value >= 20 && value <= 21) {
+       else if (value >= 20 && value <= 21.99) {
         const progress = (value - 20) / 3;
         const rotation = -20 + (progress * 10);
         return `${rotation}deg`;
       }
-      else if (value >= 22 && value <= 23) {
+      else if (value >= 22 && value <= 23.99) {
         const progress = (value - 20) / 3;
         const rotation = -35 + (progress * 10);
         return `${rotation}deg`;
       }
-      else if (value >= 24 && value <= 26) {
+      else if (value >= 24 && value <= 26.99) {
         const progress = (value - 24) / 2;
         const rotation = -35 + (progress * 5);
         return `${rotation}deg`;
-      } else if (value >= 27 && value <= 35) {
+      } else if (value >= 27 && value <= 35.99) {
         const progress = (value - 27) / 8;
         const rotation = progress * 15;
         return `${rotation}deg`;

@@ -11,6 +11,7 @@ import {
   ScrollView,
   Animated,
   TouchableWithoutFeedback,
+  Alert,
 } from 'react-native';
 import styles from './styles';
 import {SavePortableSVG} from '@Assets/svg/Static';
@@ -20,7 +21,14 @@ import { CheckboxInput } from './Component/CheckboxInput';
 type SaveModalProps = {
   visible: boolean;
   onClose: () => void;
-  onSave: (resultName: string) => Promise<void>;
+  onSave: (saveParams: {
+    blockNumber: string;
+    rowNumber: string;
+    sectionNumber: string;
+    flowerScore: string;
+    isHealthy: string;
+    unhealthyReasons: string[];
+  }) => Promise<void>;
   modalAnimation: Animated.Value;
 };
 
@@ -123,17 +131,39 @@ export const SaveModal: React.FC<SaveModalProps> = ({
   };
 
   const handleSave = async () => {
-    if (!blockNumber.trim()) {
+    // Validasi
+    if (!blockNumber.trim() || !rowNumber.trim() || !sectionNumber.trim()) {
+      Alert.alert('Error', 'Please fill Block, Row, and Section number');
+      return;
+    }
+
+    if (!condition) {
+      Alert.alert('Error', 'Please select flower score');
+      return;
+    }
+
+    if (!isHealthy) {
+      Alert.alert('Error', 'Please select plant health status');
+      return;
+    }
+
+    if (isHealthy === 'tidak_sehat' && unhealthyReasons.length === 0) {
+      Alert.alert('Error', 'Please select at least one reason for unhealthy plant');
       return;
     }
 
     setIsSaving(true);
     try {
-      await onSave(blockNumber);
-      // Setelah save berhasil, tutup modal dengan animasi
+      await onSave({
+        blockNumber: blockNumber.trim(),
+        rowNumber: rowNumber.trim(),
+        sectionNumber: sectionNumber.trim(),
+        flowerScore: condition,
+        isHealthy,
+        unhealthyReasons,
+      });
       handleClose();
     } catch (error) {
-      // Jika error, tetap tampilkan modal
       console.error('Save error:', error);
     } finally {
       setIsSaving(false);

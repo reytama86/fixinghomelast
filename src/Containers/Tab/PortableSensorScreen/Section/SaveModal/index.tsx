@@ -26,8 +26,14 @@ type SaveModalProps = {
     rowNumber: string;
     sectionNumber: string;
     flowerScore: string;
-    isHealthy: string;
-    unhealthyReasons: string[];
+    isHealthy: boolean;
+    symptoms: {
+      slowGrowth: boolean;
+      leafWilt: boolean;
+      chlorosis: boolean;
+      weakStem: boolean;
+      rotRoot: boolean;
+    };
   }) => Promise<void>;
   modalAnimation: Animated.Value;
 };
@@ -38,7 +44,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
   onSave,
   modalAnimation,
 }) => {
-  const [blockNumber, setblockNumber] = useState('');
+  const [blockNumber, setBlockNumber] = useState('');
   const [rowNumber, setRowNumber] = useState('');
   const [sectionNumber, setSectionNumber] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -59,19 +65,17 @@ export const SaveModal: React.FC<SaveModalProps> = ({
     outputRange: [0, 1],
   });
 
-  // Reset semua form ketika modal TERTUTUP (visible = false)
   useEffect(() => {
     if (!visible) {
-      // Tunggu animasi selesai baru reset
       setTimeout(() => {
-        setblockNumber('');
+        setBlockNumber('');
         setRowNumber('');
         setSectionNumber('');
         setCondition('');
         setIsHealthy('');
         setUnhealthyReasons([]);
         reasonAnimation.setValue(0);
-      }, 300); // Sesuai durasi animasi
+      }, 300);
     }
   }, [visible]);
 
@@ -112,7 +116,6 @@ export const SaveModal: React.FC<SaveModalProps> = ({
     });
   };
 
-  // Handler untuk menutup modal dengan animasi smooth
   const handleClose = () => {
     Animated.timing(modalAnimation, {
       toValue: 0,
@@ -123,7 +126,6 @@ export const SaveModal: React.FC<SaveModalProps> = ({
     });
   };
 
-  // Handler untuk klik backdrop (area di luar modal)
   const handleBackdropPress = () => {
     if (!isSaving) {
       handleClose();
@@ -131,7 +133,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
   };
 
   const handleSave = async () => {
-    // Validasi
+    
     if (!blockNumber.trim() || !rowNumber.trim() || !sectionNumber.trim()) {
       Alert.alert('Error', 'Please fill Block, Row, and Section number');
       return;
@@ -148,20 +150,30 @@ export const SaveModal: React.FC<SaveModalProps> = ({
     }
 
     if (isHealthy === 'tidak_sehat' && unhealthyReasons.length === 0) {
-      Alert.alert('Error', 'Please select at least one reason for unhealthy plant');
+      Alert.alert('Error', 'Please select at least one symptom for unhealthy plant');
       return;
     }
 
     setIsSaving(true);
     try {
+      
+      const symptoms = {
+        slowGrowth: unhealthyReasons.includes('lambat'),
+        leafWilt: unhealthyReasons.includes('layu'),
+        chlorosis: unhealthyReasons.includes('klorosis'),
+        weakStem: unhealthyReasons.includes('lemas'),
+        rotRoot: unhealthyReasons.includes('busuk'),
+      };
+
       await onSave({
         blockNumber: blockNumber.trim(),
         rowNumber: rowNumber.trim(),
         sectionNumber: sectionNumber.trim(),
         flowerScore: condition,
-        isHealthy,
-        unhealthyReasons,
+        isHealthy: isHealthy === 'sehat',
+        symptoms,
       });
+      
       handleClose();
     } catch (error) {
       console.error('Save error:', error);
@@ -219,7 +231,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                       placeholder="Enter block number"
                       placeholderTextColor="#999"
                       value={blockNumber}
-                      onChangeText={setblockNumber}
+                      onChangeText={setBlockNumber}
                       editable={!isSaving}
                     />
                   </View>
@@ -287,7 +299,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                       overflow: 'hidden',
                     }}>
                     <Text style={styles.inputLabel}>
-                      Alasan Tanaman Tidak Sehat (Pilih maksimal 2)
+                      Gejala Tanaman Tidak Sehat (Pilih maksimal 2)
                       <Text style={{color: 'red'}}> *</Text>
                     </Text>
                     <CheckboxInput

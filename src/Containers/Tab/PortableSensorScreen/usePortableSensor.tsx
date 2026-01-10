@@ -2,7 +2,7 @@ import {useState, useRef, useEffect} from 'react';
 import {BleManager, Device} from 'react-native-ble-plx';
 import {Buffer} from 'buffer';
 import {SoilSensorData} from 'src/Navigators/Tab';
-import {useControl} from '@Context/ControlContext';
+import { useControl } from '@Context/ControlContext';
 
 const SERVICE_UUID = '5900f86c-57d7-422c-8aa8-fd6216fa496b';
 const CHARACTERISTIC_UUID = 'a0863556-7065-46e6-96ee-99e3f693cb7f';
@@ -20,26 +20,28 @@ type CompactSensorData = {
 
 type BleStatus = 'scanning' | 'connecting' | 'connected' | 'disconnected';
 
-type SaveResultParams = {
+type SaveParams = {
   blockNumber: string;
   rowNumber: string;
   sectionNumber: string;
   flowerScore: string;
-  isHealthy: string;
-  unhealthyReasons: string[];
+  isHealthy: boolean;
+  symptoms: {
+    slowGrowth: boolean;
+    leafWilt: boolean;
+    chlorosis: boolean;
+    weakStem: boolean;
+    rotRoot: boolean;
+  };
 };
 
-export const usePortableSensor = (
-  initialData?: SoilSensorData,
-  initialStatus?: BleStatus,
-) => {
+export const usePortableSensor = (initialData?: SoilSensorData, initialStatus?: BleStatus) => {
   const [bleManager] = useState(() => new BleManager());
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
-  const [currentSensorData, setCurrentSensorData] =
-    useState<SoilSensorData | null>(initialData || null);
-  const [bleStatus, setBleStatus] = useState<BleStatus>(
-    initialStatus || 'disconnected',
+  const [currentSensorData, setCurrentSensorData] = useState<SoilSensorData | null>(
+    initialData || null
   );
+  const [bleStatus, setBleStatus] = useState<BleStatus>(initialStatus || 'disconnected');
   const {publish, isConnected} = useControl();
 
   const monitoringSubscription = useRef<any>(null);
@@ -47,9 +49,7 @@ export const usePortableSensor = (
 
   const PORTABLE_TOPIC = 'data/portable';
 
-  const convertCompactToFull = (
-    compactData: CompactSensorData,
-  ): SoilSensorData => {
+  const convertCompactToFull = (compactData: CompactSensorData): SoilSensorData => {
     return {
       Humidity: compactData.H,
       Temp: compactData.T,
@@ -73,7 +73,7 @@ export const usePortableSensor = (
       await device.writeCharacteristicWithoutResponseForService(
         SERVICE_UUID,
         REQUEST_CHAR_UUID,
-        Buffer.from('READ_SENSOR').toString('base64'),
+        Buffer.from('READ_SENSOR').toString('base64')
       );
       console.log('Sensor data request sent');
     } catch (error) {
@@ -93,10 +93,7 @@ export const usePortableSensor = (
         (error, characteristic) => {
           if (characteristic?.value) {
             try {
-              const jsonString = Buffer.from(
-                characteristic.value,
-                'base64',
-              ).toString('utf-8');
+              const jsonString = Buffer.from(characteristic.value, 'base64').toString('utf-8');
               console.log('Raw received data:', jsonString);
 
               if (!jsonString || jsonString.trim().length === 0) {
@@ -116,10 +113,7 @@ export const usePortableSensor = (
               let data: SoilSensorData;
               try {
                 const compactData: CompactSensorData = JSON.parse(trimmedJson);
-                if (
-                  compactData.H !== undefined &&
-                  compactData.T !== undefined
-                ) {
+                if (compactData.H !== undefined && compactData.T !== undefined) {
                   console.log('Received compact format data:', compactData);
                   data = convertCompactToFull(compactData);
                 } else {
@@ -143,7 +137,7 @@ export const usePortableSensor = (
                 'Kalium',
               ];
               const missingFields = requiredFields.filter(
-                field => data[field] === undefined || data[field] === null,
+                field => data[field] === undefined || data[field] === null
               );
 
               if (missingFields.length > 0) {
@@ -152,7 +146,7 @@ export const usePortableSensor = (
               }
 
               const invalidFields = requiredFields.filter(
-                field => typeof data[field] !== 'number' || isNaN(data[field]),
+                field => typeof data[field] !== 'number' || isNaN(data[field])
               );
 
               if (invalidFields.length > 0) {
@@ -169,7 +163,7 @@ export const usePortableSensor = (
               }, 1500);
             }
           }
-        },
+        }
       );
       await requestSensorData(device);
     } catch (error) {
@@ -197,7 +191,7 @@ export const usePortableSensor = (
       }
       setConnectedDevice(null);
       setBleStatus('scanning');
-      await new Promise((resolve: any) => setTimeout(resolve, 500));
+      await new Promise((resolve:any) => setTimeout(resolve, 500));
     } catch (error) {
       console.error('Error during BLE reset:', error);
     }
@@ -267,16 +261,15 @@ export const usePortableSensor = (
 
   const publishSavedResult = (
     sensorData: SoilSensorData,
-    resultName: string,
-    saveParams: SaveResultParams,
-    deviceId?: string,
+    displayName: string,
+    saveParams: SaveParams,
+    deviceId?: string
   ) => {
     if (!isConnected) {
       console.warn('MQTT not connected, cannot publish saved result');
       return;
     }
 
-    // Generate keterangan_portable dengan format: Block_Row_Section_Score
     const keteranganPortable = `${saveParams.blockNumber}_${saveParams.rowNumber}_${saveParams.sectionNumber}_${saveParams.flowerScore}`;
 
     const payload = {
@@ -288,7 +281,13 @@ export const usePortableSensor = (
       sectionNumber: saveParams.sectionNumber,
       flowerScore: saveParams.flowerScore,
       isHealthy: saveParams.isHealthy,
-      unhealthyReasons: saveParams.unhealthyReasons,
+      symptoms: {
+        slowGrowth: saveParams.symptoms.slowGrowth,
+        leafWilt: saveParams.symptoms.leafWilt,
+        chlorosis: saveParams.symptoms.chlorosis,
+        weakStem: saveParams.symptoms.weakStem,
+        rotRoot: saveParams.symptoms.rotRoot,
+      },
       sensorData: {
         temperature: sensorData.Temp,
         humidity: sensorData.Humidity,

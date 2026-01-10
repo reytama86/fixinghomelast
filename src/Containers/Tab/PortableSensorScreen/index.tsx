@@ -216,8 +216,14 @@ const PortableSensorScreen: React.FC<Props> = ({route, navigation}) => {
     rowNumber: string;
     sectionNumber: string;
     flowerScore: string;
-    isHealthy: string;
-    unhealthyReasons: string[];
+    isHealthy: boolean;
+    symptoms: {
+      slowGrowth: boolean;
+      leafWilt: boolean;
+      chlorosis: boolean;
+      weakStem: boolean;
+      rotRoot: boolean;
+    };
   }) => {
     if (!currentSensorData) {
       Alert.alert('Error', 'No sensor data available to save');
@@ -225,23 +231,27 @@ const PortableSensorScreen: React.FC<Props> = ({route, navigation}) => {
     }
 
     try {
-      // Generate display name
       const displayName = `Block ${saveParams.blockNumber} - Row ${saveParams.rowNumber} - Section ${saveParams.sectionNumber}`;
-
+      
       publishSavedResult(currentSensorData, displayName, saveParams);
-
+      
+      const activeSymptoms = [];
+      if (saveParams.symptoms.slowGrowth) activeSymptoms.push('Pertumbuhan lambat');
+      if (saveParams.symptoms.leafWilt) activeSymptoms.push('Daun layu');
+      if (saveParams.symptoms.chlorosis) activeSymptoms.push('Klorosis');
+      if (saveParams.symptoms.weakStem) activeSymptoms.push('Batang lemas');
+      if (saveParams.symptoms.rotRoot) activeSymptoms.push('Kebusukan akar');
+      
+      const symptomsText = activeSymptoms.length > 0 
+        ? `\nGejala: ${activeSymptoms.join(', ')}`
+        : '';
+      
       Alert.alert(
-        'Success',
-        `Result saved successfully!\n\nBlock: ${saveParams.blockNumber}\nRow: ${
-          saveParams.rowNumber
-        }\nSection: ${saveParams.sectionNumber}\nScore: ${
-          saveParams.flowerScore
-        }\nStatus: ${
-          saveParams.isHealthy === 'sehat' ? 'Healthy' : 'Unhealthy'
-        }`,
-        [{text: 'OK', onPress: () => closeModal()}],
+        'Success', 
+        `Result saved successfully!\n\nBlock: ${saveParams.blockNumber}\nRow: ${saveParams.rowNumber}\nSection: ${saveParams.sectionNumber}\nScore: ${saveParams.flowerScore}\nStatus: ${saveParams.isHealthy ? 'Sehat ✓' : 'Tidak Sehat ✗'}${symptomsText}`,
+        [{ text: 'OK', onPress: () => closeModal() }]
       );
-
+      
       console.log('Result saved:', {
         ...saveParams,
         sensorData: currentSensorData,

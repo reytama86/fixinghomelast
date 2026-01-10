@@ -17,6 +17,7 @@ import {
   generateFilename,
   ReportInfo,
 } from 'utils/excelUtils'
+import { generatePortablePDF, fetchPortableReportData } from 'utils/portablePdfUtils';
 import { fetchReportData, SENSOR_API_MAP } from '../../useChartData'
 
 interface DownloadReportModalProps {
@@ -36,7 +37,6 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Kondisional default values berdasarkan screen
   const [selectedBlock, setSelectedBlock] = useState(
     onScreen === 'Portable' ? 'Block 1' : 'Blok 4'
   );
@@ -46,7 +46,6 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
   const [showSensorDropdown, setShowSensorDropdown] = useState(false);
   const [showDeviceDropdown, setShowDeviceDropdown] = useState(false);
 
-  // Kondisional block options berdasarkan screen
   const blockOptions = onScreen === 'Portable' 
     ? ['All Block (1-9)','Block 1', 'Block 2', 'Block 3', 'Block 4', 'Block 5', 'Block 6', 'Block 7', 'Block 8', 'Block 9']
     : ['Blok 4', 'Blok 7'];
@@ -65,23 +64,54 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
   ];
   const deviceOptions = ['1', '2', '3'];
 
-  const handleConfirmDownload = async () => {
-    if (!startDate || !endDate) {
-      Alert.alert('Error', 'Please select both start date and end date');
-      return;
-    }
+const handleConfirmDownload = async () => {
+  if (!startDate || !endDate) {
+    Alert.alert('Error', 'Please select both start date and end date');
+    return;
+  }
 
-    if (startDate > endDate) {
-      Alert.alert('Error', 'Start date cannot be later than end date');
-      return;
-    }
+  if (startDate > endDate) {
+    Alert.alert('Error', 'Start date cannot be later than end date');
+    return;
+  }
 
-    setIsDownloading(true);
+  setIsDownloading(true);
 
-    try {
-      const startDateStr = startDate.toISOString().split('T')[0];
-      const endDateStr = endDate.toISOString().split('T')[0];
+  try {
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const endDateStr = endDate.toISOString().split('T')[0];
 
+    if (onScreen === 'Portable') {
+      const portableData = await fetchPortableReportData(
+        startDateStr,
+        endDateStr,
+        selectedBlock
+      );
+
+      if (portableData.length === 0) {
+        Alert.alert(
+          'No Data',
+          'No portable data found for the selected period and block.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      const filePath = await generatePortablePDF(
+        portableData,
+        startDateStr,
+        endDateStr,
+        selectedBlock
+      );
+
+      if (filePath) {
+        Alert.alert(
+          'Success',
+          `Portable report saved successfully!\n\nLocation: ${filePath}\n\nTotal entries: ${portableData.length}`,
+          [{ text: 'OK', onPress: () => handleCloseModal() }]
+        );
+      }
+    } else {
       const apiSensorType = SENSOR_API_MAP[selectedSensor] || selectedSensor;
 
       const reportData = await fetchReportData(
@@ -107,7 +137,6 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
       };
 
       const excelData = await generateExcelFile(reportData, reportInfo);
-
       const filePath = await saveExcelFile(excelData, filename);
 
       if (filePath) {
@@ -117,17 +146,18 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
           [{ text: 'OK', onPress: () => handleCloseModal() }]
         );
       }
-    } catch (error: any) {
-      console.error('Download error:', error);
-      Alert.alert(
-        'Error',
-        `Failed to generate report: ${error.message || 'Unknown error'}`,
-        [{ text: 'OK' }]
-      );
-    } finally {
-      setIsDownloading(false);
     }
-  };
+  } catch (error: any) {
+    console.error('Download error:', error);
+    Alert.alert(
+      'Error',
+      `Failed to generate report: ${error.message || 'Unknown error'}`,
+      [{ text: 'OK' }]
+    );
+  } finally {
+    setIsDownloading(false);
+  }
+};
 
   const handleCloseModal = () => {
     if (isDownloading) return;
@@ -232,7 +262,6 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
             </View>
 
             <View style={styles.modalContent}>
-              {/* Block Selection - Always visible */}
               <View style={[styles.inputContainer, { zIndex: 20 }]}>
                 <Text style={styles.inputLabel}>Block</Text>
                 <TouchableOpacity
@@ -270,7 +299,6 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
                 )}
               </View>
 
-              {/* Sensor & Device - Only visible in Chart screen */}
               {onScreen === 'Chart' && (
                 <>
                   <View style={[styles.formRow, { zIndex: 10 }]}>
@@ -353,7 +381,6 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
                 </>
               )}
 
-              {/* Date Selection - Always visible */}
               <View style={[styles.inputContainer, { zIndex: 1 }]}>
                 <Text style={styles.inputLabel}>From</Text>
                 <TouchableOpacity

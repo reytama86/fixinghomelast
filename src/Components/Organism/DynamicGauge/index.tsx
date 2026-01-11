@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleProp, ViewStyle } from 'react-native';
 import Svg, {
   G,
@@ -39,6 +39,20 @@ const THRESHOLDS: Record<'temperature' | 'humidity', ThresholdConfig> = {
   },
 };
 
+// Konfigurasi untuk perhitungan posisi dan rotasi yang lebih clean
+const GAUGE_CONFIG = {
+  centerX: 63.75,
+  centerY: 63.75,
+  radius: 66,
+  startAngle: Math.PI,
+  endAngle: 0,
+  indicatorWidth: 13,
+  indicatorHeight: 14,
+  // Range mapping untuk extended scale (-15% to 115%)
+  extendedMin: -15,
+  extendedMax: 115,
+};
+
 const DynamicGauge: React.FC<DynamicGaugeProps> = ({
   value,
   type,
@@ -46,144 +60,101 @@ const DynamicGauge: React.FC<DynamicGaugeProps> = ({
   height = 106,
   style,
 }) => {
-  const threshold = THRESHOLDS[type];
+  // Memoize threshold untuk performa
+  const threshold = useMemo(() => THRESHOLDS[type], [type]);
 
-  // Fungsi untuk menghitung persentase posisi value dalam range
-  const calculatePercentage = (val: number): number => {
-    // Map ke range -15% sampai 115% agar 0 dan 100 mentok di merah
+  /**
+   * Menghitung persentase posisi value dalam range extended (-15% sampai 115%)
+   * Temperature: 0°C = -15%, 26°C = 50%, 100°C = 115%
+   * Humidity: 0% = -15%, 75% = 50%, 100% = 115%
+   * Tapi setelah ideal max, balik ke kiri menuju merah!
+   */
+  const calculatePercentage = useMemo(() => {
+    const { extendedMin, extendedMax } = GAUGE_CONFIG;
+    const midPoint = type === 'temperature' ? 26 : 75;
+    const maxValue = 100;
     
-    if (type === 'temperature') {
-      // Temperature: 0 = -15%, 26 = 50%, 100 = 115%
-      const midVal = 26;
-      
-      if (val <= midVal) {
-        // 0-26 mapped ke -15% sampai 50%
-        return -15 + ((val / midVal) * 65); // -15 + (0 to 65)
-      } else {
-        // 27-100 mapped ke 50% sampai 115%
-        return 50 + (((val - midVal) / (100 - midVal)) * 65); // 50 + (0 to 65)
-      }
-    } else if (type === 'humidity') {
-      // Humidity: 0 = -15%, 75 = 50%, 100 = 115%
-      const midVal = 75;
-      
-      if (val <= midVal) {
-        // 0-75 mapped ke -15% sampai 50%
-        return -15 + ((val / midVal) * 65); // -15 + (0 to 65)
-      } else {
-        // 76-100 mapped ke 50% sampai 115%
-        return 50 + (((val - midVal) / (100 - midVal)) * 65); // 50 + (0 to 65)
-      }
+    // Clamp value ke range valid
+    const clampedValue = Math.max(0, Math.min(maxValue, value));
+    
+    if (clampedValue <= midPoint) {
+      // Map 0-midPoint ke -15% sampai 50% (kiri ke tengah)
+      return extendedMin + ((clampedValue / midPoint) * (50 - extendedMin));
+    } else {
+      // Map midPoint-100 ke 50% sampai -15% (tengah balik ke kiri/merah)
+      // Semakin tinggi value, semakin ke kiri (ke merah)
+      const progress = (clampedValue - midPoint) / (maxValue - midPoint);
+      return 50 - (progress * (50 - extendedMin)); // 50 -> -15
     }
+  }, [value, type]);
+
+  /**
+   * Hitung posisi X,Y pada arc berdasarkan persentase
+   */
+  const indicatorPosition = useMemo(() => {
+    const { centerX, centerY, radius, startAngle, endAngle } = GAUGE_CONFIG;
+    const angle = startAngle - (calculatePercentage / 100) * (startAngle - endAngle);
     
-    // Fallback
-    const { min, max } = threshold;
-    const clampedValue = Math.max(min, Math.min(max, val));
-    return ((clampedValue - min) / (max - min)) * 100;
-  };
+    return {
+      x: centerX + radius * Math.cos(angle),
+      y: centerY - radius * Math.sin(angle),
+    };
+  }, [calculatePercentage]);
 
-  // Hitung posisi pada arc path berdasarkan persentase
-  const getPointOnArc = (percentage: number) => {
-    const centerX = 63.75;
-    const centerY = 63.75;
-    const radius = 66;
-    
-    const startAngle = Math.PI;
-    const endAngle = 0;
-    
-    const angle = startAngle - (percentage / 100) * (startAngle - endAngle);
-    
-    const x = centerX + radius * Math.cos(angle);
-    const y = centerY - radius * Math.sin(angle);
+  /**
+   * Hitung rotasi indikator berdasarkan nilai dan tipe
+   * Menggunakan interpolasi linear untuk transisi smooth
+   * Setelah ideal max, rotasi balik ke kanan (mirror effect)
+   */
+  const getRotation = useMemo((): string => {
+    const interpolate = (val: number, ranges: Array<[number, number, number, number]>): number => {
+      for (const [min, max, startRot, endRot] of ranges) {
+        if (val >= min && val <= max) {
+          const progress = (val - min) / (max - min);
+          return startRot + (progress * (endRot - startRot));
+        }
+      }
+      return 0;
+    };
 
-    return { x, y };
-  };
-
-  const percentage = calculatePercentage(value);
-  const ellipsPosition = getPointOnArc(percentage);
-
-  const ellipsWidth = 13;
-  const ellipsHeight = 14;
-
-  const shouldFlip = percentage < 50;
-
-  // Hitung rotasi dinamis berdasarkan nilai dan tipe
-  const getRotation = (): string => {
     if (type === 'temperature') {
-      if (value <= 2) {
-        const progress = value / 19;
-        const rotation = 85 + (progress * 20);
-        return `${rotation}deg`;
-      }else if (value <= 5) {
-        const progress = value / 19;
-        const rotation = 70 + (progress * 20);
-        return `${rotation}deg`;
-      }else if (value <= 8) {
-        const progress = value / 19;
-        const rotation = 40 + (progress * 20);
-        return `${rotation}deg`;
-      }
-      else if (value <= 10) {
-        const progress = value / 19;
-        const rotation = 10 + (progress * 20);
-        return `${rotation}deg`;
-      }
-       else if (value >= 11 && value <= 12) {
-        const progress = (value - 20) / 3;
-        const rotation = 45 + (progress * 10);
-        return `${rotation}deg`;
-      }
-       else if (value >= 20 && value <= 21.99) {
-        const progress = (value - 20) / 3;
-        const rotation = -20 + (progress * 10);
-        return `${rotation}deg`;
-      }
-      else if (value >= 22 && value <= 23.99) {
-        const progress = (value - 20) / 3;
-        const rotation = -35 + (progress * 10);
-        return `${rotation}deg`;
-      }
-      else if (value >= 24 && value <= 26.99) {
-        const progress = (value - 24) / 2;
-        const rotation = -35 + (progress * 5);
-        return `${rotation}deg`;
-      } else if (value >= 27 && value <= 35.99) {
-        const progress = (value - 27) / 8;
-        const rotation = progress * 15;
-        return `${rotation}deg`;
-      } else if (value >= 36) {
-        const progress = Math.min((value - 36) / 64, 1);
-        const rotation = 15 + (progress * 20);
-        return `${rotation}deg`;
-      }
-    } else if (type === 'humidity') {
-      if (value <= 50) {
-        const progress = value / 50;
-        const rotation = -35 + (progress * 20);
-        return `${rotation}deg`;
-      } else if (value >= 51 && value <= 59) {
-        const progress = (value - 51) / 8;
-        const rotation = -15 + (progress * 10);
-        return `${rotation}deg`;
-      } else if (value >= 60 && value <= 75) {
-        const progress = (value - 60) / 15;
-        const rotation = -5 + (progress * 5);
-        return `${rotation}deg`;
-      } else if (value >= 76 && value <= 80) {
-        const progress = (value - 76) / 4;
-        const rotation = progress * 15;
-        return `${rotation}deg`;
-      } else if (value >= 81) {
-        const progress = Math.min((value - 81) / 19, 1);
-        const rotation = 15 + (progress * 20);
-        return `${rotation}deg`;
-      }
+      const ranges: Array<[number, number, number, number]> = [
+        [0, 10, 85, 10],
+        [10, 20, 10, -20],
+        [20, 24, -20, -35],
+        [24, 25.4, -35, -35], // ideal range
+        [25.5, 25.9, -40,-35],
+        // Setelah 26, balik arah (rotasi ke kanan/positif)
+        [26, 100, -40, 15],
+        [100, 100, 15, 85],
+      ];
+      return `${interpolate(value, ranges)}deg`;
+    } else {
+      const ranges: Array<[number, number, number, number]> = [
+        [0, 29, -35, -15],
+        [30, 35, 20, -15],
+        [36, 40, 20, -15],
+        [50, 60, -15, -5],
+        [60, 75, -5, -40], // ideal range
+        // Setelah 75, balik arah (rotasi ke kanan/positif)
+        [76, 77, -30, -30],
+        [78, 80, -30, 0],
+        [81, 88, -15, 0],
+        [89, 92, 15, 35],
+        [93, 94, 40, 35],
+        [95.0, 95.9, 50, 35],
+        [96.0, 96.9, 70, 35],
+        [97, 100, 70, 70],
+      ];
+      return `${interpolate(value, ranges)}deg`;
     }
-    return '0deg';
-  };
+  }, [value, type]);
+
+  const shouldFlip = calculatePercentage < 50;
 
   return (
     <View style={[{ width, height, position: 'relative' }, style]}>
+      {/* Arc gauge dengan gradient */}
       <Svg
         width={width}
         height={height}
@@ -222,18 +193,24 @@ const DynamicGauge: React.FC<DynamicGaugeProps> = ({
         </G>
       </Svg>
 
+      {/* Pointer/Indicator */}
       <View
         style={{
           position: 'absolute',
-          left: ellipsPosition.x - ellipsWidth / 2,
-          top: ellipsPosition.y - ellipsHeight / 2,
+          left: indicatorPosition.x - GAUGE_CONFIG.indicatorWidth / 2,
+          top: indicatorPosition.y - GAUGE_CONFIG.indicatorHeight / 2,
           transform: [
             { scaleX: shouldFlip ? -1 : 1 },
-            { rotate: getRotation() }
+            { rotate: getRotation }
           ],
         }}
       >
-        <Svg width={ellipsWidth} height={ellipsHeight} viewBox="0 0 17 18" fill="none">
+        <Svg 
+          width={GAUGE_CONFIG.indicatorWidth} 
+          height={GAUGE_CONFIG.indicatorHeight} 
+          viewBox="0 0 17 18" 
+          fill="none"
+        >
           <G filter="url(#filter0_dii_76_958)">
             <Path
               d="M14.9231 6.11765C14.9231 9.48719 12.2453 12.2353 8.76923 12.2353L2.61538 13L2.61546 6.11765C2.61546 2.74811 5.29326 0 8.76923 0L7.98462 6.88235L14.9231 6.11765Z"

@@ -16,8 +16,8 @@ import {
   saveExcelFile,
   generateFilename,
   ReportInfo,
-} from 'utils/excelUtils'
-import { generatePortablePDF, fetchPortableReportData } from 'utils/portablePdfUtils';
+} from '../../../../../../utils/excelUtils'
+import {generatePortablePDF, fetchPortableReportData} from '../../../../../../utils/portablePdfUtils'
 import { fetchReportData, SENSOR_API_MAP } from '../../useChartData'
 
 interface DownloadReportModalProps {

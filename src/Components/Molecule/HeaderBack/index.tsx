@@ -1,11 +1,3 @@
-// HeaderBack.tsx
-// NOTE: saya pertahankan baris import asli yang kamu comment sebelumnya (diberi komentar).
-// Jika nanti kamu sudah punya @Atom/Icon, @Atom/Text, @Hooks/useTheme, uncomment saja import di bawah.
-
-// import {StaticIcon} from '@Atom/Icon';
-// import Text from '@Atom/Text';
-// import useTheme from '@Hooks/useTheme';
-
 import {RootStackParamList} from '@Constants/RouteParamsList.constants';
 import {BlurView} from '@react-native-community/blur';
 import {useNavigation} from '@react-navigation/native';
@@ -37,10 +29,6 @@ import styles from './styles';
 
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
-/* ---------------------------
-  FALLBACKS (dipakai kalau kamu belum punya modul Atom/Hook)
-  - Jika nanti kamu punya StaticIcon/Text/useTheme, uncomment impor aslinya
-----------------------------*/
 const FallbackColors = {
   neutral10: '#0A0A0A',
   neutral100: '#FFFFFF',
@@ -59,10 +47,7 @@ const useThemeFallback = () => {
   };
 };
 
-/** Simple StaticIcon fallback:
- * kalau kamu punya @Atom/Icon, comment/remove fallback ini.
- * mendukung 'arrow-left' dan default placeholder.
- */
+
 const StaticIconFallback: React.FC<{
   name?: string;
   size?: number;
@@ -85,7 +70,6 @@ const StaticIconFallback: React.FC<{
     );
   }
 
-  // placeholder circle
   return (
     <Svg width={width} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -99,9 +83,6 @@ const StaticIconFallback: React.FC<{
   );
 };
 
-/** Simple Text fallback that supports animatedStyle prop used di component.
- * Jika kamu pakai atom Text, uncomment import dan hapus fallback ini.
- */
 const TextFallback: React.FC<{
   animatedStyle?: any;
   style?: any;
@@ -125,9 +106,6 @@ const TextFallback: React.FC<{
   );
 };
 
-/* ---------------------------
-  END FALLBACKS
-----------------------------*/
 
 interface HeaderBackProps {
   back?: boolean;
@@ -166,14 +144,8 @@ const HeaderBack: React.FC<HeaderBackProps> = ({
   const insets = useSafeAreaInsets();
   const windowInsets = initialWindowMetrics?.insets || {top: 0};
 
-  // ganti useThemeFallback() dengan useTheme() kalau sudah tersedia
   const {Colors /*, Gutters */} = useThemeFallback() as any;
 
-  // kalau kamu punya StaticIcon/Text dari atom, uncomment 2 baris di bawah:
-  // const StaticIcon = require('@Atom/Icon').StaticIcon || StaticIconFallback;
-  // const Text = require('@Atom/Text').default || TextFallback;
-
-  // sementara kita pakai fallback local supaya file ini langsung jalan:
   const StaticIcon = StaticIconFallback;
   const Text = TextFallback;
 
@@ -388,7 +360,6 @@ const HeaderBack: React.FC<HeaderBackProps> = ({
     );
   }
 
-  // non-animated header
   return (
     <RNView
       style={[

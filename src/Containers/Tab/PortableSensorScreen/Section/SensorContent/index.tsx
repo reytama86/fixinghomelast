@@ -6,6 +6,7 @@ import { Ellips } from '@Assets/svg/Static';
 import {SoilSensorData} from 'src/Navigators/Tab';
 import {SoilIndicator} from '@Helpers/getSensorStatus';
 import styles from './styles';
+import DynamicGauge from '@Organism/DynamicGauge';
 
 type SensorContentProps = {
   sensorData: SoilSensorData | null;
@@ -34,9 +35,13 @@ export const SensorContent: React.FC<SensorContentProps> = ({
           <View style={[styles.cardTransmisi, {marginRight: 12}]}>
             <View style={styles.cardDetailTransmisi}>
               <View style={styles.Transmisi}>
-                <GaugeSvg />
+                 <DynamicGauge 
+                  value={sensorData?.Temp || 0} 
+                  type="temperature"
+                  width={127}
+                  height={106}
+                />
                 <View style={{top: -100, right: -105}}>
-                  <Ellips />
                 </View>
               </View>
               <Text style={styles.nameSensorTransmisi}>Soil Temperature</Text>
@@ -49,7 +54,12 @@ export const SensorContent: React.FC<SensorContentProps> = ({
           <View style={styles.cardTransmisi}>
             <View style={styles.cardDetailTransmisi}>
               <View style={styles.Transmisi}>
-                <GaugeSvg />
+                <DynamicGauge 
+                value={sensorData?.Humidity || 0} 
+                type="humidity"
+                width={127}
+                height={106}
+              />
               </View>
               <Text style={styles.nameSensorTransmisi}>Soil Humidity</Text>
             </View>

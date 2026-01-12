@@ -17,7 +17,10 @@ import {
   generateFilename,
   ReportInfo,
 } from '../../../../../../utils/excelUtils'
-import {generatePortablePDF, fetchPortableReportData} from '../../../../../../utils/portablePdfUtils'
+import {
+  generatePortablePDF,
+  fetchPortableReportData
+} from '../../../../../../utils/portablePdfUtils'
 import { fetchReportData, SENSOR_API_MAP } from '../../useChartData'
 
 interface DownloadReportModalProps {
@@ -64,100 +67,100 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
   ];
   const deviceOptions = ['1', '2', '3'];
 
-const handleConfirmDownload = async () => {
-  if (!startDate || !endDate) {
-    Alert.alert('Error', 'Please select both start date and end date');
-    return;
-  }
-
-  if (startDate > endDate) {
-    Alert.alert('Error', 'Start date cannot be later than end date');
-    return;
-  }
-
-  setIsDownloading(true);
-
-  try {
-    const startDateStr = startDate.toISOString().split('T')[0];
-    const endDateStr = endDate.toISOString().split('T')[0];
-
-    if (onScreen === 'Portable') {
-      const portableData = await fetchPortableReportData(
-        startDateStr,
-        endDateStr,
-        selectedBlock
-      );
-
-      if (portableData.length === 0) {
-        Alert.alert(
-          'No Data',
-          'No portable data found for the selected period and block.',
-          [{ text: 'OK' }]
-        );
-        return;
-      }
-
-      const filePath = await generatePortablePDF(
-        portableData,
-        startDateStr,
-        endDateStr,
-        selectedBlock
-      );
-
-      if (filePath) {
-        Alert.alert(
-          'Success',
-          `Portable report saved successfully!\n\nLocation: ${filePath}\n\nTotal entries: ${portableData.length}`,
-          [{ text: 'OK', onPress: () => handleCloseModal() }]
-        );
-      }
-    } else {
-      const apiSensorType = SENSOR_API_MAP[selectedSensor] || selectedSensor;
-
-      const reportData = await fetchReportData(
-        startDateStr,
-        endDateStr,
-        apiSensorType,
-        selectedDevice,
-        selectedBlock
-      );
-
-      const filename = generateFilename(
-        selectedSensor,
-        startDateStr,
-        endDateStr
-      );
-
-      const reportInfo: ReportInfo = {
-        block: selectedBlock,
-        sensor: selectedSensor,
-        device: selectedDevice,
-        startDate: startDateStr,
-        endDate: endDateStr,
-      };
-
-      const excelData = await generateExcelFile(reportData, reportInfo);
-      const filePath = await saveExcelFile(excelData, filename);
-
-      if (filePath) {
-        Alert.alert(
-          'Success',
-          `Report saved successfully!\n\nLocation: ${filePath}\n\nFile: ${filename}`,
-          [{ text: 'OK', onPress: () => handleCloseModal() }]
-        );
-      }
+  const handleConfirmDownload = async () => {
+    if (!startDate || !endDate) {
+      Alert.alert('Error', 'Please select both start date and end date');
+      return;
     }
-  } catch (error: any) {
-    console.error('Download error:', error);
-    Alert.alert(
-      'Error',
-      `Failed to generate report: ${error.message || 'Unknown error'}`,
-      [{ text: 'OK' }]
-    );
-  } finally {
-    setIsDownloading(false);
-  }
-};
+
+    if (startDate > endDate) {
+      Alert.alert('Error', 'Start date cannot be later than end date');
+      return;
+    }
+
+    setIsDownloading(true);
+
+    try {
+      const startDateStr = startDate.toISOString().split('T')[0];
+      const endDateStr = endDate.toISOString().split('T')[0];
+
+      if (onScreen === 'Portable') {
+        const portableData = await fetchPortableReportData(
+          startDateStr,
+          endDateStr,
+          selectedBlock
+        );
+
+        if (portableData.length === 0) {
+          Alert.alert(
+            'No Data',
+            'No portable data found for the selected period and block.',
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+
+        const filePath = await generatePortablePDF(
+          portableData,
+          startDateStr,
+          endDateStr,
+          selectedBlock
+        );
+
+        if (filePath) {
+          Alert.alert(
+            'Success',
+            `Portable report saved successfully!\n\nLocation: ${filePath}\n\nTotal entries: ${portableData.length}`,
+            [{ text: 'OK', onPress: () => handleCloseModal() }]
+          );
+        }
+      } else {
+        const apiSensorType = SENSOR_API_MAP[selectedSensor] || selectedSensor;
+
+        const reportData = await fetchReportData(
+          startDateStr,
+          endDateStr,
+          apiSensorType,
+          selectedDevice,
+          selectedBlock
+        );
+
+        const filename = generateFilename(
+          selectedSensor,
+          startDateStr,
+          endDateStr
+        );
+
+        const reportInfo: ReportInfo = {
+          block: selectedBlock,
+          sensor: selectedSensor,
+          device: selectedDevice,
+          startDate: startDateStr,
+          endDate: endDateStr,
+        };
+
+        const excelData = await generateExcelFile(reportData, reportInfo);
+        const filePath = await saveExcelFile(excelData, filename);
+
+        if (filePath) {
+          Alert.alert(
+            'Success',
+            `Report saved successfully!\n\nLocation: ${filePath}\n\nFile: ${filename}`,
+            [{ text: 'OK', onPress: () => handleCloseModal() }]
+          );
+        }
+      }
+    } catch (error: any) {
+      console.error('Download error:', error);
+      Alert.alert(
+        'Error',
+        `Failed to generate report: ${error.message || 'Unknown error'}`,
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const handleCloseModal = () => {
     if (isDownloading) return;
@@ -180,22 +183,27 @@ const handleConfirmDownload = async () => {
   };
 
   const handleStartDateChange = (event: any, selectedDate?: Date) => {
+    console.log('START DATE CHANGE - Event type:', event?.type, 'Selected date:', selectedDate);
+    
     if (Platform.OS === 'android') {
       setShowStartDatePicker(false);
     }
+    
     if (selectedDate) {
+      console.log('Setting START date to:', selectedDate.toLocaleDateString());
       setStartDate(selectedDate);
-      if (endDate && selectedDate > endDate) {
-        setEndDate(selectedDate);
-      }
     }
   };
 
   const handleEndDateChange = (event: any, selectedDate?: Date) => {
+    console.log('END DATE CHANGE - Event type:', event?.type, 'Selected date:', selectedDate);
+    
     if (Platform.OS === 'android') {
       setShowEndDatePicker(false);
     }
+    
     if (selectedDate) {
+      console.log('Setting END date to:', selectedDate.toLocaleDateString());
       setEndDate(selectedDate);
     }
   };
@@ -400,7 +408,7 @@ const handleConfirmDownload = async () => {
                 </TouchableOpacity>
               </View>
 
-              {showStartDatePicker && (
+              {showStartDatePicker && Platform.OS === 'ios' && (
                 <View style={styles.inlinePickerContainer}>
                   <View style={styles.pickerHeader}>
                     <Text style={styles.pickerTitle}>Select Start Date</Text>
@@ -414,7 +422,7 @@ const handleConfirmDownload = async () => {
                   <DateTimePicker
                     value={startDate || new Date()}
                     mode="date"
-                    display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                    display="compact"
                     onChange={handleStartDateChange}
                     maximumDate={new Date()}
                     style={styles.inlinePicker}
@@ -441,7 +449,7 @@ const handleConfirmDownload = async () => {
                 </TouchableOpacity>
               </View>
 
-              {showEndDatePicker && (
+              {showEndDatePicker && Platform.OS === 'ios' && (
                 <View style={styles.inlinePickerContainer}>
                   <View style={styles.pickerHeader}>
                     <Text style={styles.pickerTitle}>Select End Date</Text>
@@ -455,7 +463,7 @@ const handleConfirmDownload = async () => {
                   <DateTimePicker
                     value={endDate || new Date()}
                     mode="date"
-                    display={Platform.OS === 'ios' ? 'compact' : 'default'}
+                    display="compact"
                     onChange={handleEndDateChange}
                     minimumDate={startDate || undefined}
                     maximumDate={new Date()}

@@ -18,7 +18,7 @@ export const styles = StyleSheet.create({
   },
   listContainer: {
     padding: 16,
-    paddingTop: 46,
+    paddingTop: 0,
   },
   separator: {
     height: 16,

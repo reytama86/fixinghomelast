@@ -1,5 +1,5 @@
 import React, {useMemo} from 'react';
-import {View, Text, TouchableOpacity} from 'react-native';
+import {View, Text, TouchableOpacity, useWindowDimensions} from 'react-native';
 import {ArrowDown} from 'iconsax-react-native';
 import {Svg, Path} from 'react-native-svg';
 import {CornerCutComponent} from '@Atom/CornerCutCard';
@@ -10,6 +10,7 @@ interface PortableItemProps {
   item: PortableToolData;
   onPress: () => void;
 }
+
 
 const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
@@ -58,11 +59,14 @@ export const PortableItem: React.FC<PortableItemProps> = React.memo(
       [item.created_at],
     );
 
+  const {width} = useWindowDimensions();
+  const cardWidth = width - 32;
+
     return (
       <View style={styles.container}>
         <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
           <CornerCutComponent
-            width={370}
+            width={cardWidth}
             height={140}
             cutSize={40.5}
             backgroundColor="#ffffff"

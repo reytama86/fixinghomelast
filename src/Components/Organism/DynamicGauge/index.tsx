@@ -39,7 +39,6 @@ const THRESHOLDS: Record<'temperature' | 'humidity', ThresholdConfig> = {
   },
 };
 
-// Konfigurasi untuk perhitungan posisi dan rotasi yang lebih clean
 const GAUGE_CONFIG = {
   centerX: 63.75,
   centerY: 63.75,
@@ -48,7 +47,6 @@ const GAUGE_CONFIG = {
   endAngle: 0,
   indicatorWidth: 13,
   indicatorHeight: 14,
-  // Range mapping untuk extended scale (-15% to 115%)
   extendedMin: -15,
   extendedMax: 115,
 };
@@ -60,31 +58,20 @@ const DynamicGauge: React.FC<DynamicGaugeProps> = ({
   height = 106,
   style,
 }) => {
-  // Memoize threshold untuk performa
   const threshold = useMemo(() => THRESHOLDS[type], [type]);
 
-  /**
-   * Menghitung persentase posisi value dalam range extended (-15% sampai 115%)
-   * Temperature: 0°C = -15%, 26°C = 50%, 100°C = 115%
-   * Humidity: 0% = -15%, 75% = 50%, 100% = 115%
-   * Tapi setelah ideal max, balik ke kiri menuju merah!
-   */
   const calculatePercentage = useMemo(() => {
     const { extendedMin, extendedMax } = GAUGE_CONFIG;
     const midPoint = type === 'temperature' ? 26 : 75;
     const maxValue = 100;
     
-    // Clamp value ke range valid
     const clampedValue = Math.max(0, Math.min(maxValue, value));
     
     if (clampedValue <= midPoint) {
-      // Map 0-midPoint ke -15% sampai 50% (kiri ke tengah)
       return extendedMin + ((clampedValue / midPoint) * (50 - extendedMin));
     } else {
-      // Map midPoint-100 ke 50% sampai -15% (tengah balik ke kiri/merah)
-      // Semakin tinggi value, semakin ke kiri (ke merah)
       const progress = (clampedValue - midPoint) / (maxValue - midPoint);
-      return 50 - (progress * (50 - extendedMin)); // 50 -> -15
+      return 50 - (progress * (50 - extendedMin)); 
     }
   }, [value, type]);
 
@@ -122,9 +109,8 @@ const DynamicGauge: React.FC<DynamicGaugeProps> = ({
         [0, 10, 85, 10],
         [10, 20, 10, -20],
         [20, 24, -20, -35],
-        [24, 25.4, -35, -35], // ideal range
+        [24, 25.4, -35, -35], 
         [25.5, 25.9, -40,-35],
-        // Setelah 26, balik arah (rotasi ke kanan/positif)
         [26, 100, -40, 15],
         [100, 100, 15, 85],
       ];
@@ -135,8 +121,7 @@ const DynamicGauge: React.FC<DynamicGaugeProps> = ({
         [30, 35, 20, -15],
         [36, 40, 20, -15],
         [50, 60, -15, -5],
-        [60, 75, -5, -40], // ideal range
-        // Setelah 75, balik arah (rotasi ke kanan/positif)
+        [60, 75, -5, -40], 
         [76, 77, -30, -30],
         [78, 80, -30, 0],
         [81, 88, -15, 0],
@@ -154,7 +139,6 @@ const DynamicGauge: React.FC<DynamicGaugeProps> = ({
 
   return (
     <View style={[{ width, height, position: 'relative' }, style]}>
-      {/* Arc gauge dengan gradient */}
       <Svg
         width={width}
         height={height}
@@ -193,7 +177,6 @@ const DynamicGauge: React.FC<DynamicGaugeProps> = ({
         </G>
       </Svg>
 
-      {/* Pointer/Indicator */}
       <View
         style={{
           position: 'absolute',

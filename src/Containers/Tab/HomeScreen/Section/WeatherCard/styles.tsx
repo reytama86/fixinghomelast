@@ -1,5 +1,6 @@
 import {StyleSheet, Platform} from 'react-native';
 
+
 export const styles = StyleSheet.create({
   card: {
     width: '100%',
@@ -61,12 +62,11 @@ export const styles = StyleSheet.create({
   },
   cloud: {
     position: 'absolute',
-    flex: 1,
     height: 76.05,
     backgroundColor: 'transparent',
     marginBottom: 20,
     alignItems: 'center',
-    left: Platform.OS === 'android' ? 260 : 260,
+    justifyContent:"center",
   },
   gradientLine: {
     width: 319,

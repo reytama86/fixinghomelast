@@ -7,7 +7,10 @@ import {
   Text,
   RefreshControl,
   TouchableOpacity,
+  Platform,
+  StatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '@Constants/RouteParamsList.constants';
 import RouteName from '@Constants/RouteName.constants';
@@ -18,11 +21,12 @@ import { PortableItem } from './Section/PortableItem';
 import {styles} from './styles';
 import DownloadReportModal from '@Containers/Tab/ChartScreen/Section/DownloadReportModal';
 
-type Props = NativeStackScreenProps<RootStackParamList, typeof RouteName.PortableListScreenNavigation>; 
+type Props = NativeStackScreenProps<RootStackParamList, typeof RouteName.PortableListScreenNavigation>;
 
 const PortableListScreen: React.FC<Props> = ({navigation}) => {
   const {handleScroll, headMode: headerMode} = useHeaderMode();
   const [modalVisible, setModalVisible] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const {
     reversedData,
@@ -30,6 +34,10 @@ const PortableListScreen: React.FC<Props> = ({navigation}) => {
     fetchPortableData,
     handleItemPress,
   } = usePortableList(navigation);
+
+  const topInset = insets.top ?? (Platform.OS === 'android' ? StatusBar.currentHeight ?? 0 : 0);
+  const HEADER_EXTRA = 60; 
+  const listPaddingTop = topInset + HEADER_EXTRA;
 
   const renderItem = ({item}: any) => (
     <PortableItem item={item} onPress={() => handleItemPress(item)} />
@@ -62,7 +70,7 @@ const PortableListScreen: React.FC<Props> = ({navigation}) => {
           renderItem={renderItem}
           keyExtractor={item => item.id.toString()}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContainer}
+          contentContainerStyle={[styles.listContainer, { paddingTop: listPaddingTop }]}
           refreshControl={
             <RefreshControl
               refreshing={loading}
@@ -85,23 +93,24 @@ const PortableListScreen: React.FC<Props> = ({navigation}) => {
           scrollEventThrottle={16}
         />
       )}
-      <View style={styles.footerWrapper}>
-              <View style={styles.footerBox}>
-                <TouchableOpacity
-                  style={styles.downloadButton}
-                  onPress={handleDownload}
-                >
-                  <Text style={styles.downloadText}>Download Report</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            <DownloadReportModal
+
+      <View style={[styles.footerWrapper, { paddingBottom: insets.bottom ?? 0 }]}>
+        <View style={styles.footerBox}>
+          <TouchableOpacity
+            style={styles.downloadButton}
+            onPress={handleDownload}
+          >
+            <Text style={styles.downloadText}>Download Report</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <DownloadReportModal
         visible={modalVisible}
         onClose={handleCloseModal}
         onScreen='Portable'
       />
     </SafeAreaView>
-      
   );
 };
 

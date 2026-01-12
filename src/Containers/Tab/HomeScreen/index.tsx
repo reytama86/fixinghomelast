@@ -141,7 +141,7 @@ const HomeScreen: React.FC = ({}) => {
             onRefresh={fetchPortableData}
           />
 
-          <View style={{height: 20}} />
+          <View style={{height: 55}} />
         </ScrollView>
       </View>
 

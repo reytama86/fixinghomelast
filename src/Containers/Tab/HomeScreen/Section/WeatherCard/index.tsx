@@ -2,9 +2,10 @@ import React, {useEffect, useState, useMemo, useCallback} from 'react';
 import {View, Text, ImageBackground, Platform} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
-import { fetchCurrentWeather } from 'src/Hooks/weather';
-import { weatherImages } from '../../../../../Constants/WeatherIconList.constants';
+import {fetchCurrentWeather} from 'src/Hooks/weather';
+import {weatherImages} from '../../../../../Constants/WeatherIconList.constants';
 import {styles} from './styles';
+import {useWindowDimensions} from 'react-native';
 
 type SensorMedianData = {
   median: number;
@@ -71,12 +72,15 @@ const WeatherCard: React.FC<WeatherCardProps> = ({sensorData}) => {
 
     const timeKey = weather.is_day === 1 ? 'Day' : 'Night';
     const descKey = weather.description.toLowerCase();
-    const Icon = weatherImages[timeKey][descKey] || weatherImages[timeKey].other;
+    const Icon =
+      weatherImages[timeKey][descKey] || weatherImages[timeKey].other;
 
     return {Icon, timeKey, descKey};
   }, [weather]);
 
   const {Icon} = weatherInfo;
+
+  const {width} = useWindowDimensions();
 
   return (
     <ImageBackground
@@ -87,7 +91,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({sensorData}) => {
         <Ionicons name="location" size={20} color={'white'} />
         <Text style={styles.locationText}>Rembangan, Jember</Text>
       </View>
-      
+
       <View style={styles.weatherSectionTwo}>
         <Text style={styles.temperatureText}>
           {Math.round(Number(getSensorValue('Temperature')))}°
@@ -100,7 +104,13 @@ const WeatherCard: React.FC<WeatherCardProps> = ({sensorData}) => {
             Light: {Math.round(Number(getSensorValue('Light')))} Lux
           </Text>
         </View>
-        <View style={styles.cloud}>
+        <View
+          style={[
+            styles.cloud,
+            {
+              left: width - 125, 
+            },
+          ]}>
           {Icon ? <Icon width={80} height={80} /> : null}
         </View>
       </View>
@@ -111,7 +121,7 @@ const WeatherCard: React.FC<WeatherCardProps> = ({sensorData}) => {
         end={{x: 1, y: 0}}
         style={styles.gradientLine}
       />
-      
+
       <View style={styles.detailSectionThree}>
         <View style={{flex: 1}}>
           <Text style={styles.detailSectionThreeText}>Soil Temperature</Text>

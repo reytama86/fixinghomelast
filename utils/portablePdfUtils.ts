@@ -1,6 +1,6 @@
-import * as RNHTMLtoPDF from 'react-native-html-to-pdf';
+import RNPrint from 'react-native-print';
 import RNFS from 'react-native-fs';
-import { PermissionsAndroid, Platform, Alert } from 'react-native';
+import { Platform, Alert } from 'react-native';
 
 interface PortableEntry {
   id: number;
@@ -34,7 +34,6 @@ const SYMPTOM_LABELS: { [key: string]: string } = {
   rot_root: 'Kebusukan akar',
 };
 
-// Helper: Get sensor value
 const getSensorValue = (sensors: any[], type: string): number => {
   const sensor = sensors.find(
     s => s.keterangan_sensor.toLowerCase() === type.toLowerCase()
@@ -42,7 +41,6 @@ const getSensorValue = (sensors: any[], type: string): number => {
   return sensor ? Number(sensor.nilai_sensor) : 0;
 };
 
-// Helper: Format symptoms
 const formatSymptoms = (entry: PortableEntry): string => {
   const symptoms: string[] = [];
   if (entry.slow_growth) symptoms.push(SYMPTOM_LABELS.slow_growth);
@@ -54,7 +52,6 @@ const formatSymptoms = (entry: PortableEntry): string => {
   return symptoms.length > 0 ? symptoms.join(', ') : '-';
 };
 
-// Helper: Group data by block
 const groupByBlock = (data: PortableEntry[]): GroupedData => {
   return data.reduce((acc: GroupedData, entry) => {
     const block = entry.block_number;
@@ -78,7 +75,6 @@ const getFlowerScoreLabel = (score: number): string => {
   return labels[score] || '-';
 };
 
-// Generate HTML table for a block
 const generateBlockTable = (blockNumber: string, entries: PortableEntry[]): string => {
   const rows = entries.map((entry, index) => {
     const temp = getSensorValue(entry.sensors, 'temperature');
@@ -107,7 +103,7 @@ const generateBlockTable = (blockNumber: string, entries: PortableEntry[]): stri
         <td>${p.toFixed(0)}</td>
         <td>${k.toFixed(0)}</td>
         <td style="font-size: 9px;">${flowerLabel}</td>
-        <td style="${entry.is_healthy ? 'color: green;' : 'color: red;'}">${healthStatus}</td>
+        <td style="${entry.is_healthy ? 'color: green; font-weight: bold;' : 'color: red; font-weight: bold;'}">${healthStatus}</td>
         <td style="font-size: 9px;">${symptoms}</td>
       </tr>
     `;
@@ -120,11 +116,11 @@ const generateBlockTable = (blockNumber: string, entries: PortableEntry[]): stri
         <thead>
           <tr>
             <th>No</th>
-            <th>Block</th>
-            <th>Row</th>
-            <th>Sect.</th>
-            <th>Temp (°C)</th>
-            <th>Hum (%)</th>
+            <th>Blok</th>
+            <th>Baris</th>
+            <th>Gawang</th>
+            <th>Suhu Tanah(°C)</th>
+            <th>Kelembaban Tanah(%)</th>
             <th>pH</th>
             <th>EC</th>
             <th>N</th>
@@ -143,128 +139,120 @@ const generateBlockTable = (blockNumber: string, entries: PortableEntry[]): stri
   `;
 };
 
-// Generate chart data points for a block
-const generateChartData = (entries: PortableEntry[]): string => {
-  // Sort by date
+const generateBlockChartSVG = (blockNumber: string, entries: PortableEntry[]): string => {
   const sorted = [...entries].sort((a, b) => 
     new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
   );
+
+  if (sorted.length === 0) return '';
+
+  const width = 900;
+  const height = 400;
+  const padding = { top: 40, right: 180, bottom: 80, left: 60 };
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
 
   const labels = sorted.map(e => {
     const date = new Date(e.created_at);
     return `${date.getDate()}/${date.getMonth() + 1}`;
   });
 
-  const tempData = sorted.map(e => getSensorValue(e.sensors, 'temperature'));
-  const humData = sorted.map(e => getSensorValue(e.sensors, 'humidity'));
-  const phData = sorted.map(e => getSensorValue(e.sensors, 'ph') ); // Scale pH untuk visibility
-  const ecData = sorted.map(e => getSensorValue(e.sensors, 'ec') ); // Scale EC
-  const nData = sorted.map(e => getSensorValue(e.sensors, 'nitrogen') );
-  const pData = sorted.map(e => getSensorValue(e.sensors, 'phosphorus') );
-  const kData = sorted.map(e => getSensorValue(e.sensors, 'kalium') );
+  const datasets = [
+    { label: 'Temp (°C)', data: sorted.map(e => getSensorValue(e.sensors, 'temperature')), color: '#FF6384' },
+    { label: 'Hum (%)', data: sorted.map(e => getSensorValue(e.sensors, 'humidity')), color: '#36A2EB' },
+    { label: 'pH', data: sorted.map(e => getSensorValue(e.sensors, 'ph') * 10), color: '#FFCE56' },
+    { label: 'EC', data: sorted.map(e => getSensorValue(e.sensors, 'ec')), color: '#4BC0C0' },
+    { label: 'N', data: sorted.map(e => getSensorValue(e.sensors, 'nitrogen')), color: '#9966FF' },
+    { label: 'P', data: sorted.map(e => getSensorValue(e.sensors, 'phosphorus')), color: '#FF9F40' },
+    { label: 'K', data: sorted.map(e => getSensorValue(e.sensors, 'kalium')), color: '#F39C12' },
+  ];
 
-  return JSON.stringify({
-    labels,
-    datasets: [
-      { label: 'Temperature (°C)', data: tempData, color: '#FF6384' },
-      { label: 'Humidity (%)', data: humData, color: '#36A2EB' },
-      { label: 'pH', data: phData, color: '#FFCE56' },
-      { label: 'EC', data: ecData, color: '#4BC0C0' },
-      { label: 'Nitrogen', data: nData, color: '#8344AD' },
-      { label: 'Phosphorus', data: pData, color: '#2ECC71' },
-      { label: 'Kalium', data: kData, color: '#F39C12' },
-    ]
+  let maxValue = 0;
+  datasets.forEach(ds => {
+    const max = Math.max(...ds.data);
+    if (max > maxValue) maxValue = max;
   });
-};
-
-// Generate chart HTML with Canvas
-const generateBlockChart = (blockNumber: string, entries: PortableEntry[]): string => {
-  const chartData = generateChartData(entries);
   
+  const scale = maxValue > 0 ? chartHeight / maxValue : 1;
+  const xStep = chartWidth / Math.max(labels.length - 1, 1);
+
+  const gridLines = Array.from({ length: 11 }, (_, i) => {
+    const y = padding.top + chartHeight - (chartHeight / 10) * i;
+    const value = (i * 10).toFixed(0);
+    return `
+      <line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" stroke="#e0e0e0" stroke-width="1"/>
+      <text x="${padding.left - 10}" y="${y + 4}" text-anchor="end" font-size="11" fill="#333">${value}</text>
+    `;
+  }).join('');
+
+  const xLabels = labels.map((label, i) => {
+    const x = padding.left + xStep * i;
+    const y = height - padding.bottom + 20;
+    return `
+      <text x="${x}" y="${y}" text-anchor="middle" font-size="10" fill="#333" transform="rotate(-30 ${x} ${y})">${label}</text>
+    `;
+  }).join('');
+
+  const lines = datasets.map((dataset) => {
+    const points = dataset.data.map((value, i) => {
+      const x = padding.left + xStep * i;
+      const y = padding.top + chartHeight - (value * scale);
+      return `${x},${y}`;
+    }).join(' ');
+
+    const circles = dataset.data.map((value, i) => {
+      const x = padding.left + xStep * i;
+      const y = padding.top + chartHeight - (value * scale);
+      return `<circle cx="${x}" cy="${y}" r="3" fill="${dataset.color}"/>`;
+    }).join('');
+
+    return `
+      <polyline points="${points}" fill="none" stroke="${dataset.color}" stroke-width="2.5"/>
+      ${circles}
+    `;
+  }).join('');
+
+  const legend = datasets.map((dataset, i) => {
+    const y = 60 + i * 25;
+    return `
+      <rect x="${width - padding.right + 20}" y="${y}" width="18" height="18" fill="${dataset.color}" stroke="#666" stroke-width="1"/>
+      <text x="${width - padding.right + 45}" y="${y + 13}" font-size="12" fill="#333" font-weight="bold">${dataset.label}</text>
+    `;
+  }).join('');
+
   return `
     <div class="chart-section">
       <h3>Sensor Values Over Time - Block ${blockNumber}</h3>
-      <canvas id="chart-${blockNumber}" width="700" height="300"></canvas>
-      <script>
-        (function() {
-          const data = ${chartData};
-          const canvas = document.getElementById('chart-${blockNumber}');
-          const ctx = canvas.getContext('2d');
-          
-          const padding = 50;
-          const chartWidth = canvas.width - padding * 2;
-          const chartHeight = canvas.height - padding * 2;
-          
-          // Draw axes
-          ctx.strokeStyle = '#000';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(padding, padding);
-          ctx.lineTo(padding, canvas.height - padding);
-          ctx.lineTo(canvas.width - padding, canvas.height - padding);
-          ctx.stroke();
-          
-          // Draw Y axis labels (0-100)
-          ctx.font = '10px Arial';
-          ctx.fillStyle = '#000';
-          for (let i = 0; i <= 10; i++) {
-            const y = canvas.height - padding - (chartHeight / 10) * i;
-            const label = (i * 10).toString();
-            ctx.fillText(label, padding - 30, y + 3);
-            
-            // Grid line
-            ctx.strokeStyle = '#e0e0e0';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(padding, y);
-            ctx.lineTo(canvas.width - padding, y);
-            ctx.stroke();
-          }
-          
-          // Draw X axis labels (dates)
-          const xStep = chartWidth / (data.labels.length - 1);
-          data.labels.forEach((label, i) => {
-            const x = padding + xStep * i;
-            ctx.save();
-            ctx.translate(x, canvas.height - padding + 15);
-            ctx.rotate(-Math.PI / 4);
-            ctx.fillText(label, 0, 0);
-            ctx.restore();
-          });
-          
-          // Draw lines for each sensor
-          data.datasets.forEach((dataset, dsIndex) => {
-            ctx.strokeStyle = dataset.color;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            
-            dataset.data.forEach((value, i) => {
-              const x = padding + xStep * i;
-              const y = canvas.height - padding - (value / 100) * chartHeight;
-              
-              if (i === 0) {
-                ctx.moveTo(x, y);
-              } else {
-                ctx.lineTo(x, y);
-              }
-            });
-            ctx.stroke();
-            
-            // Draw legend
-            const legendY = 20 + dsIndex * 20;
-            ctx.fillStyle = dataset.color;
-            ctx.fillRect(canvas.width - 150, legendY, 15, 15);
-            ctx.fillStyle = '#000';
-            ctx.font = '11px Arial';
-            ctx.fillText(dataset.label, canvas.width - 130, legendY + 12);
-          });
-        })();
-      </script>
+      <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        <!-- Background -->
+        <rect width="${width}" height="${height}" fill="white"/>
+        
+        <!-- Grid lines and Y labels -->
+        ${gridLines}
+        
+        <!-- Axes -->
+        <line x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${height - padding.bottom}" stroke="#333" stroke-width="2"/>
+        <line x1="${padding.left}" y1="${height - padding.bottom}" x2="${width - padding.right}" y2="${height - padding.bottom}" stroke="#333" stroke-width="2"/>
+        
+        <!-- X labels -->
+        ${xLabels}
+        
+        <!-- Lines and points -->
+        ${lines}
+        
+        <!-- Legend box -->
+        <rect x="${width - padding.right + 10}" y="50" width="160" height="${datasets.length * 25 + 20}" fill="white" stroke="#ddd" stroke-width="1" opacity="0.95"/>
+        ${legend}
+        
+        <!-- Axis labels -->
+        <text x="${padding.left - 40}" y="${height / 2}" text-anchor="middle" font-size="13" fill="#333" font-weight="bold" transform="rotate(-90 ${padding.left - 40} ${height / 2})">Value</text>
+        <text x="${width / 2}" y="${height - 10}" text-anchor="middle" font-size="13" fill="#333" font-weight="bold">Date</text>
+        <text x="${width / 2}" y="25" text-anchor="middle" font-size="15" fill="#333" font-weight="bold">Sensor Trends</text>
+      </svg>
     </div>
   `;
 };
 
-// Generate complete HTML for PDF
 const generatePortableReportHTML = (
   data: PortableEntry[],
   startDate: string,
@@ -273,13 +261,13 @@ const generatePortableReportHTML = (
 ): string => {
   const groupedData = selectedBlock === 'All Block (1-9)' 
     ? groupByBlock(data) 
-    : { [selectedBlock.split(' ')[1]]: data };
+    : { [selectedBlock.split(' ')[1] || selectedBlock]: data };
 
   const blockSections = Object.entries(groupedData)
     .map(([blockNumber, entries]) => {
       return `
         ${generateBlockTable(blockNumber, entries)}
-        ${generateBlockChart(blockNumber, entries)}
+        ${generateBlockChartSVG(blockNumber, entries)}
         <div class="page-break"></div>
       `;
     })
@@ -290,53 +278,73 @@ const generatePortableReportHTML = (
     <html>
     <head>
       <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <style>
+        @page {
+          size: A4 landscape;
+          margin: 15mm;
+        }
+        
         body {
-          font-family: Arial, sans-serif;
-          padding: 20px;
+          font-family: 'Arial', sans-serif;
+          padding: 10px;
           font-size: 10px;
+          background: white;
+          color: #333;
         }
         
         .header {
           text-align: center;
-          margin-bottom: 30px;
-          border-bottom: 2px solid #B4DC45;
-          padding-bottom: 10px;
+          margin-bottom: 25px;
+          border-bottom: 3px solid #B4DC45;
+          padding-bottom: 15px;
         }
         
         .header h1 {
           color: #B4DC45;
-          margin: 0;
-          font-size: 24px;
+          margin: 0 0 10px 0;
+          font-size: 28px;
+          font-weight: bold;
+          text-transform: uppercase;
+          letter-spacing: 1px;
         }
         
         .header p {
           margin: 5px 0;
           font-size: 12px;
+          color: #555;
+        }
+        
+        .header p strong {
+          color: #333;
+          font-weight: bold;
         }
         
         .block-section {
-          margin-bottom: 20px;
+          margin-bottom: 30px;
+          page-break-inside: avoid;
         }
         
         .block-section h2 {
-          color: #333;
-          font-size: 16px;
-          margin-bottom: 10px;
-          border-bottom: 1px solid #ddd;
-          padding-bottom: 5px;
+          color: #B4DC45;
+          font-size: 18px;
+          margin-bottom: 15px;
+          border-bottom: 2px solid #B4DC45;
+          padding-bottom: 8px;
+          font-weight: bold;
         }
         
         table {
           width: 100%;
           border-collapse: collapse;
-          margin-bottom: 20px;
+          margin-bottom: 25px;
           font-size: 9px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         th, td {
           border: 1px solid #ddd;
-          padding: 6px;
+          padding: 8px 6px;
           text-align: center;
         }
         
@@ -344,26 +352,41 @@ const generatePortableReportHTML = (
           background-color: #B4DC45;
           color: white;
           font-weight: bold;
+          font-size: 10px;
+          text-transform: uppercase;
         }
         
         tr:nth-child(even) {
           background-color: #f9f9f9;
         }
         
+        tr:hover {
+          background-color: #f0f0f0;
+        }
+        
         .chart-section {
-          margin: 20px 0;
+          margin: 25px 0;
           page-break-inside: avoid;
+          background: white;
+          padding: 15px;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          text-align: center;
         }
         
         .chart-section h3 {
-          font-size: 14px;
+          font-size: 16px;
           color: #333;
-          margin-bottom: 10px;
+          margin-bottom: 15px;
+          font-weight: bold;
         }
         
-        canvas {
+        svg {
+          display: block;
+          margin: 0 auto;
           border: 1px solid #ddd;
           background: white;
+          border-radius: 4px;
         }
         
         .page-break {
@@ -371,18 +394,26 @@ const generatePortableReportHTML = (
         }
         
         @media print {
+          body {
+            padding: 0;
+          }
+          
           .page-break {
             page-break-after: always;
+          }
+          
+          .block-section, .chart-section {
+            page-break-inside: avoid;
           }
         }
       </style>
     </head>
     <body>
       <div class="header">
-        <h1>Portable Tools Report</h1>
-        <p>Period: ${startDate} to ${endDate}</p>
-        <p>Total Entries: ${data.length}</p>
-        <p>Block: ${selectedBlock}</p>
+        <h1>🌱 Portable Tools Report</h1>
+        <p><strong>Period:</strong> ${startDate} to ${endDate}</p>
+        <p><strong>Total Entries:</strong> ${data.length} | <strong>Block:</strong> ${selectedBlock}</p>
+        <p><strong>Generated:</strong> ${new Date().toLocaleString('id-ID')}</p>
       </div>
       
       ${blockSections}
@@ -391,7 +422,6 @@ const generatePortableReportHTML = (
   `;
 };
 
-// Main function to generate and save PDF
 export const generatePortablePDF = async (
   data: PortableEntry[],
   startDate: string,
@@ -399,38 +429,25 @@ export const generatePortablePDF = async (
   selectedBlock: string
 ): Promise<string | null> => {
   try {
-    // Request permissions for Android
-    if (Platform.OS === 'android') {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
-      );
-      if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-        Alert.alert('Permission Denied', 'Storage permission is required');
-        return null;
-      }
-    }
+    console.log('Starting PDF generation with react-native-print...');
 
     const html = generatePortableReportHTML(data, startDate, endDate, selectedBlock);
-    
     const filename = `Portable_Report_${selectedBlock.replace(/\s+/g, '_')}_${startDate}_${endDate}.pdf`;
     
-    const options = {
-      html,
+    const { filePath } = await RNPrint.print({
+      html: html,
       fileName: filename,
-      directory: Platform.OS === 'ios' ? 'Documents' : 'Downloads',
-      base64: false,
-    };
+    });
 
-    const file = await RNHTMLtoPDF.convert(options);
+    console.log('PDF generated successfully:', filePath);
     
-    return file.filePath || null;
+    return filePath || null;
   } catch (error) {
     console.error('PDF generation error:', error);
     throw error;
   }
 };
 
-// Fetch portable data for report
 export const fetchPortableReportData = async (
   startDate: string,
   endDate: string,
@@ -445,10 +462,15 @@ export const fetchPortableReportData = async (
       url += `&blockNumber=${blockNum}`;
     }
 
+    console.log('Fetching portable data from:', url);
     const response = await fetch(url);
-    if (!response.ok) throw new Error('Failed to fetch data');
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch data: ${response.status}`);
+    }
     
     const result = await response.json();
+    console.log('Fetched data:', result.data?.length || 0, 'entries');
     return result.data || [];
   } catch (error) {
     console.error('Fetch error:', error);

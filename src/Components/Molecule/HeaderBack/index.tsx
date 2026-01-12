@@ -365,7 +365,7 @@ const HeaderBack: React.FC<HeaderBackProps> = ({
       style={[
         styles.container,
         {
-          paddingTop: totalPadingTop - 10,
+          paddingTop: totalPadingTop,
         },
       ]}>
       {back && (

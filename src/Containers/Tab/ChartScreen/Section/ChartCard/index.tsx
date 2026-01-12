@@ -168,7 +168,13 @@ export const ChartCard: React.FC<ChartCardProps> = ({
         <View style={styles.selectorWrapper}>
           {blokList.length > 0 ? (
             <SegmentedControl
-              values={blokList.map(b => b.nama_blok)}
+              values={[...blokList]
+                .sort((a, b) => {
+                  const numA = parseInt(a.nama_blok.replace(/\D/g, ''), 10);
+                  const numB = parseInt(b.nama_blok.replace(/\D/g, ''), 10);
+                  return numA - numB;
+                })
+                .map(b => b.nama_blok)}
               selectedIndex={selectedBlokIndex}
               onChange={e =>
                 setSelectedBlokIndex(e.nativeEvent.selectedSegmentIndex)
@@ -278,7 +284,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 <View
                   style={[
                     styles.tooltip,
-                    isAboveThreshold && {marginTop: 100}, 
+                    isAboveThreshold && {marginTop: 100},
                   ]}>
                   {isAboveThreshold && <View style={styles.tooltipArrowUp} />}
                   {!isAboveThreshold && (

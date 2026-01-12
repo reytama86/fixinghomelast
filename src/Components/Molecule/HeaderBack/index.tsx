@@ -159,7 +159,7 @@ const HeaderBack: React.FC<HeaderBackProps> = ({
     }, [mode]);
 
     const derivedColor = useDerivedValue(() => {
-      return withTiming(mode === 'top' ? 0 : 1, {duration: 50});
+      return withTiming(mode === 'top' ? 0 : 1, {duration: 10});
     });
 
     const animatedBackground = useAnimatedStyle(() => {
@@ -365,7 +365,7 @@ const HeaderBack: React.FC<HeaderBackProps> = ({
       style={[
         styles.container,
         {
-          paddingTop: totalPadingTop + 5,
+          paddingTop: totalPadingTop - 10,
         },
       ]}>
       {back && (

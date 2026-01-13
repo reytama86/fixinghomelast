@@ -14,13 +14,15 @@ const BLOCK_CONFIGS: Record<3 | 4, BlockConfig> = {
   4: {
     blockNumber: 1,
     blockTitle: 'Block 4',
-    apiEndpoint: 'https://iot-vanili-api.permataindonesia.com/api/latest-sensor-block1',
+    apiEndpoint:
+      'https://iot-vanili-api.permataindonesia.com/api/latest-sensor-block1',
     devices: [1, 2, 3],
   },
   3: {
     blockNumber: 2,
     blockTitle: 'Block 3',
-    apiEndpoint: 'https://iot-vanili-api.permataindonesia.com/api/latest-sensor-block2',
+    apiEndpoint:
+      'https://iot-vanili-api.permataindonesia.com/api/latest-sensor-block2',
     devices: [1, 2, 3],
   },
 };
@@ -35,17 +37,17 @@ export const useDetailBlock = (blockIdParam?: number) => {
   const [loading, setLoading] = useState(true);
   const [showDurationModal, setShowDurationModal] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  
+
   const [currentProcess, setCurrentProcess] = useState<{
     type: 'water' | 'fertilizer';
     target: 'main' | 'row1' | 'row2';
   } | null>(null);
-  
+
   const [confirmProcess, setConfirmProcess] = useState<{
     type: 'water' | 'fertilizer';
     target: 'main' | 'row1' | 'row2';
   } | null>(null);
-  
+
   const [inputMinutes, setInputMinutes] = useState('1');
   const [inputSeconds, setInputSeconds] = useState('0');
 
@@ -92,42 +94,58 @@ export const useDetailBlock = (blockIdParam?: number) => {
   }, [config.apiEndpoint]);
 
   const refreshData = useCallback(async () => {
-  try {
-    const response = await fetch(config.apiEndpoint);
-    const data = await response.json();
-    setSensorData(data);
-  } catch (error) {
-    console.error('Error refreshing data:', error);
-  }
-}, [blockId]);
+    try {
+      const response = await fetch(config.apiEndpoint);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        setSensorData(result.data);
+      }
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    }
+  }, [config.apiEndpoint]);
 
   useFocusEffect(
     useCallback(() => {
       setActivePage(blockId === 4 ? 'block1' : 'block2');
       fetchSensorData();
-    }, [blockId, fetchSensorData, setActivePage])
+    }, [blockId, fetchSensorData, setActivePage]),
   );
 
-  const getControl = useCallback((type: 'water' | 'fertilizer', target: 'main' | 'row1' | 'row2') => {
-    if (target === 'main') {
-      return blockControls.main;
-    }
-    
-    if (blockId === 4) {
-      if (type === 'water') {
-        return target === 'row1' ? blockControls.row1Water : blockControls.row2Water;
-      } else {
-        return target === 'row1' ? blockControls.row1Fertilizer : blockControls.row2Fertilizer;
+  const getControl = useCallback(
+    (type: 'water' | 'fertilizer', target: 'main' | 'row1' | 'row2') => {
+      if (target === 'main') {
+        return blockControls.main;
       }
-    }
-    
-    return blockControls.main;
-  }, [blockId, blockControls]);
+
+      if (blockId === 4) {
+        if (type === 'water') {
+          return target === 'row1'
+            ? blockControls.row1Water
+            : blockControls.row2Water;
+        } else {
+          return target === 'row1'
+            ? blockControls.row1Fertilizer
+            : blockControls.row2Fertilizer;
+        }
+      }
+
+      return blockControls.main;
+    },
+    [blockId, blockControls],
+  );
 
   const handleToggle = useCallback(
     (type: 'water' | 'fertilizer', target: 'main' | 'row1' | 'row2') => {
       const control = getControl(type, target);
-      const isCurrentlyActive = type === 'water' ? control.isWaterOn : control.isFertilizerOn;
+      const isCurrentlyActive =
+        type === 'water' ? control.isWaterOn : control.isFertilizerOn;
 
       if (isCurrentlyActive) {
         setConfirmProcess({type, target});
@@ -137,7 +155,7 @@ export const useDetailBlock = (blockIdParam?: number) => {
         setShowDurationModal(true);
       }
     },
-    [getControl]
+    [getControl],
   );
 
   const handleMinutesChange = useCallback((text: string) => {
@@ -169,7 +187,7 @@ export const useDetailBlock = (blockIdParam?: number) => {
       setInputSeconds('0');
       setCurrentProcess(null);
     },
-    [currentProcess, getControl]
+    [currentProcess, getControl],
   );
 
   const handleConfirmStop = useCallback(() => {

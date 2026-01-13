@@ -40,17 +40,17 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({deviceNumber, sensorData}
 
   const latestTimestamp = useMemo(() => getLatestTimestamp(), [getLatestTimestamp]);
 
-  if (!deviceData) return null;
-
   const hasGauge = deviceNumber === 2;
   const temperature = useMemo(
-    () => getSensorValue(deviceData, 'Temperature'),
+    () => getSensorValue(deviceData || [], 'Temperature'), 
     [getSensorValue, deviceData],
   );
   const humidity = useMemo(
-    () => getSensorValue(deviceData, 'Humidity'),
+    () => getSensorValue(deviceData || [], 'Humidity'), 
     [getSensorValue, deviceData],
   );
+
+  if (!deviceData) return null;
 
   return (
     <View style={hasGauge ? styles.cardThree : styles.cardTwo}>

@@ -65,7 +65,7 @@ export const useNotificationHandler = () => {
           android: {
             channelId: 'sensor_alerts',
             importance: AndroidImportance.HIGH,
-            smallIcon: 'ic_notification',
+            smallIcon: 'ic_launcher',
             color: '#B4DC45',
             vibrationPattern: [300, 500, 300, 500],
             pressAction: {

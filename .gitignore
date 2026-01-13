@@ -76,3 +76,5 @@ yarn-error.log
 
 android/app/vanomia-1d2cf-firebase-adminsdk-fbsvc-9d33ba697e.json
 android/app/google-services.json
+android/app/vanomia-1d2cf-firebase-adminsdk-fbsvc-9d33ba697e.json
+**/*firebase-adminsdk*.json

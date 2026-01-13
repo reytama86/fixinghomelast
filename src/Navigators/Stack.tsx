@@ -1,9 +1,7 @@
 import RouteName from '@Constants/RouteName.constants';
 import { RootStackParamList } from '@Constants/RouteParamsList.constants';
 import SplashScreen from '@Containers/SplashScreen';
-// import Intro from '@Containers/SplashScreen/Intro';
 import Login from '@Containers/Auth/Login';
-// import NotificationHandler from '@Hooks/useNavigationOneSignal';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import React, { useContext } from 'react';
@@ -11,11 +9,18 @@ import { Platform, StatusBar, View, ActivityIndicator } from 'react-native';
 import TabNavigator from './Tab';
 import { AuthorizedScreens } from './Config';
 import { AuthContext } from '@Context/AuthContext';
+import { useNotificationHandler } from '../../utils/NotificationHandler' // ✅ Adjust path
 
 const Stack = createStackNavigator<RootStackParamList>();
 
+// ✅ Component wrapper untuk notification handler
+const NotificationHandlerComponent = () => {
+  useNotificationHandler();
+  return null;
+};
+
 export default function StackNavigator() {
-  const { userToken, isLoading } = useContext(AuthContext);
+  const { userToken, isLoading, user } = useContext(AuthContext);
 
   if (isLoading) {
     return (
@@ -27,12 +32,14 @@ export default function StackNavigator() {
 
   return (
     <NavigationContainer>
+      {/* ✅ Setup notification handler hanya untuk developer */}
+      {user?.role === 'developer' && <NotificationHandlerComponent />}
+      
       <StatusBar
         barStyle={'dark-content'}
         translucent
         backgroundColor={'transparent'}
       />
-      {/* <NotificationHandler /> */}
       
       <Stack.Navigator
         screenOptions={{
@@ -40,12 +47,6 @@ export default function StackNavigator() {
           animation: Platform.OS === 'android' ? 'fade' : 'default',
         }}
       >
-        {/* Splash Screen
-        <Stack.Screen
-          name={RouteName.SplashScreenNavigation}
-          component={SplashScreen}
-        /> */}
-
         {!userToken ? (
           <Stack.Group>
             <Stack.Screen
@@ -80,7 +81,6 @@ export default function StackNavigator() {
                 }),
               }}
             />
-
             <Stack.Group
               screenOptions={{
                 presentation: 'card',
@@ -95,11 +95,6 @@ export default function StackNavigator() {
                   options={screen.options}
                 />
               ))}
-              {/* <Stack.Screen
-                name="ReadSoil"
-                component={PortableSensorScreen}
-                options={{headerShown: false}}
-              /> */}
             </Stack.Group>
           </>
         )}

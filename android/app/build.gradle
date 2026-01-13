@@ -116,6 +116,7 @@ android {
 }
 
 // apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
+apply plugin: 'com.google.gms.google-services'
 
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
@@ -127,5 +128,7 @@ dependencies {
         implementation jscFlavor
     }
 
-    implementation project(':react-native-html-to-pdf')
+    implementation platform('com.google.firebase:firebase-bom:32.7.0')
+    implementation 'com.google.firebase:firebase-analytics'
+
 }

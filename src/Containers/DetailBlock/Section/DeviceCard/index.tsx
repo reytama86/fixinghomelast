@@ -3,6 +3,7 @@ import {View, Text} from 'react-native';
 import {SensorItem} from '../SensorItem';
 import DynamicGauge from '@Organism/DynamicGauge';
 import {styles} from './styles';
+import moment from 'moment';
 
 interface DeviceCardProps {
   deviceNumber: number;
@@ -21,6 +22,22 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({deviceNumber, sensorData}
   const sensorKey = `sensor_${deviceNumber}`;
   const deviceData = sensorData?.[sensorKey];
 
+  const getLatestTimestamp = () => {
+    const timestamps = deviceData
+    .map(sensor => sensor.created_at)
+    .filter(timestamp => timestamp !== null);
+
+    if (timestamps.length === 0) return null;
+
+    const latestTimestamp = timestamps.reduce((latest, current) => {
+      return moment(current).isAfter(moment(latest)) ? current : latest;
+    })
+
+    return latestTimestamp
+  }
+
+  const latestTimestamp = getLatestTimestamp();
+
   if (!deviceData) return null;
 
   const hasGauge = deviceNumber === 2;
@@ -36,6 +53,15 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({deviceNumber, sensorData}
   return (
     <View style={hasGauge ? styles.cardThree : styles.cardTwo}>
       <Text style={styles.soilTitle}>Statistic Device {deviceNumber}</Text>
+
+      <View style={styles.timestampContainer}>
+        <Text style={styles.timestampLabel}>
+          Last updated at: {``}
+        </Text>
+        <Text style={styles.timestampValue}>
+          {moment(latestTimestamp).format('DD MMMM YYYY, HH:mm')}
+        </Text>
+      </View>
 
       {hasGauge && (
         <View style={styles.containerTransmisi}>

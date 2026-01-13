@@ -3,7 +3,7 @@ import {StyleSheet} from 'react-native';
 export const styles = StyleSheet.create({
   cardTwo: {
     width: '100%',
-    height: 310,
+    height: 340,
     borderRadius: 16,
     overflow: 'hidden',
     padding: 11,
@@ -16,7 +16,7 @@ export const styles = StyleSheet.create({
   },
   cardThree: {
     width: '100%',
-    height: 470,
+    height: 500,
     borderRadius: 16,
     overflow: 'hidden',
     padding: 11,
@@ -112,5 +112,21 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '400',
     fontFamily: 'SpaceGrotesk-Regular',
+  },
+  timestampContainer: {
+    flexDirection:"row",
+    marginTop: 4,
+    marginBottom: 4,
+    paddingVertical: 4
+  },
+  timestampLabel: {
+    fontFamily:"SpaceGrotesk-Regular",
+    fontSize: 11,
+    color: '#6B7280'
+  },
+  timestampValue: {
+    fontFamily: "SpaceGrotesk-Regular",
+    fontSize: 11,
+    color: "#B4DC45"
   },
 });

@@ -13,7 +13,6 @@ import notifee, { AndroidImportance, EventType } from '@notifee/react-native';
 
 Ionicons.loadFont();
 
-// ✅ CREATE CHANNEL FUNCTION (digunakan di banyak tempat)
 const createNotificationChannel = async () => {
   try {
     await notifee.createChannel({
@@ -31,10 +30,8 @@ const createNotificationChannel = async () => {
   }
 };
 
-// ✅ DISPLAY NOTIFICATION FUNCTION (reusable)
 const displayNotification = async (remoteMessage) => {
   try {
-    // Ensure channel exists first
     await createNotificationChannel();
 
     await notifee.displayNotification({
@@ -43,7 +40,7 @@ const displayNotification = async (remoteMessage) => {
       android: {
         channelId: 'sensor_alerts',
         importance: AndroidImportance.HIGH,
-        smallIcon: 'ic_launcher', // ← Gunakan icon app default
+        smallIcon: 'ic_launcher',
         color: '#B4DC45',
         vibrationPattern: [300, 500, 300, 500],
         sound: 'default',
@@ -60,8 +57,6 @@ const displayNotification = async (remoteMessage) => {
   }
 };
 
-// ✅ BACKGROUND MESSAGE HANDLER (MUST BE TOP-LEVEL)
-// This runs even when app is completely killed
 messaging().setBackgroundMessageHandler(async remoteMessage => {
   console.log('📬 Background notification received (app killed):', remoteMessage);
   
@@ -70,17 +65,14 @@ messaging().setBackgroundMessageHandler(async remoteMessage => {
   return Promise.resolve();
 });
 
-// ✅ BACKGROUND EVENT HANDLER (untuk notifee)
 notifee.onBackgroundEvent(async ({ type, detail }) => {
   console.log('🔔 Background event:', type);
   
   if (type === EventType.PRESS) {
     console.log('👆 User pressed notification (background):', detail.notification?.data);
-    // Navigation akan di-handle oleh useNotificationHandler
   }
 });
 
-// ✅ Create channel immediately on app load
 createNotificationChannel();
 
 const Root = () => (

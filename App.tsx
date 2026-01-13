@@ -10,7 +10,6 @@ import { Platform } from 'react-native';
 
 function App(): React.JSX.Element {
   useEffect(() => {
-    // ✅ Create notification channel saat app pertama kali dibuka
     const createNotificationChannel = async () => {
       if (Platform.OS === 'android') {
         try {

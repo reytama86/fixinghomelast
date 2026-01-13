@@ -22,21 +22,23 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({deviceNumber, sensorData}
   const sensorKey = `sensor_${deviceNumber}`;
   const deviceData = sensorData?.[sensorKey];
 
-  const getLatestTimestamp = () => {
+  const getLatestTimestamp = useCallback(() => {
+    if (!deviceData || deviceData.length === 0) return null;
+
     const timestamps = deviceData
-    .map(sensor => sensor.created_at)
-    .filter(timestamp => timestamp !== null);
+      .map(sensor => sensor.created_at)
+      .filter(timestamp => timestamp !== null && timestamp !== undefined);
 
     if (timestamps.length === 0) return null;
 
     const latestTimestamp = timestamps.reduce((latest, current) => {
       return moment(current).isAfter(moment(latest)) ? current : latest;
-    })
+    });
 
-    return latestTimestamp
-  }
+    return latestTimestamp;
+  }, [deviceData]);
 
-  const latestTimestamp = getLatestTimestamp();
+  const latestTimestamp = useMemo(() => getLatestTimestamp(), [getLatestTimestamp]);
 
   if (!deviceData) return null;
 
@@ -55,11 +57,11 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({deviceNumber, sensorData}
       <Text style={styles.soilTitle}>Statistic Device {deviceNumber}</Text>
 
       <View style={styles.timestampContainer}>
-        <Text style={styles.timestampLabel}>
-          Last updated at: {``}
-        </Text>
+        <Text style={styles.timestampLabel}>Last updated at: </Text>
         <Text style={styles.timestampValue}>
-          {moment(latestTimestamp).format('DD MMMM YYYY, HH:mm')}
+          {latestTimestamp 
+            ? moment(latestTimestamp).format('DD MMMM YYYY, HH:mm')
+            : 'No data'}
         </Text>
       </View>
 

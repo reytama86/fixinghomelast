@@ -9,11 +9,10 @@ import { Platform, StatusBar, View, ActivityIndicator } from 'react-native';
 import TabNavigator from './Tab';
 import { AuthorizedScreens } from './Config';
 import { AuthContext } from '@Context/AuthContext';
-import { useNotificationHandler } from '../../utils/NotificationHandler' // ✅ Adjust path
+import { useNotificationHandler } from '../../utils/NotificationHandler';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
-// ✅ Component wrapper untuk notification handler
 const NotificationHandlerComponent = () => {
   useNotificationHandler();
   return null;
@@ -32,7 +31,6 @@ export default function StackNavigator() {
 
   return (
     <NavigationContainer>
-      {/* ✅ Setup notification handler hanya untuk developer */}
       {user?.role === 'developer' && <NotificationHandlerComponent />}
       
       <StatusBar

@@ -5,6 +5,7 @@ import {
   SafeAreaView,
   ScrollView,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import {useDetailBlock} from './useDetailBlock';
 import {ExpandableBlock} from './Section/ExpandableBlock';
@@ -42,9 +43,17 @@ const DetailBlock: React.FC = () => {
     setShowConfirm,
     handleMinutesChange,
     handleSecondsChange,
+    refreshData, // Tambahkan ini di hook useDetailBlock
   } = useDetailBlock(blockId);
 
   const {handleScroll, headMode: headerMode} = useHeaderMode();
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await refreshData(); // Function ini harus ada di useDetailBlock
+    setRefreshing(false);
+  }, [refreshData]);
 
   if (loading && !sensorData) {
     return (
@@ -104,7 +113,16 @@ const DetailBlock: React.FC = () => {
           showsVerticalScrollIndicator={false}
           bounces={true}
           onScroll={handleScroll}
-          scrollEventThrottle={16}>
+          scrollEventThrottle={16}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={['#B4DC45']}
+              tintColor="#B4DC45"
+              progressViewOffset={HEADER_HEIGHT + insets.top}
+            />
+          }>
           <View style={{height: 30}} />
 
           {expandableBlocks.map((block, index) => (

@@ -91,6 +91,16 @@ export const useDetailBlock = (blockIdParam?: number) => {
     }
   }, [config.apiEndpoint]);
 
+  const refreshData = useCallback(async () => {
+  try {
+    const response = await fetch(config.apiEndpoint);
+    const data = await response.json();
+    setSensorData(data);
+  } catch (error) {
+    console.error('Error refreshing data:', error);
+  }
+}, [blockId]);
+
   useFocusEffect(
     useCallback(() => {
       setActivePage(blockId === 4 ? 'block1' : 'block2');
@@ -180,6 +190,8 @@ export const useDetailBlock = (blockIdParam?: number) => {
 
     sensorData,
     loading,
+
+    refreshData,
 
     showDurationModal,
     showConfirm,

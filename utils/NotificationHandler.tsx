@@ -10,7 +10,6 @@ export const useNotificationHandler = () => {
   useEffect(() => {
     console.log('🔔 Setting up notification handlers...');
 
-    // ✅ Request notification permission
     const requestPermission = async () => {
       try {
         const authStatus = await messaging().requestPermission();
@@ -35,7 +34,6 @@ export const useNotificationHandler = () => {
 
     requestPermission();
 
-    // ✅ Ensure notification channel exists
     const ensureChannel = async () => {
       if (Platform.OS === 'android') {
         try {
@@ -57,12 +55,10 @@ export const useNotificationHandler = () => {
 
     ensureChannel();
 
-    // ✅ 1. Handle FOREGROUND notifications (app dibuka/aktif)
     const unsubscribeForeground = messaging().onMessage(async remoteMessage => {
       console.log('📱 FOREGROUND notification received:', remoteMessage);
 
       try {
-        // Tampilkan notifikasi lokal menggunakan notifee
         const notificationId = await notifee.displayNotification({
           title: remoteMessage.notification?.title || '⚠️ Sensor Alert',
           body: remoteMessage.notification?.body || 'Ada update dari sensor',
@@ -85,7 +81,6 @@ export const useNotificationHandler = () => {
       }
     });
 
-    // ✅ 2. Handle notification tap dari BACKGROUND (app di background, not closed)
     const unsubscribeNotificationOpen = messaging().onNotificationOpenedApp(
       remoteMessage => {
         console.log('🔔 BACKGROUND: Notification opened app:', remoteMessage);
@@ -94,21 +89,18 @@ export const useNotificationHandler = () => {
       }
     );
 
-    // ✅ 3. Handle notification tap dari QUIT STATE (app completely closed)
     messaging()
       .getInitialNotification()
       .then(remoteMessage => {
         if (remoteMessage) {
           console.log('🔔 QUIT STATE: Notification opened app:', remoteMessage);
           
-          // Delay navigation untuk memastikan app sudah fully loaded
           setTimeout(() => {
             handleNotificationNavigation(remoteMessage.data);
           }, 2000);
         }
       });
 
-    // ✅ 4. Handle notifee foreground events (untuk notifikasi yang ditampilkan via notifee)
     const unsubscribeNotifeeEvent = notifee.onForegroundEvent(({ type, detail }) => {
       console.log('🔔 Notifee foreground event:', type);
       
@@ -119,7 +111,6 @@ export const useNotificationHandler = () => {
       }
     });
 
-    // ✅ Function untuk handle navigation dari notification data
     const handleNotificationNavigation = (data: any) => {
       console.log('🧭 Handling navigation with data:', data);
       
@@ -130,7 +121,6 @@ export const useNotificationHandler = () => {
           
           console.log(`📍 Navigating to DetailBlock with blockId: ${blockId}`);
           
-          // Navigate ke DetailBlock
           navigation.navigate('DetailBlock' as never, { blockId } as never);
         } catch (error) {
           console.error('❌ Error navigating:', error);
@@ -140,7 +130,6 @@ export const useNotificationHandler = () => {
       }
     };
 
-    // Cleanup subscriptions
     return () => {
       console.log('🧹 Cleaning up notification handlers');
       unsubscribeForeground();

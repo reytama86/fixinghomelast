@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect, useCallback, useContext} from 'react';
 import {View, ScrollView, BackHandler} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -18,10 +18,12 @@ import {styles} from './styles';
 import {useHomeData} from '@Hooks/useHomeData';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '@Constants/RouteParamsList.constants';
+import { AuthContext } from '@Context/AuthContext';
 
 const HomeScreen: React.FC = ({}) => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const {setActivePage} = usePageControl();
+  const {user}= useContext(AuthContext);
   const {
     homeControl,
     block1Control,
@@ -119,7 +121,7 @@ const HomeScreen: React.FC = ({}) => {
 
           <SoilStatistic sensorData={sensorData} />
 
-          <ControlCentre
+          { user?.role !== 'farmer' && (<ControlCentre
             controlState={homeControl}
             isBlock1AnyActive={isBlock1AnyActive}
             onToggle={type => {
@@ -130,7 +132,7 @@ const HomeScreen: React.FC = ({}) => {
               setConfirmType(type);
               setShowConfirm(true);
             }}
-          />
+          />)}
 
           <FieldList sensorDataBlock={sensorDataBlock} navigation={navigation} />
 

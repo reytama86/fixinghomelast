@@ -8,9 +8,10 @@ import moment from 'moment';
 interface DeviceCardProps {
   deviceNumber: number;
   sensorData: any;
+  isFarmer: boolean;
 }
 
-export const DeviceCard: React.FC<DeviceCardProps> = ({deviceNumber, sensorData}) => {
+export const DeviceCard: React.FC<DeviceCardProps> = ({deviceNumber, sensorData, isFarmer}) => {
   const getSensorValue = useCallback(
     (sensorArray: any[], keterangan: string): number => {
       const sensor = sensorArray?.find(item => item.keterangan_sensor === keterangan);
@@ -56,14 +57,14 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({deviceNumber, sensorData}
     <View style={hasGauge ? styles.cardThree : styles.cardTwo}>
       <Text style={styles.soilTitle}>Statistic Device {deviceNumber}</Text>
 
-      <View style={styles.timestampContainer}>
+      {!isFarmer && (<View style={styles.timestampContainer}>
         <Text style={styles.timestampLabel}>Last updated at: </Text>
         <Text style={styles.timestampValue}>
           {latestTimestamp 
             ? moment(latestTimestamp).format('DD MMMM YYYY, HH:mm')
             : 'No data'}
         </Text>
-      </View>
+      </View>)}
 
       {hasGauge && (
         <View style={styles.containerTransmisi}>

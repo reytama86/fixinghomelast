@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import {
   View,
   SafeAreaView,
@@ -20,6 +20,7 @@ import {usePortableList} from './usePortableList';
 import { PortableItem } from './Section/PortableItem';
 import {styles} from './styles';
 import DownloadReportModal from '@Containers/Tab/ChartScreen/Section/DownloadReportModal';
+import { AuthContext } from '@Context/AuthContext';
 
 type Props = NativeStackScreenProps<RootStackParamList, typeof RouteName.PortableListScreenNavigation>;
 
@@ -27,6 +28,10 @@ const PortableListScreen: React.FC<Props> = ({navigation}) => {
   const {handleScroll, headMode: headerMode} = useHeaderMode();
   const [modalVisible, setModalVisible] = useState(false);
   const insets = useSafeAreaInsets();
+
+  const {user} = useContext(AuthContext);
+
+  const isFarmer = user?.role === 'farmer';
 
   const {
     reversedData,
@@ -94,7 +99,7 @@ const PortableListScreen: React.FC<Props> = ({navigation}) => {
         />
       )}
 
-      <View style={[styles.footerWrapper, { paddingBottom: insets.bottom ?? 0 }]}>
+      {!isFarmer && (<View style={[styles.footerWrapper, { paddingBottom: insets.bottom ?? 0 }]}>
         <View style={styles.footerBox}>
           <TouchableOpacity
             style={styles.downloadButton}
@@ -103,7 +108,7 @@ const PortableListScreen: React.FC<Props> = ({navigation}) => {
             <Text style={styles.downloadText}>Download Report</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </View>)}
 
       <DownloadReportModal
         visible={modalVisible}

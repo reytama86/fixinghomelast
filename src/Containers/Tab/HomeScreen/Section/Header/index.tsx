@@ -13,7 +13,7 @@ const Header: React.FC = () => {
       ? 'IOT Developer'
       : user?.role === 'user'
       ? 'Bapak Arik'
-      : 'Guest';
+      : 'Farmer';
 
   const avatarSource =
     user?.role === 'developer'

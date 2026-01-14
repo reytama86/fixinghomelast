@@ -1,15 +1,16 @@
-import { Buffer } from 'buffer';
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Modal, Text, Pressable, Animated } from 'react-native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
-import { Home, Chart, Scan } from 'iconsax-react-native';
+import {Buffer} from 'buffer';
+import React, {useEffect, useState, useRef, useContext} from 'react';
+import {View, Modal, Text, Pressable, Animated} from 'react-native';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {getFocusedRouteNameFromRoute} from '@react-navigation/native';
+import {Home, Chart, Scan} from 'iconsax-react-native';
 import HomeScreen from '@Containers/Tab/HomeScreen';
 import ImgLoadPortable from '@Assets/svg/ImgLoadPortable';
 import PortableSensorScreen from '@Containers/Tab/PortableSensorScreen';
 import styles from './styles';
-import { BleManager, Device } from 'react-native-ble-plx';
+import {BleManager, Device} from 'react-native-ble-plx';
 import ChartScreen from '@Containers/Tab/ChartScreen/index';
+import {AuthContext} from '@Context/AuthContext';
 
 const SERVICE_UUID = '5900f86c-57d7-422c-8aa8-fd6216fa496b';
 const CHARACTERISTIC_UUID = 'a0863556-7065-46e6-96ee-99e3f693cb7f';
@@ -40,7 +41,7 @@ export type MainTabParamList = {
   PortableHistory: {
     bleStatus?: 'scanning' | 'connecting' | 'connected' | 'disconnected';
     sensorData?: SoilSensorData;
-    portableData?: any; 
+    portableData?: any;
     isHistoryMode?: boolean;
   };
   ChartScreen: undefined;
@@ -53,11 +54,15 @@ const AnimatedTabBar = (props: any) => {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
-    const { state } = props;
+    const {state} = props;
     const currentRoute = state.routes[state.index];
     const routeName = currentRoute.name;
-    
-    const hideTabScreens = ['PortableHistory', 'ChartMain', ChartScreen, 'ChartScreen'];
+
+    const hideTabScreens = [
+      'PortableHistory',
+      'ChartMain',
+      'ChartScreen',
+    ];
 
     const shouldHide = hideTabScreens.includes(routeName);
 
@@ -78,24 +83,28 @@ const AnimatedTabBar = (props: any) => {
     }
   }, [props.state]);
 
-  const { state, descriptors, navigation } = props;
+  const {state, descriptors, navigation} = props;
 
   return (
     <Animated.View
       style={[
         styles.animatedTabBar,
         {
-          transform: [{ translateY: tabBarAnimation }],
+          transform: [{translateY: tabBarAnimation}],
         },
-      ]}
-    >
+      ]}>
       <View style={styles.tabBarContainer}>
         {state.routes.map((route: any, index: number) => {
-          const { options } = descriptors[route.key];
+          const {options} = descriptors[route.key];
           const label = options.tabBarLabel || route.name;
           const isFocused = state.index === index;
+          const isDisabled = !!options.tabBarDisabled;
 
           const onPress = () => {
+            if(isDisabled){
+              console.log('disabled')
+              return;
+            }
             const event = navigation.emit({
               type: 'tabPress',
               target: route.key,
@@ -113,10 +122,11 @@ const AnimatedTabBar = (props: any) => {
             <Pressable
               key={route.key}
               accessibilityRole="button"
-              accessibilityState={isFocused ? { selected: true } : {}}
+              accessibilityState={isFocused ? {selected: true} : {}}
               onPress={onPress}
               style={styles.tabBarItem}
-            >
+              disabled={isDisabled}
+              >
               <Icon
                 focused={isFocused}
                 color={isFocused ? '#B4DC45' : 'gray'}
@@ -126,9 +136,8 @@ const AnimatedTabBar = (props: any) => {
                 <Text
                   style={[
                     styles.tabBarLabel,
-                    { color: isFocused ? '#B4DC45' : 'gray' }
-                  ]}
-                >
+                    {color: isFocused ? '#B4DC45' : 'gray'},
+                  ]}>
                   {label}
                 </Text>
               )}
@@ -144,7 +153,9 @@ const TabNavigator: React.FC = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [dotCount, setDotCount] = useState(0);
   const [navigation, setNavigation] = useState<any>(null);
-  const [bleStatus, setBleStatus] = useState<'scanning' | 'connecting' | 'connected' | 'disconnected'>('scanning');
+  const [bleStatus, setBleStatus] = useState<
+    'scanning' | 'connecting' | 'connected' | 'disconnected'
+  >('scanning');
   const [bleManager] = useState(() => new BleManager());
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [sensorData, setSensorData] = useState<SoilSensorData | null>(null);
@@ -153,7 +164,7 @@ const TabNavigator: React.FC = () => {
   const isScanning = useRef(false);
 
   useEffect(() => {
-    let dotInterval: NodeJS.Timeout;
+    let dotInterval: ReturnType<typeof setInterval>;
     if (showPopup) {
       dotInterval = setInterval(() => {
         setDotCount(prev => (prev + 1) % 4);
@@ -185,13 +196,15 @@ const TabNavigator: React.FC = () => {
       setConnectedDevice(null);
       setSensorData(null);
       setBleStatus('scanning');
-      await new Promise((resolve:any) => setTimeout(resolve, 500));
+      await new Promise((resolve: any) => setTimeout(resolve, 500));
     } catch (error) {
       console.error('Error during BLE reset:', error);
     }
   };
 
-  const convertCompactToFull = (compactData: CompactSensorData): SoilSensorData => {
+  const convertCompactToFull = (
+    compactData: CompactSensorData,
+  ): SoilSensorData => {
     return {
       Humidity: compactData.H,
       Temp: compactData.T,
@@ -199,7 +212,7 @@ const TabNavigator: React.FC = () => {
       pH: compactData.P,
       Nitrogen: compactData.N,
       Phosphorus: compactData.K,
-      Kalium: compactData.L
+      Kalium: compactData.L,
     };
   };
 
@@ -215,7 +228,7 @@ const TabNavigator: React.FC = () => {
       await device.writeCharacteristicWithoutResponseForService(
         SERVICE_UUID,
         REQUEST_CHAR_UUID,
-        Buffer.from('READ_SENSOR').toString('base64')
+        Buffer.from('READ_SENSOR').toString('base64'),
       );
       console.log('Sensor data request sent');
     } catch (error) {
@@ -229,32 +242,38 @@ const TabNavigator: React.FC = () => {
       if (monitoringSubscription.current) {
         monitoringSubscription.current.remove();
       }
-      
+
       monitoringSubscription.current = device.monitorCharacteristicForService(
         SERVICE_UUID,
         CHARACTERISTIC_UUID,
         (error, characteristic) => {
           if (characteristic?.value) {
             try {
-              const jsonString = Buffer.from(characteristic.value, 'base64').toString('utf-8');
+              const jsonString = Buffer.from(
+                characteristic.value,
+                'base64',
+              ).toString('utf-8');
               console.log('Raw data:', jsonString);
-              
+
               if (!jsonString || jsonString.trim().length === 0) {
                 console.error('Empty JSON received');
                 return;
               }
-              
+
               const trimmedJson = jsonString.trim();
               if (!trimmedJson.startsWith('{') || !trimmedJson.endsWith('}')) {
                 console.error('Invalid JSON format');
                 setTimeout(() => requestSensorData(device), 1000);
                 return;
               }
-              
+
               let data: SoilSensorData;
               try {
                 const compactData: CompactSensorData = JSON.parse(trimmedJson);
-                if (compactData.H !== undefined && compactData.T !== undefined) {
+                if (
+                  compactData.H !== undefined &&
+                  compactData.T !== undefined
+                ) {
                   data = convertCompactToFull(compactData);
                 } else {
                   data = JSON.parse(trimmedJson) as SoilSensorData;
@@ -264,26 +283,33 @@ const TabNavigator: React.FC = () => {
                 setTimeout(() => requestSensorData(device), 2000);
                 return;
               }
-              
-              const requiredFields = ['Humidity', 'Temp', 'EC', 'pH', 'Nitrogen', 'Phosphorus', 'Kalium'];
-              const missingFields = requiredFields.filter(field => 
-                data[field] === undefined || data[field] === null
+
+              const requiredFields = [
+                'Humidity',
+                'Temp',
+                'EC',
+                'pH',
+                'Nitrogen',
+                'Phosphorus',
+                'Kalium',
+              ];
+              const missingFields = requiredFields.filter(
+                field => data[field] === undefined || data[field] === null,
               );
-              
+
               if (missingFields.length > 0) {
                 console.error('Missing fields:', missingFields);
                 return;
               }
-              
+
               setSensorData(data);
               console.log('Sensor data received:', data);
-              
             } catch (error) {
               console.error('Error processing data:', error);
               setTimeout(() => requestSensorData(device), 1500);
             }
           }
-        }
+        },
       );
 
       await requestSensorData(device);
@@ -294,17 +320,17 @@ const TabNavigator: React.FC = () => {
 
   useEffect(() => {
     if (!showPopup) return;
-    
+
     let timeoutId: ReturnType<typeof setTimeout>;
-    
+
     const startBLEProcess = async () => {
       await resetBLEState();
-      
+
       console.log('Starting BLE scan...');
       setBleStatus('scanning');
       setSensorData(null);
       isScanning.current = true;
-      
+
       bleManager.startDeviceScan([SERVICE_UUID], null, (error, device) => {
         if (error) {
           console.warn('Scan error:', error);
@@ -312,14 +338,15 @@ const TabNavigator: React.FC = () => {
           isScanning.current = false;
           return;
         }
-        
+
         if (device?.name?.includes('Smart-Soil-Sensor')) {
           console.log('Found device:', device.name);
           bleManager.stopDeviceScan();
           isScanning.current = false;
           setBleStatus('connecting');
-          
-          device.connect()
+
+          device
+            .connect()
             .then(connectedDevice => {
               console.log('Device connected');
               setConnectedDevice(connectedDevice);
@@ -361,16 +388,16 @@ const TabNavigator: React.FC = () => {
 
   useEffect(() => {
     if (!showPopup) return;
-    
+
     if (bleStatus === 'connected') {
       const checkDataInterval = setInterval(() => {
         if (sensorData) {
           clearInterval(checkDataInterval);
           setTimeout(() => {
             setShowPopup(false);
-            navigation.navigate('PortableHistory', { 
+            navigation.navigate('PortableHistory', {
               bleStatus,
-              sensorData 
+              sensorData,
             });
           }, 1000);
         }
@@ -380,9 +407,9 @@ const TabNavigator: React.FC = () => {
         clearInterval(checkDataInterval);
         console.log('Data timeout');
         setShowPopup(false);
-        navigation.navigate('PortableHistory', { 
+        navigation.navigate('PortableHistory', {
           bleStatus: 'disconnected',
-          sensorData: null 
+          sensorData: null,
         });
       }, 10000);
 
@@ -393,9 +420,9 @@ const TabNavigator: React.FC = () => {
     } else if (bleStatus === 'disconnected') {
       setTimeout(() => {
         setShowPopup(false);
-        navigation.navigate('PortableHistory', { 
+        navigation.navigate('PortableHistory', {
           bleStatus,
-          sensorData: null 
+          sensorData: null,
         });
       }, 800);
     }
@@ -413,15 +440,25 @@ const TabNavigator: React.FC = () => {
 
   const loadingText = `Gathering Data${'.'.repeat(dotCount)}`;
 
+  const {user} = useContext(AuthContext);
+
+  const isFarmer = user?.role === 'farmer';
+
   return (
     <>
       <Tab.Navigator
-        tabBar={(props) => <AnimatedTabBar {...props} />}
-        screenOptions={({ route }) => ({
+        tabBar={props => <AnimatedTabBar {...props} />}
+        screenOptions={({route}) => ({
           headerShown: false,
-          tabBarIcon: ({ color, size, focused }) => {
+          tabBarIcon: ({color, size, focused}) => {
             if (route.name === 'Home') {
-              return <Home color={focused ? '#B4DC45' : color} variant="Bold" size={size} />;
+              return (
+                <Home
+                  color={focused ? '#B4DC45' : color}
+                  variant="Bold"
+                  size={size}
+                />
+              );
             }
             if (route.name === 'PortableHistory') {
               return (
@@ -430,22 +467,26 @@ const TabNavigator: React.FC = () => {
                 </View>
               );
             }
-            return <Chart color={focused ? '#B4DC45' : color} variant="Linear" size={size} />;
+            return (
+              <Chart
+                color={focused ? '#B4DC45' : color}
+                variant="Linear"
+                size={size}
+              />
+            );
           },
-        })}
-      >
+        })}>
         <Tab.Screen
           name="Home"
           component={HomeScreen}
-          options={{ tabBarLabel: 'Home' }}
+          options={{tabBarLabel: 'Home'}}
         />
         <Tab.Screen
           name="PortableHistory"
           component={PortableSensorScreen}
-          options={{ tabBarLabel: '' }}
-          listeners={({ navigation: nav }) => ({
+          options={{tabBarLabel: ''}}
+          listeners={({navigation: nav}) => ({
             tabPress: e => {
-
               e.preventDefault();
               setNavigation(nav);
               // setSensorData(null);
@@ -456,10 +497,11 @@ const TabNavigator: React.FC = () => {
         <Tab.Screen
           name="ChartScreen"
           component={ChartScreen}
-           options={{ 
-    tabBarLabel: 'History',
-    tabBarStyle: { display: 'none' } 
-  }}
+          options={{
+            tabBarLabel: 'History',
+            tabBarStyle: {display: 'none'},
+            tabBarDisabled: isFarmer,
+          }}
         />
       </Tab.Navigator>
 
@@ -467,8 +509,7 @@ const TabNavigator: React.FC = () => {
         visible={showPopup}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowPopup(false)}
-      >
+        onRequestClose={() => setShowPopup(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <View style={styles.containerImage}>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import {useHeaderMode} from '@Hooks/useHeaderMode';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import {RootStackParamList} from '@Constants/RouteParamsList.constants';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { AuthContext } from '@Context/AuthContext';
 
 type DetailBlockRouteProp = RouteProp<RootStackParamList, 'DetailBlock'>;
 
@@ -48,6 +49,7 @@ const DetailBlock: React.FC = () => {
 
   const {handleScroll, headMode: headerMode} = useHeaderMode();
   const [refreshing, setRefreshing] = React.useState(false);
+  const {user} = useContext(AuthContext)
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -93,6 +95,9 @@ const DetailBlock: React.FC = () => {
   const insets = useSafeAreaInsets();
   const HEADER_HEIGHT = 10;
 
+  const canControl = user?.role !== 'farmer';
+  const isFarmer = user?.role === 'farmer';
+
   return (
     <SafeAreaView style={styles.safe}>
       <HeaderBack
@@ -125,7 +130,7 @@ const DetailBlock: React.FC = () => {
           }>
           <View style={{height: 30}} />
 
-          {expandableBlocks.map((block, index) => (
+          {canControl && expandableBlocks.map((block, index) => (
             <ExpandableBlock key={index} {...block} onToggle={handleToggle} />
           ))}
 
@@ -134,6 +139,7 @@ const DetailBlock: React.FC = () => {
               key={index}
               deviceNumber={device}
               sensorData={sensorData}
+              isFarmer={isFarmer}
             />
           ))}
         </ScrollView>

@@ -70,13 +70,13 @@ export default StyleSheet.create({
   textButton: {
     fontSize: 14,
     fontWeight: '500',
-    fontFamily: 'SpaceGrotesk-Regular',
+    fontFamily: 'SpaceGrotesk-Medium',
   },
   inputLabel: {
     fontSize: 14,
     color: '#333',
     marginBottom: 6,
     fontWeight: '500',
-    fontFamily: 'SpaceGrotesk-Regular',
+    fontFamily: 'SpaceGrotesk-Medium',
   },
 });

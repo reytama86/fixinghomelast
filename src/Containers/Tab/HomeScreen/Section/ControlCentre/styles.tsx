@@ -6,7 +6,7 @@ export const styles = StyleSheet.create({
   },
   controlCentreText: {
     fontSize: 14,
-    fontFamily: 'SpaceGrotesk-Medium',
+    fontFamily: 'SpaceGrotesk-SemiBold',
     fontWeight: '600',
     marginBottom: 8,
   },

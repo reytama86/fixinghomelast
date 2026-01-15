@@ -35,7 +35,7 @@ export default StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#374151',
-    fontFamily: 'SpaceGrotesk-Regular',
+    fontFamily: 'SpaceGrotesk-Medium',
   },
   primaryButton: {
     flex: 1,
@@ -49,6 +49,6 @@ export default StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#1F2937',
-    fontFamily: 'SpaceGrotesk-Regular',
+    fontFamily: 'SpaceGrotesk-Medium',
   },
 })

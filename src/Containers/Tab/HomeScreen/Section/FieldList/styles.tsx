@@ -17,7 +17,7 @@ export const styles = StyleSheet.create({
   headerText: {
     fontSize: 14,
     fontWeight: '600',
-    fontFamily: 'SpaceGrotesk-Medium',
+    fontFamily: 'SpaceGrotesk-SemiBold',
   },
   showAll: {
     flexDirection: 'row',

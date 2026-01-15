@@ -34,7 +34,7 @@ export const styles = StyleSheet.create({
   textBlockHeader: {
     fontSize: 14,
     fontWeight: '600',
-    fontFamily: 'SpaceGrotesk-Medium',
+    fontFamily: 'SpaceGrotesk-SemiBold',
   },
   textBlock: {
     fontSize: 14,

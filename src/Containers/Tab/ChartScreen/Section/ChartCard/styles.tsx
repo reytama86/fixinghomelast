@@ -27,7 +27,7 @@ export default StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#333',
-    fontFamily: 'SpaceGrotesk-Regular',
+    fontFamily: 'SpaceGrotesk-SemiBold',
   },
   badge: {
     backgroundColor: '#F0F8DA',

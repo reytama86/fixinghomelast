@@ -54,7 +54,7 @@ export const RadioInput: React.FC<RadioInputProps> = ({
                   />
                 )}
               </View>
-              <Text style={{marginLeft: 10, fontSize: 14, fontFamily:'SpaceGrotesk-Regular'}}>
+              <Text style={{marginLeft: 10, fontSize: 14, fontFamily:'SpaceGrotesk-Medium'}}>
                 {option.label}
                 {option.sublabel && (
                     <Text style={{color:'#BBC3CE'}}>
@@ -131,9 +131,10 @@ export const RadioInput: React.FC<RadioInputProps> = ({
                   style={{
                     marginLeft: 10,
                     fontSize: 14,
-                    fontFamily: 'SpaceGrotesk-Regular',
+                    fontFamily: 'SpaceGrotesk-Medium',
                     flex: 1,
                     flexWrap: 'wrap',
+                    color: "#BBC3CE"
                   }}
                 >
                   {option.label}

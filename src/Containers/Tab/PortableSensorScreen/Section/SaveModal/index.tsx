@@ -332,7 +332,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                     onPress={handleClose}
                     disabled={isSaving}
                     activeOpacity={0.7}>
-                    <Text style={[styles.textButton, {color: '#B4DC45'}]}>Cancel</Text>
+                    <Text style={[styles.textButton, {color: 'black'}]}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.confirmResult, isSaving && {opacity: 0.6}]}

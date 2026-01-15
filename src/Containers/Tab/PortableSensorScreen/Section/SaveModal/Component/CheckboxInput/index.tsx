@@ -58,7 +58,7 @@ export const CheckboxInput: React.FC<CheckboxInputProps> = ({
               style={{
                 marginLeft: 10,
                 fontSize: 14,
-                fontFamily: 'SpaceGrotesk-Regular',
+                fontFamily: 'SpaceGrotesk-Medium',
                 color: isDisabled ? '#999' : '#000',
               }}
             >

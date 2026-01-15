@@ -41,7 +41,7 @@ export const styles = StyleSheet.create({
   downloadText: {
     color: 'Black',
     fontWeight: '600',
-    fontFamily: 'SpaceGrotesk-Regular',
+    fontFamily: 'SpaceGrotesk-Medium',
   },
 
   // Modal Styles

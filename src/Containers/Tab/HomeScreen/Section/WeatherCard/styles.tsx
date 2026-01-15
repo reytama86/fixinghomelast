@@ -43,11 +43,11 @@ export const styles = StyleSheet.create({
   },
   temperatureText: {
     fontSize: 40,
-    fontFamily: 'SpaceGrotesk-Regular',
+    fontFamily: 'SpaceGrotesk-SemiBold',
     color: 'white',
     fontWeight: '600',
     textAlign: 'center',
-    top: -6,
+    lineHeight:48
   },
   detailSectionTwo: {
     flexDirection: 'column',
@@ -91,6 +91,13 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     fontFamily: 'SpaceGrotesk-Regular',
+    color: 'white',
+  },
+  detailSectionThreeValue: {
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: 'SpaceGrotesk-SemiBold',
     color: 'white',
   },
 });

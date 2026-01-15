@@ -79,7 +79,7 @@ export default StyleSheet.create({
   modalTitle: {
     fontSize: 16,
     fontWeight: '600',
-    fontFamily: 'SpaceGrotesk-Regular',
+    fontFamily: 'SpaceGrotesk-Medium',
     color: '#000',
   },
   modalContent: {
@@ -238,7 +238,7 @@ export default StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: 'black',
-    fontFamily: 'SpaceGrotesk-Regular',
+    fontFamily: 'SpaceGrotesk-Medium',
   },
   confirmButton: {
     flex: 1,
@@ -251,7 +251,7 @@ export default StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#000',
-    fontFamily: 'SpaceGrotesk-Regular',
+    fontFamily: 'SpaceGrotesk-Medium',
   },
   buttonDisabled: {
     opacity: 0.5,

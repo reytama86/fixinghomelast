@@ -75,7 +75,7 @@ export default StyleSheet.create({
   soilTitle: {
     fontSize: 14,
     fontWeight: '600',
-    fontFamily: 'SpaceGrotesk-Regular',
+    fontFamily: 'SpaceGrotesk-SemiBold',
   },
   soilStatisticOne: {
     height: 52,
@@ -125,7 +125,7 @@ export default StyleSheet.create({
   statValueHistory: {
     fontSize: 14,
     fontWeight: '600',
-    fontFamily: 'SpaceGrotesk-Regular',
+    fontFamily: 'SpaceGrotesk-SemiBold',
   },
   statExtra: {
     flexDirection: 'column',

@@ -17,7 +17,7 @@ export default StyleSheet.create({
   infoArea: {
     fontSize: 16,
     fontWeight: '600',
-    fontFamily: 'SpaceGrotesk-Medium',
+    fontFamily: 'SpaceGrotesk-SemiBold',
     color: 'black',
     marginBottom: 4,
   },

@@ -125,19 +125,19 @@ const WeatherCard: React.FC<WeatherCardProps> = ({sensorData}) => {
       <View style={styles.detailSectionThree}>
         <View style={{flex: 1}}>
           <Text style={styles.detailSectionThreeText}>Soil Temperature</Text>
-          <Text style={styles.detailSectionThreeText}>
+          <Text style={styles.detailSectionThreeValue}>
             {getSensorValue('Soil Temperature')}°
           </Text>
         </View>
         <View style={{flex: 1}}>
           <Text style={styles.detailSectionThreeText}>Soil Moisture</Text>
-          <Text style={styles.detailSectionThreeText}>
+          <Text style={styles.detailSectionThreeValue}>
             {getSensorValue('Soil Humidity')}%
           </Text>
         </View>
         <View style={{flex: 1}}>
           <Text style={styles.detailSectionThreeText}>Conductivity</Text>
-          <Text style={styles.detailSectionThreeText}>
+          <Text style={styles.detailSectionThreeValue}>
             {getSensorValue('EC')} μS/cm
           </Text>
         </View>

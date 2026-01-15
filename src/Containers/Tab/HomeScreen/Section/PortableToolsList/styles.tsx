@@ -13,7 +13,7 @@ export const styles = StyleSheet.create({
   headerText: {
     fontSize: 14,
     fontWeight: '600',
-    fontFamily: 'SpaceGrotesk-Medium',
+    fontFamily: 'SpaceGrotesk-SemiBold',
   },
   showAll: {
     flexDirection: 'row',
@@ -44,7 +44,7 @@ export const styles = StyleSheet.create({
     top: 12,
   },
   infoArea: {
-    fontFamily: 'SpaceGrotesk-Medium',
+    fontFamily: 'SpaceGrotesk-SemiBold',
     fontSize: 13,
     marginBottom: 5,
   },

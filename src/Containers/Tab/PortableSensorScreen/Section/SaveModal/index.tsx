@@ -57,7 +57,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
 
   const modalTranslateY = modalAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [300, 0],
+    outputRange: [600, 0], 
   });
 
   const backdropOpacity = modalAnimation.interpolate({
@@ -133,7 +133,6 @@ export const SaveModal: React.FC<SaveModalProps> = ({
   };
 
   const handleSave = async () => {
-    
     if (!blockNumber.trim() || !rowNumber.trim() || !sectionNumber.trim()) {
       Alert.alert('Error', 'Please fill Block, Row, and Section number');
       return;
@@ -156,7 +155,6 @@ export const SaveModal: React.FC<SaveModalProps> = ({
 
     setIsSaving(true);
     try {
-      
       const symptoms = {
         slowGrowth: unhealthyReasons.includes('lambat'),
         leafWilt: unhealthyReasons.includes('layu'),
@@ -192,7 +190,8 @@ export const SaveModal: React.FC<SaveModalProps> = ({
       visible={visible}
       transparent
       animationType="none"
-      onRequestClose={handleClose}>
+      onRequestClose={handleClose}
+      statusBarTranslucent>
       <TouchableWithoutFeedback onPress={handleBackdropPress}>
         <Animated.View 
           style={[
@@ -208,6 +207,15 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                   styles.modalContainer,
                   {transform: [{translateY: modalTranslateY}]},
                 ]}>
+                <View style={{
+                  width: 40,
+                  height: 4,
+                  backgroundColor: '#E0E0E0',
+                  borderRadius: 2,
+                  alignSelf: 'center',
+                  marginBottom: 16,
+                }} />
+
                 <View style={styles.modalHeader}>
                   <SavePortableSVG />
                   <View style={{flexDirection: 'column'}}>
@@ -219,8 +227,9 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                 <ScrollView
                   ref={scrollViewRef}
                   showsVerticalScrollIndicator={false}
-                  style={{maxHeight: 400}}
-                  contentContainerStyle={{paddingBottom: 16}}>
+                  style={{maxHeight: 450}}
+                  contentContainerStyle={{paddingBottom: 16}}
+                  bounces={false}>
                   
                   <View>
                     <Text style={styles.inputLabel}>
@@ -321,17 +330,19 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                   <TouchableOpacity
                     style={styles.cancelResult}
                     onPress={handleClose}
-                    disabled={isSaving}>
-                    <Text style={styles.textButton}>Cancel</Text>
+                    disabled={isSaving}
+                    activeOpacity={0.7}>
+                    <Text style={[styles.textButton, {color: '#B4DC45'}]}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.confirmResult, isSaving && {opacity: 0.6}]}
                     onPress={handleSave}
-                    disabled={isSaving || !blockNumber.trim()}>
+                    disabled={isSaving || !blockNumber.trim()}
+                    activeOpacity={0.7}>
                     {isSaving ? (
                       <ActivityIndicator color="white" size="small" />
                     ) : (
-                      <Text style={styles.textButton}>Save</Text>
+                      <Text style={[styles.textButton, {color: '#000'}]}>Save</Text>
                     )}
                   </TouchableOpacity>
                 </View>

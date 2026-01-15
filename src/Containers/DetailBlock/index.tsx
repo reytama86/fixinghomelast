@@ -26,6 +26,11 @@ const DetailBlock: React.FC = () => {
   const route = useRoute<DetailBlockRouteProp>();
   const {blockId} = route.params;
 
+  const {user} = useContext(AuthContext);
+  const {handleScroll, headMode: headerMode} = useHeaderMode();
+  const [refreshing, setRefreshing] = React.useState(false);
+  const insets = useSafeAreaInsets();
+
   const {
     blockTitle,
     blockControls,
@@ -44,16 +49,12 @@ const DetailBlock: React.FC = () => {
     setShowConfirm,
     handleMinutesChange,
     handleSecondsChange,
-    refreshData, // Tambahkan ini di hook useDetailBlock
+    refreshData,
   } = useDetailBlock(blockId);
-
-  const {handleScroll, headMode: headerMode} = useHeaderMode();
-  const [refreshing, setRefreshing] = React.useState(false);
-  const {user} = useContext(AuthContext)
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
-    await refreshData(); // Function ini harus ada di useDetailBlock
+    await refreshData();
     setRefreshing(false);
   }, [refreshData]);
 
@@ -65,6 +66,10 @@ const DetailBlock: React.FC = () => {
       </View>
     );
   }
+
+  const HEADER_HEIGHT = 10;
+  const canControl = user?.role !== 'farmer';
+  const isFarmer = user?.role === 'farmer';
 
   const expandableBlocks =
     blockId === 4
@@ -91,12 +96,6 @@ const DetailBlock: React.FC = () => {
           },
         ]
       : [];
-
-  const insets = useSafeAreaInsets();
-  const HEADER_HEIGHT = 10;
-
-  const canControl = user?.role !== 'farmer';
-  const isFarmer = user?.role === 'farmer';
 
   return (
     <SafeAreaView style={styles.safe}>

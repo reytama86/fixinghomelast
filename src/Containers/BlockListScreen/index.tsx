@@ -1,8 +1,7 @@
 import React from 'react';
-import {View, ScrollView, Dimensions} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {View, ScrollView, Dimensions, StatusBar, Platform} from 'react-native';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
-
 import HeaderBack from '@Molecule/HeaderBack';
 import {BlockCard} from '@Organism/BlockCard'; 
 import {useBlockList} from './useBlockList';
@@ -14,18 +13,26 @@ import { useNavigation } from '@react-navigation/native';
 const {width: screenWidth} = Dimensions.get('window');
 const cardWidth = (screenWidth - 45.5) / 2;
 
-
-const BlockListScreen: React.FC = ({}) => {
+const BlockListScreen: React.FC = () => {
   const {blocks} = useBlockList();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  return (
-    <SafeAreaView style={styles.container}>
-      <HeaderBack title="Field List" back />
+  const insets = useSafeAreaInsets();
+  
+  const statusBarHeight = Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : 0;
 
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <HeaderBack title="Field List" back />
+      
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}>
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: 25, 
+          }
+        ]}>
         <View style={styles.blocksContainer}>
           {blocks.map(block => (
             <BlockCard

@@ -1,10 +1,10 @@
-
 import { Platform, StyleSheet } from "react-native";
 
 export default StyleSheet.create({
-    modalOverlay: {
+  modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end', 
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -12,19 +12,18 @@ export default StyleSheet.create({
   },
   modalContainer: {
     width: '100%',
-    height: 'auto',
     backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 14,
-    paddingBottom: 35,
-    marginBottom: 0,
-    alignSelf: 'center',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 30, 
+    maxHeight: '90%', 
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
-    gap: 6
+    gap: 6,
   },
   modalTitle: {
     fontSize: 16,
@@ -49,36 +48,35 @@ export default StyleSheet.create({
   resultOption: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 16, 
   },
   cancelResult: {
     width: '48%',
-    height: 36,
+    height: 44, 
     borderColor: '#B4DC45',
     borderWidth: 1,
     borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center', 
   },
   confirmResult: {
     width: '48%',
-    height: 36,
+    height: 44,
     borderRadius: 8,
     backgroundColor: '#B4DC45',
     alignItems: 'center',
+    justifyContent: 'center', 
   },
   textButton: {
-    alignItems: 'center',
-    textAlign: 'center',
-    top: 6,
     fontSize: 14,
     fontWeight: '500',
     fontFamily: 'SpaceGrotesk-Regular',
   },
   inputLabel: {
-  fontSize: 14,
-  color: '#333',
-  marginBottom: 6,
-  fontWeight: '500',
-  fontFamily: 'SpaceGrotesk-Regular',
-},
-
-})
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 6,
+    fontWeight: '500',
+    fontFamily: 'SpaceGrotesk-Regular',
+  },
+});

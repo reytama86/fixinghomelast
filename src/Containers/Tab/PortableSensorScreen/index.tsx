@@ -224,6 +224,13 @@ const PortableSensorScreen: React.FC<Props> = ({route, navigation}) => {
       weakStem: boolean;
       rotRoot: boolean;
     };
+    plantCounts: {
+      slowGrowth: number;
+      leafWilt: number;
+      chlorosis: number;
+      weakStem: number;
+      rotRoot: number;
+    };
   }) => {
     if (!currentSensorData) {
       Alert.alert('Error', 'No sensor data available to save');
@@ -232,26 +239,55 @@ const PortableSensorScreen: React.FC<Props> = ({route, navigation}) => {
 
     try {
       const displayName = `Block ${saveParams.blockNumber} - Row ${saveParams.rowNumber} - Section ${saveParams.sectionNumber}`;
-      
+
       publishSavedResult(currentSensorData, displayName, saveParams);
-      
+
       const activeSymptoms = [];
-      if (saveParams.symptoms.slowGrowth) activeSymptoms.push('Pertumbuhan lambat');
-      if (saveParams.symptoms.leafWilt) activeSymptoms.push('Daun layu');
-      if (saveParams.symptoms.chlorosis) activeSymptoms.push('Klorosis');
-      if (saveParams.symptoms.weakStem) activeSymptoms.push('Batang lemas');
-      if (saveParams.symptoms.rotRoot) activeSymptoms.push('Kebusukan akar');
-      
-      const symptomsText = activeSymptoms.length > 0 
-        ? `\nGejala: ${activeSymptoms.join(', ')}`
-        : '';
-      
+      if (saveParams.symptoms.slowGrowth) {
+        activeSymptoms.push(
+          `Pertumbuhan lambat (${saveParams.plantCounts.slowGrowth} tanaman)`,
+        );
+      }
+      if (saveParams.symptoms.leafWilt) {
+        activeSymptoms.push(
+          `Daun layu (${saveParams.plantCounts.leafWilt} tanaman)`,
+        );
+      }
+      if (saveParams.symptoms.chlorosis) {
+        activeSymptoms.push(
+          `Klorosis (${saveParams.plantCounts.chlorosis} tanaman)`,
+        );
+      }
+      if (saveParams.symptoms.weakStem) {
+        activeSymptoms.push(
+          `Batang lemas (${saveParams.plantCounts.weakStem} tanaman)`,
+        );
+      }
+      if (saveParams.symptoms.rotRoot) {
+        activeSymptoms.push(
+          `Kebusukan akar (${saveParams.plantCounts.rotRoot} tanaman)`,
+        );
+      }
+
+      const symptomsText =
+        activeSymptoms.length > 0
+          ? `\n\nGejala yang terdeteksi:\n${activeSymptoms
+              .map(s => `• ${s}`)
+              .join('\n')}`
+          : '';
+
       Alert.alert(
-        'Success', 
-        `Result saved successfully!\n\nBlock: ${saveParams.blockNumber}\nRow: ${saveParams.rowNumber}\nSection: ${saveParams.sectionNumber}\nScore: ${saveParams.flowerScore}\nStatus: ${saveParams.isHealthy ? 'Sehat ✓' : 'Tidak Sehat ✗'}${symptomsText}`,
-        [{ text: 'OK', onPress: () => closeModal() }]
+        'Success',
+        `Result saved successfully!\n\nBlock: ${saveParams.blockNumber}\nRow: ${
+          saveParams.rowNumber
+        }\nSection: ${saveParams.sectionNumber}\nScore: ${
+          saveParams.flowerScore
+        }\nStatus: ${
+          saveParams.isHealthy ? 'Sehat ✓' : 'Tidak Sehat ✗'
+        }${symptomsText}`,
+        [{text: 'OK', onPress: () => closeModal()}],
       );
-      
+
       console.log('Result saved:', {
         ...saveParams,
         sensorData: currentSensorData,

@@ -19,7 +19,6 @@ export const RadioInput: React.FC<RadioInputProps> = ({
   onChange,
   columns = 1,
 }) => {
-  // Jika columns = 1, render biasa (vertikal tanpa border)
   if (columns === 1) {
     return (
       <View>
@@ -69,7 +68,6 @@ export const RadioInput: React.FC<RadioInputProps> = ({
     );
   }
 
-  // Jika columns > 1, bagi menjadi baris dengan border
   const rows = [];
   for (let i = 0; i < options.length; i += columns) {
     rows.push(options.slice(i, i + columns));
@@ -110,7 +108,7 @@ export const RadioInput: React.FC<RadioInputProps> = ({
                     height: 20,
                     borderRadius: 10,
                     borderWidth: 2,
-                    borderColor: selected ? '#B4DC45' : '#49454F',
+                    borderColor: selected ? '#B4DC45' :  '#E0E0E0',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
@@ -134,7 +132,7 @@ export const RadioInput: React.FC<RadioInputProps> = ({
                     fontFamily: 'SpaceGrotesk-Medium',
                     flex: 1,
                     flexWrap: 'wrap',
-                    color: "#BBC3CE"
+                    color: selected ? "black" : "#BBC3CE",
                   }}
                 >
                   {option.label}

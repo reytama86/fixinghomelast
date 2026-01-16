@@ -7,7 +7,7 @@ export default StyleSheet.create({
     justifyContent: 'flex-end', 
   },
   keyboardAvoidingView: {
-    flex: 1,
+    width: '100%',
     justifyContent: 'flex-end',
   },
   modalContainer: {
@@ -17,7 +17,7 @@ export default StyleSheet.create({
     borderTopRightRadius: 20,
     padding: 20,
     paddingBottom: Platform.OS === 'ios' ? 40 : 30, 
-    maxHeight: '90%', 
+    minHeight: 620, 
   },
   modalHeader: {
     flexDirection: 'row',
@@ -46,10 +46,13 @@ export default StyleSheet.create({
     backgroundColor: '#F9F9F9',
   },
   resultOption: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 16, 
-  },
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginTop: 16,
+  paddingTop: 12,           
+  borderTopWidth: 1,        
+  borderTopColor: '#F0F0F0', 
+},
   cancelResult: {
     width: '48%',
     height: 44, 

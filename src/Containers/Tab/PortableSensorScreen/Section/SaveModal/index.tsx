@@ -34,6 +34,13 @@ type SaveModalProps = {
       weakStem: boolean;
       rotRoot: boolean;
     };
+    plantCounts: {
+      slowGrowth: number;
+      leafWilt: number;
+      chlorosis: number;
+      weakStem: number;
+      rotRoot: number;
+    };
   }) => Promise<void>;
   modalAnimation: Animated.Value;
 };
@@ -51,6 +58,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
   const [condition, setCondition] = useState('');
   const [isHealthy, setIsHealthy] = useState('');
   const [unhealthyReasons, setUnhealthyReasons] = useState<string[]>([]);
+  const [plantCounts, setPlantCounts] = useState<{ [key: string]: string }>({});
   const scrollViewRef = useRef<ScrollView>(null);
   
   const [reasonAnimation] = useState(new Animated.Value(0));
@@ -74,6 +82,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
         setCondition('');
         setIsHealthy('');
         setUnhealthyReasons([]);
+        setPlantCounts({});
         reasonAnimation.setValue(0);
       }, 300);
     }
@@ -99,21 +108,28 @@ export const SaveModal: React.FC<SaveModalProps> = ({
         useNativeDriver: false,
       }).start();
       setUnhealthyReasons([]);
+      setPlantCounts({});
     }
   };
 
   const handleUnhealthyReasonChange = (value: string) => {
     setUnhealthyReasons(prev => {
       if (prev.includes(value)) {
+        const newCounts = {...plantCounts};
+        delete newCounts[value];
+        setPlantCounts(newCounts);
         return prev.filter(item => item !== value);
       } else {
-        if (prev.length >= 2) {
-          return [...prev.slice(1), value];
-        } else {
-          return [...prev, value];
-        }
+        return [...prev, value];
       }
     });
+  };
+
+  const handlePlantCountChange = (symptomValue: string, count: string) => {
+    setPlantCounts(prev => ({
+      ...prev,
+      [symptomValue]: count,
+    }));
   };
 
   const handleClose = () => {
@@ -153,6 +169,17 @@ export const SaveModal: React.FC<SaveModalProps> = ({
       return;
     }
 
+    if (isHealthy === 'tidak_sehat') {
+      const missingCounts = unhealthyReasons.filter(
+        symptom => !plantCounts[symptom] || parseInt(plantCounts[symptom]) === 0
+      );
+      
+      if (missingCounts.length > 0) {
+        Alert.alert('Error', 'Harap isi jumlah tanaman untuk setiap gejala yang dipilih');
+        return;
+      }
+    }
+
     setIsSaving(true);
     try {
       const symptoms = {
@@ -163,6 +190,14 @@ export const SaveModal: React.FC<SaveModalProps> = ({
         rotRoot: unhealthyReasons.includes('busuk'),
       };
 
+      const counts = {
+        slowGrowth: parseInt(plantCounts['lambat'] || '0'),
+        leafWilt: parseInt(plantCounts['layu'] || '0'),
+        chlorosis: parseInt(plantCounts['klorosis'] || '0'),
+        weakStem: parseInt(plantCounts['lemas'] || '0'),
+        rotRoot: parseInt(plantCounts['busuk'] || '0'),
+      };
+
       await onSave({
         blockNumber: blockNumber.trim(),
         rowNumber: rowNumber.trim(),
@@ -170,6 +205,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
         flowerScore: condition,
         isHealthy: isHealthy === 'sehat',
         symptoms,
+        plantCounts: counts,
       });
       
       handleClose();
@@ -182,7 +218,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
 
   const reasonHeight = reasonAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 350],
+    outputRange: [0, 400],
   });
 
   return (
@@ -308,7 +344,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                       overflow: 'hidden',
                     }}>
                     <Text style={styles.inputLabel}>
-                      Gejala Tanaman Tidak Sehat (Pilih maksimal 2)
+                      Gejala Tanaman Tidak Sehat
                       <Text style={{color: 'red'}}> *</Text>
                     </Text>
                     <CheckboxInput
@@ -321,7 +357,8 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                       ]}
                       selectedValues={unhealthyReasons}
                       onChange={handleUnhealthyReasonChange}
-                      maxSelection={2}
+                      plantCounts={plantCounts}
+                      onCountChange={handlePlantCountChange}
                     />
                   </Animated.View>
                 </ScrollView>

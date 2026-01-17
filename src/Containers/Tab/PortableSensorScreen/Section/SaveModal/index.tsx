@@ -15,8 +15,8 @@ import {
 } from 'react-native';
 import styles from './styles';
 import {SavePortableSVG} from '@Assets/svg/Static';
-import { RadioInput } from './Component/RadioInput';
-import { CheckboxInput } from './Component/CheckboxInput';
+import {RadioInput} from './Component/RadioInput';
+import {CheckboxInput} from './Component/CheckboxInput';
 
 type SaveModalProps = {
   visible: boolean;
@@ -58,14 +58,14 @@ export const SaveModal: React.FC<SaveModalProps> = ({
   const [condition, setCondition] = useState('');
   const [isHealthy, setIsHealthy] = useState('');
   const [unhealthyReasons, setUnhealthyReasons] = useState<string[]>([]);
-  const [plantCounts, setPlantCounts] = useState<{ [key: string]: string }>({});
+  const [plantCounts, setPlantCounts] = useState<{[key: string]: string}>({});
   const scrollViewRef = useRef<ScrollView>(null);
-  
+
   const [reasonAnimation] = useState(new Animated.Value(0));
 
   const modalTranslateY = modalAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [600, 0], 
+    outputRange: [600, 0],
   });
 
   const backdropOpacity = modalAnimation.interpolate({
@@ -90,7 +90,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
 
   const handleHealthChange = (value: string) => {
     setIsHealthy(value);
-    
+
     if (value === 'tidak_sehat') {
       Animated.timing(reasonAnimation, {
         toValue: 1,
@@ -98,7 +98,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
         useNativeDriver: false,
       }).start(() => {
         setTimeout(() => {
-          scrollViewRef.current?.scrollToEnd({ animated: true });
+          scrollViewRef.current?.scrollToEnd({animated: true});
         }, 100);
       });
     } else {
@@ -165,17 +165,24 @@ export const SaveModal: React.FC<SaveModalProps> = ({
     }
 
     if (isHealthy === 'tidak_sehat' && unhealthyReasons.length === 0) {
-      Alert.alert('Error', 'Please select at least one symptom for unhealthy plant');
+      Alert.alert(
+        'Error',
+        'Please select at least one symptom for unhealthy plant',
+      );
       return;
     }
 
     if (isHealthy === 'tidak_sehat') {
       const missingCounts = unhealthyReasons.filter(
-        symptom => !plantCounts[symptom] || parseInt(plantCounts[symptom]) === 0
+        symptom =>
+          !plantCounts[symptom] || parseInt(plantCounts[symptom]) === 0,
       );
-      
+
       if (missingCounts.length > 0) {
-        Alert.alert('Error', 'Harap isi jumlah tanaman untuk setiap gejala yang dipilih');
+        Alert.alert(
+          'Error',
+          'Harap isi jumlah tanaman untuk setiap gejala yang dipilih',
+        );
         return;
       }
     }
@@ -207,7 +214,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
         symptoms,
         plantCounts: counts,
       });
-      
+
       handleClose();
     } catch (error) {
       console.error('Save error:', error);
@@ -229,11 +236,8 @@ export const SaveModal: React.FC<SaveModalProps> = ({
       onRequestClose={handleClose}
       statusBarTranslucent>
       <TouchableWithoutFeedback onPress={handleBackdropPress}>
-        <Animated.View 
-          style={[
-            styles.modalOverlay,
-            { opacity: backdropOpacity }
-          ]}>
+        <Animated.View
+          style={[styles.modalOverlay, {opacity: backdropOpacity}]}>
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.keyboardAvoidingView}>
@@ -243,14 +247,16 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                   styles.modalContainer,
                   {transform: [{translateY: modalTranslateY}]},
                 ]}>
-                <View style={{
-                  width: 40,
-                  height: 4,
-                  backgroundColor: '#E0E0E0',
-                  borderRadius: 2,
-                  alignSelf: 'center',
-                  marginBottom: 16,
-                }} />
+                <View
+                  style={{
+                    width: 40,
+                    height: 4,
+                    backgroundColor: '#E0E0E0',
+                    borderRadius: 2,
+                    alignSelf: 'center',
+                    marginBottom: 16,
+                  }}
+                />
 
                 <View style={styles.modalHeader}>
                   <SavePortableSVG />
@@ -263,10 +269,11 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                 <ScrollView
                   ref={scrollViewRef}
                   showsVerticalScrollIndicator={false}
-                  style={{maxHeight: 450}}
+                  style={{flex: 1}}
                   contentContainerStyle={{paddingBottom: 16}}
-                  bounces={false}>
-                  
+                  bounces={false}
+                  nestedScrollEnabled={true}
+                  scrollEnabled={true}>
                   <View>
                     <Text style={styles.inputLabel}>
                       Block number<Text style={{color: 'red'}}> *</Text>
@@ -278,6 +285,9 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                       value={blockNumber}
                       onChangeText={setBlockNumber}
                       editable={!isSaving}
+                      onFocus={() => {
+                        scrollViewRef.current?.scrollTo({y: 0, animated: true});
+                      }}
                     />
                   </View>
 
@@ -314,12 +324,20 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                   </Text>
                   <RadioInput
                     options={[
-                      {label: '0', sublabel: '(Tidak terdapat bunga)', value: '0'},
-                      {label: '1', sublabel:'(1-2 tanaman bunga)', value: '1'},
-                      {label: '2', sublabel:'(3-4 tanaman bunga)', value: '2'},
-                      {label: '3', sublabel:'(5-6 tanaman bunga)', value: '3'},
-                      {label: '4', sublabel:'(7-8 tanaman bunga)', value: '4'},
-                      {label: '5', sublabel:'(Bunga lebat >50 tandan)', value: '5'},
+                      {
+                        label: '0',
+                        sublabel: '(Tidak terdapat bunga)',
+                        value: '0',
+                      },
+                      {label: '1', sublabel: '(1-2 tanaman bunga)', value: '1'},
+                      {label: '2', sublabel: '(3-4 tanaman bunga)', value: '2'},
+                      {label: '3', sublabel: '(5-6 tanaman bunga)', value: '3'},
+                      {label: '4', sublabel: '(7-8 tanaman bunga)', value: '4'},
+                      {
+                        label: '5',
+                        sublabel: '(Bunga lebat >50 tandan)',
+                        value: '5',
+                      },
                     ]}
                     selectedValue={condition}
                     onChange={setCondition}
@@ -349,11 +367,27 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                     </Text>
                     <CheckboxInput
                       options={[
-                        {label: 'Pertumbuhan lambat atau terhenti', value: 'lambat'},
-                        {label: 'Daun layu meskipun kondisi tanah lembab', value: 'layu'},
-                        {label: 'Warna daun pucat atau hijau kekuningan (klorosis)', value: 'klorosis'},
-                        {label: 'Batang tampak lemas dan tidak kokoh', value: 'lemas'},
-                        {label: 'Terdapat kebusukan pada batang dan/atau akar', value: 'busuk'},
+                        {
+                          label: 'Pertumbuhan lambat atau terhenti',
+                          value: 'lambat',
+                        },
+                        {
+                          label: 'Daun layu meskipun kondisi tanah lembab',
+                          value: 'layu',
+                        },
+                        {
+                          label:
+                            'Warna daun pucat atau hijau kekuningan (klorosis)',
+                          value: 'klorosis',
+                        },
+                        {
+                          label: 'Batang tampak lemas dan tidak kokoh',
+                          value: 'lemas',
+                        },
+                        {
+                          label: 'Terdapat kebusukan pada batang dan/atau akar',
+                          value: 'busuk',
+                        },
                       ]}
                       selectedValues={unhealthyReasons}
                       onChange={handleUnhealthyReasonChange}
@@ -369,7 +403,9 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                     onPress={handleClose}
                     disabled={isSaving}
                     activeOpacity={0.7}>
-                    <Text style={[styles.textButton, {color: 'black'}]}>Cancel</Text>
+                    <Text style={[styles.textButton, {color: 'black'}]}>
+                      Cancel
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.confirmResult, isSaving && {opacity: 0.6}]}
@@ -379,7 +415,9 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                     {isSaving ? (
                       <ActivityIndicator color="white" size="small" />
                     ) : (
-                      <Text style={[styles.textButton, {color: '#000'}]}>Save</Text>
+                      <Text style={[styles.textButton, {color: '#000'}]}>
+                        Save
+                      </Text>
                     )}
                   </TouchableOpacity>
                 </View>

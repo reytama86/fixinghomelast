@@ -44,7 +44,6 @@ export default StyleSheet.create({
     fontFamily: 'SpaceGrotesk-Regular',
   },
 
-  // Modal Styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -85,10 +84,8 @@ export default StyleSheet.create({
   modalContent: {
     paddingHorizontal: 16,
     paddingVertical: 16,
-    maxHeight: '80%',
   },
 
-  // Form layout styles
   formRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -131,7 +128,6 @@ export default StyleSheet.create({
     fontFamily: 'SpaceGrotesk-Regular',
   },
 
-  // Dropdown styles
   dropdownWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -160,7 +156,7 @@ export default StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 6,
     marginTop: 4,
-    maxHeight: 120,
+    maxHeight: 200, 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -169,11 +165,11 @@ export default StyleSheet.create({
     zIndex: 1000,
   },
   dropdownScrollView: {
-    maxHeight: 110,
+    maxHeight: 200, // DIPERBESAR dari 110 jadi 250
   },
   dropdownItem: {
     paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#f5f5f5',
   },
@@ -183,7 +179,6 @@ export default StyleSheet.create({
     fontFamily: 'SpaceGrotesk-Regular',
   },
 
-  // Inline DatePicker Styles
   inlinePickerContainer: {
     backgroundColor: '#f8f9fa',
     borderRadius: 8,

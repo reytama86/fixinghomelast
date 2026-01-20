@@ -9,19 +9,19 @@ import {
   Alert,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import Icon  from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/Ionicons';
 import styles from './styles';
 import {
   generateExcelFile,
   saveExcelFile,
   generateFilename,
   ReportInfo,
-} from '../../../../../../utils/excelUtils'
+} from '../../../../../../utils/excelUtils';
 import {
   generatePortablePDF,
-  fetchPortableReportData
-} from '../../../../../../utils/portablePdfUtils'
-import { fetchReportData, SENSOR_API_MAP } from '../../useChartData'
+  fetchPortableReportData,
+} from '../../../../../../utils/portablePdfUtils';
+import { fetchReportData, SENSOR_API_MAP } from '../../useChartData';
 
 interface DownloadReportModalProps {
   visible: boolean;
@@ -32,7 +32,7 @@ interface DownloadReportModalProps {
 const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
   visible,
   onClose,
-  onScreen
+  onScreen,
 }) => {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
@@ -49,9 +49,21 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
   const [showSensorDropdown, setShowSensorDropdown] = useState(false);
   const [showDeviceDropdown, setShowDeviceDropdown] = useState(false);
 
-  const blockOptions = onScreen === 'Portable' 
-    ? ['All Block (1-9)','Block 1', 'Block 2', 'Block 3', 'Block 4', 'Block 5', 'Block 6', 'Block 7', 'Block 8', 'Block 9']
-    : ['Blok 4', 'Blok 7'];
+  const blockOptions =
+    onScreen === 'Portable'
+      ? [
+          'All Block (1-9)',
+          'Block 1',
+          'Block 2',
+          'Block 3',
+          'Block 4',
+          'Block 5',
+          'Block 6',
+          'Block 7',
+          'Block 8',
+          'Block 9',
+        ]
+      : ['Blok 4', 'Blok 7'];
 
   const sensorOptions = [
     'Temperature',
@@ -183,12 +195,17 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
   };
 
   const handleStartDateChange = (event: any, selectedDate?: Date) => {
-    console.log('START DATE CHANGE - Event type:', event?.type, 'Selected date:', selectedDate);
-    
+    console.log(
+      'START DATE CHANGE - Event type:',
+      event?.type,
+      'Selected date:',
+      selectedDate
+    );
+
     if (Platform.OS === 'android') {
       setShowStartDatePicker(false);
     }
-    
+
     if (selectedDate) {
       console.log('Setting START date to:', selectedDate.toLocaleDateString());
       setStartDate(selectedDate);
@@ -196,12 +213,17 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
   };
 
   const handleEndDateChange = (event: any, selectedDate?: Date) => {
-    console.log('END DATE CHANGE - Event type:', event?.type, 'Selected date:', selectedDate);
-    
+    console.log(
+      'END DATE CHANGE - Event type:',
+      event?.type,
+      'Selected date:',
+      selectedDate
+    );
+
     if (Platform.OS === 'android') {
       setShowEndDatePicker(false);
     }
-    
+
     if (selectedDate) {
       console.log('Setting END date to:', selectedDate.toLocaleDateString());
       setEndDate(selectedDate);
@@ -269,8 +291,8 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
               <Text style={styles.modalTitle}>Download Report</Text>
             </View>
 
-            <View style={styles.modalContent}>
-              <View style={[styles.inputContainer, { zIndex: 20 }]}>
+            <ScrollView style={styles.modalContent}>
+              <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Block</Text>
                 <TouchableOpacity
                   style={styles.dropdownWrapper}
@@ -285,19 +307,23 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
                   disabled={isDownloading}
                 >
                   <Text style={styles.dropdownText}>{selectedBlock}</Text>
-                  <Icon name='chevron-down' size={16} color='#666'/>
+                  <Icon name="chevron-down" size={16} color="#666" />
                 </TouchableOpacity>
                 {showBlockDropdown && (
                   <View style={styles.dropdownContainer}>
                     <ScrollView
                       style={styles.dropdownScrollView}
                       nestedScrollEnabled={true}
+                      showsVerticalScrollIndicator={true}
+                      bounces={false}
+                      scrollEnabled={true}
                     >
                       {blockOptions.map((block, index) => (
                         <TouchableOpacity
                           key={index}
                           style={styles.dropdownItem}
                           onPress={() => handleBlockSelect(block)}
+                          activeOpacity={0.7}
                         >
                           <Text style={styles.dropdownItemText}>{block}</Text>
                         </TouchableOpacity>
@@ -309,8 +335,8 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
 
               {onScreen === 'Chart' && (
                 <>
-                  <View style={[styles.formRow, { zIndex: 10 }]}>
-                    <View style={[styles.halfWidth, { zIndex: 2 }]}>
+                  <View style={styles.formRow}>
+                    <View style={styles.halfWidth}>
                       <Text style={styles.inputLabel}>Sensor</Text>
                       <TouchableOpacity
                         style={styles.dropdownWrapper}
@@ -327,19 +353,23 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
                         <Text style={[styles.dropdownText, { fontSize: 13 }]}>
                           {selectedSensor}
                         </Text>
-                        <Icon name='chevron-down' size={16} color='#666'/>
+                        <Icon name="chevron-down" size={16} color="#666" />
                       </TouchableOpacity>
                       {showSensorDropdown && (
                         <View style={styles.dropdownContainer}>
                           <ScrollView
                             style={styles.dropdownScrollView}
                             nestedScrollEnabled={true}
+                            showsVerticalScrollIndicator={true}
+                            bounces={false}
+                            scrollEnabled={true}
                           >
                             {sensorOptions.map((sensor, index) => (
                               <TouchableOpacity
                                 key={index}
                                 style={styles.dropdownItem}
                                 onPress={() => handleSensorSelect(sensor)}
+                                activeOpacity={0.7}
                               >
                                 <Text
                                   style={[
@@ -356,32 +386,45 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
                       )}
                     </View>
 
-                    <View style={[styles.halfWidth, { zIndex: 1 }]}>
+                    <View style={styles.halfWidth}>
                       <Text style={styles.inputLabel}>Device ID</Text>
                       <TouchableOpacity
                         style={styles.dropdownWrapper}
                         onPress={() => {
                           if (isDownloading) return;
                           setShowDeviceDropdown(!showDeviceDropdown);
-                          closeAllDropdowns();
-                          setShowDeviceDropdown(true);
+                          setShowBlockDropdown(false);
+                          setShowSensorDropdown(false);
+                          setShowStartDatePicker(false);
+                          setShowEndDatePicker(false);
                         }}
                         disabled={isDownloading}
                       >
                         <Text style={styles.dropdownText}>{selectedDevice}</Text>
-                        <Icon name='chevron-down' size={16} color='#666'/>
+                        <Icon name="chevron-down" size={16} color="#666" />
                       </TouchableOpacity>
                       {showDeviceDropdown && (
                         <View style={styles.dropdownContainer}>
-                          {deviceOptions.map((device, index) => (
-                            <TouchableOpacity
-                              key={index}
-                              style={styles.dropdownItem}
-                              onPress={() => handleDeviceSelect(device)}
-                            >
-                              <Text style={styles.dropdownItemText}>{device}</Text>
-                            </TouchableOpacity>
-                          ))}
+                          <ScrollView
+                            style={styles.dropdownScrollView}
+                            nestedScrollEnabled={true}
+                            showsVerticalScrollIndicator={true}
+                            bounces={false}
+                            scrollEnabled={true}
+                          >
+                            {deviceOptions.map((device, index) => (
+                              <TouchableOpacity
+                                key={index}
+                                style={styles.dropdownItem}
+                                onPress={() => handleDeviceSelect(device)}
+                                activeOpacity={0.7}
+                              >
+                                <Text style={styles.dropdownItemText}>
+                                  {device}
+                                </Text>
+                              </TouchableOpacity>
+                            ))}
+                          </ScrollView>
                         </View>
                       )}
                     </View>
@@ -389,7 +432,7 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
                 </>
               )}
 
-              <View style={[styles.inputContainer, { zIndex: 1 }]}>
+              <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>From</Text>
                 <TouchableOpacity
                   style={styles.dateInputWrapper}
@@ -404,7 +447,7 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
                   >
                     {startDate ? formatDate(startDate) : 'Choose date'}
                   </Text>
-                  <Icon name='calendar-outline' size={16} color='#666'/>
+                  <Icon name="calendar-outline" size={16} color="#666" />
                 </TouchableOpacity>
               </View>
 
@@ -430,7 +473,7 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
                 </View>
               )}
 
-              <View style={[styles.inputContainer, { zIndex: 1 }]}>
+              <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>To</Text>
                 <TouchableOpacity
                   style={styles.dateInputWrapper}
@@ -445,7 +488,7 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
                   >
                     {endDate ? formatDate(endDate) : 'Choose date'}
                   </Text>
-                  <Icon name='calendar-outline' size={16} color='#666'/>
+                  <Icon name="calendar-outline" size={16} color="#666" />
                 </TouchableOpacity>
               </View>
 
@@ -497,7 +540,7 @@ const DownloadReportModal: React.FC<DownloadReportModalProps> = ({
                   </Text>
                 </TouchableOpacity>
               </View>
-            </View>
+            </ScrollView>
           </TouchableOpacity>
         </TouchableOpacity>
 

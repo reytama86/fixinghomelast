@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, {useContext} from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   ScrollView,
   ActivityIndicator,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import {useDetailBlock} from './useDetailBlock';
 import {ExpandableBlock} from './Section/ExpandableBlock';
@@ -18,7 +19,7 @@ import {useHeaderMode} from '@Hooks/useHeaderMode';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import {RootStackParamList} from '@Constants/RouteParamsList.constants';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import { AuthContext } from '@Context/AuthContext';
+import {AuthContext} from '@Context/AuthContext';
 
 type DetailBlockRouteProp = RouteProp<RootStackParamList, 'DetailBlock'>;
 
@@ -109,7 +110,7 @@ const DetailBlock: React.FC = () => {
         style={[
           styles.main,
           {
-            paddingTop: HEADER_HEIGHT + insets.top,
+            paddingTop: Platform.OS === 'ios' ? 0 : HEADER_HEIGHT + insets.top,
           },
         ]}>
         <ScrollView
@@ -129,9 +130,10 @@ const DetailBlock: React.FC = () => {
           }>
           <View style={{height: 30}} />
 
-          {canControl && expandableBlocks.map((block, index) => (
-            <ExpandableBlock key={index} {...block} onToggle={handleToggle} />
-          ))}
+          {canControl &&
+            expandableBlocks.map((block, index) => (
+              <ExpandableBlock key={index} {...block} onToggle={handleToggle} />
+            ))}
 
           {blockControls.devices?.map((device, index) => (
             <DeviceCard

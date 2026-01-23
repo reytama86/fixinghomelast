@@ -76,7 +76,7 @@ const PortableListScreen: React.FC<Props> = ({navigation}) => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[
             styles.listContainer,
-            {paddingTop: listPaddingTop},
+            {paddingTop: Platform.OS === 'ios' ? 42.5 : listPaddingTop},
           ]}
           refreshControl={
             <RefreshControl

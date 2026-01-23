@@ -319,6 +319,20 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                     />
                   </View>
 
+                  <View>
+                    <Text style={styles.inputLabel}>
+                      Section number<Text style={{color: 'red'}}> *</Text>
+                    </Text>
+                    <TextInput
+                      style={styles.inputField}
+                      placeholder="Enter section number"
+                      placeholderTextColor="#999"
+                      value={sectionNumber}
+                      onChangeText={setSectionNumber}
+                      editable={!isSaving}
+                    />
+                  </View>
+
                   <Text style={styles.inputLabel}>
                     Score<Text style={{color: 'red'}}> *</Text>
                   </Text>

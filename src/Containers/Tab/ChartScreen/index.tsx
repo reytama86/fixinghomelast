@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, {useCallback, useState} from 'react';
 import {
   ScrollView,
   SafeAreaView,
@@ -6,8 +6,9 @@ import {
   TouchableOpacity,
   Text,
   BackHandler,
+  Platform,
 } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 
 import Temperature from './Section/ListSensor/Temperature';
 import Humidity from './Section/ListSensor/Humidity';
@@ -20,16 +21,14 @@ import SoilNitrogen from './Section/ListSensor/SoilNitrogen';
 import SoilPhospor from './Section/ListSensor/SoilPhospor';
 import SoilKalium from './Section/ListSensor/SoilKalium';
 import HeaderBack from '@Molecule/HeaderBack';
-import { useHeaderMode } from '@Hooks/useHeaderMode';
+import {useHeaderMode} from '@Hooks/useHeaderMode';
 import DownloadReportModal from './Section/DownloadReportModal';
-import { styles } from './styles';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
+import {styles} from './styles';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 export default function ChartScreen() {
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
-
 
   useFocusEffect(
     useCallback(() => {
@@ -40,10 +39,10 @@ export default function ChartScreen() {
 
       const subscription = BackHandler.addEventListener(
         'hardwareBackPress',
-        onBackPress
+        onBackPress,
       );
       return () => subscription.remove();
-    }, [navigation])
+    }, [navigation]),
   );
 
   const handleDownload = () => {
@@ -54,11 +53,10 @@ export default function ChartScreen() {
     setModalVisible(false);
   };
 
-  const { handleScroll, headMode } = useHeaderMode();
+  const {handleScroll, headMode} = useHeaderMode();
   const insets = useSafeAreaInsets();
   const HEADER_HEIGHT = 60;
   const FOOTER_HEIGHT = 84;
-
 
   return (
     <SafeAreaView style={styles.container}>
@@ -66,12 +64,12 @@ export default function ChartScreen() {
 
       <ScrollView
         contentContainerStyle={{
-        paddingTop: HEADER_HEIGHT + insets.top - 100,
-        paddingBottom: FOOTER_HEIGHT + insets.bottom + 16,
-      }}
+          paddingTop: HEADER_HEIGHT + insets.top - 100,
+          paddingBottom: Platform.OS === 'ios' ? 0 : FOOTER_HEIGHT + insets.bottom + 16,
+          marginTop: Platform.OS === 'ios' ? -60 : 0,
+        }}
         onScroll={handleScroll}
-        scrollEventThrottle={16}
-      >
+        scrollEventThrottle={16}>
         <Temperature />
         <Humidity />
         <Light />
@@ -88,8 +86,7 @@ export default function ChartScreen() {
         <View style={styles.footerBox}>
           <TouchableOpacity
             style={styles.downloadButton}
-            onPress={handleDownload}
-          >
+            onPress={handleDownload}>
             <Text style={styles.downloadText}>Download Report</Text>
           </TouchableOpacity>
         </View>
@@ -98,7 +95,7 @@ export default function ChartScreen() {
       <DownloadReportModal
         visible={modalVisible}
         onClose={handleCloseModal}
-        onScreen='Chart'
+        onScreen="Chart"
       />
     </SafeAreaView>
   );

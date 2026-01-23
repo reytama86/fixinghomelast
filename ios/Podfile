@@ -16,14 +16,19 @@ end
 
 target 'vanili_jaya' do
   config = use_native_modules!
-
+  
+  # Enable modular headers for specific Firebase/Google pods
+  pod 'GoogleUtilities', :modular_headers => true
+  pod 'FirebaseCore', :modular_headers => true
+  pod 'FirebaseCoreInternal', :modular_headers => true
+  
   use_react_native!(
     :path => config[:reactNativePath],
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/..",
     :new_arch_enabled => false
   )
-
+  
   post_install do |installer|
     # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
     react_native_post_install(
@@ -32,5 +37,12 @@ target 'vanili_jaya' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+    
+    # Additional build settings to prevent module errors
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+      end
+    end
   end
 end

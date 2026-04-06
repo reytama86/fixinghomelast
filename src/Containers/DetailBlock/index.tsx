@@ -20,6 +20,7 @@ import {RouteProp, useRoute} from '@react-navigation/native';
 import {RootStackParamList} from '@Constants/RouteParamsList.constants';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {AuthContext} from '@Context/AuthContext';
+import FertilizerBlock01 from './Section/FertilizerBlock01';
 
 type DetailBlockRouteProp = RouteProp<RootStackParamList, 'DetailBlock'>;
 
@@ -35,6 +36,7 @@ const DetailBlock: React.FC = () => {
   const {
     blockTitle,
     blockControls,
+    hasControl,
     sensorData,
     loading,
     showDurationModal,
@@ -72,6 +74,7 @@ const DetailBlock: React.FC = () => {
   const canControl = user?.role !== 'farmer';
   const isFarmer = user?.role === 'farmer';
 
+
   const expandableBlocks =
     blockId === 4
       ? [
@@ -83,7 +86,7 @@ const DetailBlock: React.FC = () => {
             mainControl: blockControls.main,
             row1Control: blockControls.row1Water,
             row2Control: blockControls.row2Water,
-            isDisabled: blockControls.main.isFertilizerOn,
+            isDisabled: blockControls.main?.isFertilizerOn,
           },
           {
             title: 'Fertilizer',
@@ -93,10 +96,26 @@ const DetailBlock: React.FC = () => {
             mainControl: blockControls.main,
             row1Control: blockControls.row1Fertilizer,
             row2Control: blockControls.row2Fertilizer,
-            isDisabled: blockControls.main.isWaterOn,
+            isDisabled: blockControls.main?.isWaterOn,
           },
         ]
       : [];
+
+  const renderControl = () => {
+    if (!canControl || !hasControl) return null;
+
+    if (blockId === 4) {
+      return expandableBlocks.map((block, index) => (
+        <ExpandableBlock key={index} {...block} onToggle={handleToggle} />
+      ));
+    }
+
+    if (blockId === 1 && blockControls.type === 'block01') {
+      return <FertilizerBlock01 control={blockControls.block01} />;
+    }
+
+    return null;
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -130,10 +149,7 @@ const DetailBlock: React.FC = () => {
           }>
           <View style={{height: 30}} />
 
-          {canControl &&
-            expandableBlocks.map((block, index) => (
-              <ExpandableBlock key={index} {...block} onToggle={handleToggle} />
-            ))}
+          {renderControl()}
 
           {blockControls.devices?.map((device, index) => (
             <DeviceCard

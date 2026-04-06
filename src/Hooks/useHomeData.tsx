@@ -1,4 +1,4 @@
-import {useState, useCallback, useEffect} from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { PortableToolData } from '@Containers/PortableListScreen/usePortableList';
 
 type SensorMedianData = {
@@ -15,15 +15,17 @@ type MedianSensorResponse = {
 };
 
 type SensorDataBlock = {
-  block1: {temp: string; humidity: string};
-  block2: {temp: string; humidity: string};
+  block1: { temp: string; humidity: string };
+  block2: { temp: string; humidity: string };
+  block01: { temp: string; humidity: string };
 };
 
 export const useHomeData = () => {
   const [sensorData, setSensorData] = useState<MedianSensorResponse['data'] | null>(null);
   const [sensorDataBlock, setSensorDataBlock] = useState<SensorDataBlock>({
-    block1: {temp: '--', humidity: '--'},
-    block2: {temp: '--', humidity: '--'},
+    block1: { temp: '--', humidity: '--' },
+    block2: { temp: '--', humidity: '--' },
+    block01: { temp: '--', humidity: '--' },
   });
   const [portableData, setPortableData] = useState<PortableToolData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,17 +57,30 @@ export const useHomeData = () => {
         const data = result.data;
 
         const block1Temp = data.find(
-          ( item: { id_sensor: number; keterangan_sensor: string; }) => item.id_sensor === 2 && item.keterangan_sensor === 'Temperature',
+          (item: { id_sensor: number; keterangan_sensor: string; }) => 
+            item.id_sensor === 2 && item.keterangan_sensor === 'Temperature',
         );
         const block1Humidity = data.find(
-          ( item: { id_sensor: number; keterangan_sensor: string; }) => item.id_sensor === 2 && item.keterangan_sensor === 'Humidity',
+          (item: { id_sensor: number; keterangan_sensor: string; }) => 
+            item.id_sensor === 2 && item.keterangan_sensor === 'Humidity',
         );
 
         const block2Temp = data.find(
-          ( item: { id_sensor: number; keterangan_sensor: string; }) => item.id_sensor === 5 && item.keterangan_sensor === 'Temperature',
+          (item: { id_sensor: number; keterangan_sensor: string; }) => 
+            item.id_sensor === 5 && item.keterangan_sensor === 'Temperature',
         );
         const block2Humidity = data.find(
-          ( item: { id_sensor: number; keterangan_sensor: string; }) => item.id_sensor === 5 && item.keterangan_sensor === 'Humidity',
+          (item: { id_sensor: number; keterangan_sensor: string; }) => 
+            item.id_sensor === 5 && item.keterangan_sensor === 'Humidity',
+        );
+
+        const block01Temp = data.find(
+          (item: { id_sensor: number; keterangan_sensor: string }) =>
+            item.id_sensor === 9 && item.keterangan_sensor === 'Temperature',
+        );
+        const block01Humidity = data.find(
+          (item: { id_sensor: number; keterangan_sensor: string }) =>
+            item.id_sensor === 9 && item.keterangan_sensor === 'Humidity',
         );
 
         setSensorDataBlock({
@@ -76,6 +91,10 @@ export const useHomeData = () => {
           block2: {
             temp: block2Temp ? block2Temp.nilai_sensor : '--',
             humidity: block2Humidity ? block2Humidity.nilai_sensor : '--',
+          },
+          block01: {
+            temp: block01Temp ? block01Temp.nilai_sensor : '--',
+            humidity: block01Humidity ? block01Humidity.nilai_sensor : '--',
           },
         });
       }

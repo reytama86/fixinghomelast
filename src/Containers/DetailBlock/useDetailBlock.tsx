@@ -8,27 +8,35 @@ interface BlockConfig {
   blockTitle: string;
   apiEndpoint: string;
   devices: number[];
+  hasControl: boolean;
 }
 
-const BLOCK_CONFIGS: Record<3 | 4, BlockConfig> = {
+const BLOCK_CONFIGS: Record<1 | 3 | 4, BlockConfig> = {
+  1: {
+    blockNumber: 0,
+    blockTitle: 'Block 1',
+    apiEndpoint: 'https://iot-vanili-api.permataindonesia.com/api/latest-sensor-block01',
+    devices: [1, 2, 3],
+    hasControl: true,
+  },
   4: {
     blockNumber: 1,
     blockTitle: 'Block 4',
-    apiEndpoint:
-      'https://iot-vanili-api.permataindonesia.com/api/latest-sensor-block1',
+    apiEndpoint: 'https://iot-vanili-api.permataindonesia.com/api/latest-sensor-block1',
     devices: [1, 2, 3],
+    hasControl: true,
   },
   3: {
     blockNumber: 2,
     blockTitle: 'Block 3',
-    apiEndpoint:
-      'https://iot-vanili-api.permataindonesia.com/api/latest-sensor-block2',
+    apiEndpoint: 'https://iot-vanili-api.permataindonesia.com/api/latest-sensor-block2',
     devices: [1, 2, 3],
+    hasControl: false,
   },
 };
 
 export const useDetailBlock = (blockIdParam?: number) => {
-  const blockId = blockIdParam === 3 ? 3 : 4;
+  const blockId = blockIdParam === 3 ? 3 : blockIdParam === 1 ? 1 : 4;
   const config = BLOCK_CONFIGS[blockId];
   const {setActivePage} = usePageControl();
   const controls = useControl();
@@ -52,22 +60,30 @@ export const useDetailBlock = (blockIdParam?: number) => {
   const [inputSeconds, setInputSeconds] = useState('0');
 
   const blockControls = useMemo(() => {
-    if (blockId === 4) {
-      return {
-        main: controls.block1Control,
-        row1Water: controls.block1RowWater1Control,
-        row2Water: controls.block1RowWater2Control,
-        row1Fertilizer: controls.block1RowFertilizer1Control,
-        row2Fertilizer: controls.block1RowFertilizer2Control,
-        devices: config.devices,
-      };
-    }
-
+  if (blockId === 4) {
     return {
-      main: controls.block2Control,
+      type: 'block4' as const,
+      main: controls.block1Control,
+      row1Water: controls.block1RowWater1Control,
+      row2Water: controls.block1RowWater2Control,
+      row1Fertilizer: controls.block1RowFertilizer1Control,
+      row2Fertilizer: controls.block1RowFertilizer2Control,
       devices: config.devices,
     };
-  }, [blockId, config, controls]);
+  }
+  if (blockId === 1) {
+    return {
+      type: 'block01' as const,
+      block01: controls.block01Control,
+      devices: config.devices,
+    };
+  }
+  return {
+    type: 'block3' as const,
+    main: controls.block2Control,
+    devices: config.devices,
+  };
+}, [blockId, config, controls]);
 
   const fetchSensorData = useCallback(async () => {
     try {
@@ -79,6 +95,7 @@ export const useDetailBlock = (blockIdParam?: number) => {
       }
 
       const result = await response.json();
+      // console.log('Fetched sensor data:', result);
 
       if (result.success) {
         setSensorData(result.data);
@@ -113,7 +130,8 @@ export const useDetailBlock = (blockIdParam?: number) => {
 
   useFocusEffect(
     useCallback(() => {
-      setActivePage(blockId === 4 ? 'block1' : 'block2');
+      const page = blockId === 4 ? 'block1' : blockId === 1 ? 'block01' : 'block2';
+      setActivePage(page);
       fetchSensorData();
     }, [blockId, fetchSensorData, setActivePage]),
   );
@@ -203,7 +221,6 @@ export const useDetailBlock = (blockIdParam?: number) => {
   return {
     blockNumber: config.blockNumber,
     blockTitle: config.blockTitle,
-    blockControls,
     apiEndpoint: config.apiEndpoint,
 
     sensorData,
@@ -217,6 +234,9 @@ export const useDetailBlock = (blockIdParam?: number) => {
     confirmProcess,
     inputMinutes,
     inputSeconds,
+
+    blockControls,
+    hasControl: config.hasControl,
 
     handleToggle,
     handleStartProcess,

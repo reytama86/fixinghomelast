@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Text, TouchableOpacity, Dimensions} from 'react-native';
+import {View, Text, TouchableOpacity, Dimensions, ScrollView} from 'react-native';
 import {Maximize1} from 'iconsax-react-native';
 import {BlockCard} from '@Organism/BlockCard';
 import {styles} from './styles';
@@ -11,6 +11,7 @@ const cardWidth = (screenWidth - 45.5) / 2;
 interface SensorDataBlock {
   block1: {temp: string; humidity: string};
   block2: {temp: string; humidity: string};
+  block01: {temp: string; humidity: string};
 }
 
 interface FieldListProps {
@@ -20,6 +21,14 @@ interface FieldListProps {
 
 const FieldList: React.FC<FieldListProps> = ({sensorDataBlock, navigation}) => {
   const blocks = [
+    {
+      id: 1,
+      name: 'Block 1',
+      temperature: Math.round(Number(sensorDataBlock.block01.temp)).toString(),
+      humidity: Math.round(Number(sensorDataBlock.block01.humidity)).toString(),
+      navigationEnabled: true,
+      svgPath: 'block1' as const,
+    },
     {
       id: 3,
       name: 'Block 3',
@@ -53,17 +62,19 @@ const FieldList: React.FC<FieldListProps> = ({sensorDataBlock, navigation}) => {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.containerBlock}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}>
         {blocks.map(block => (
           <BlockCard
             key={block.id}
             block={block}
             navigation={navigation}
             cardWidth={cardWidth}
-            // from="HomeFix"
           />
         ))}
-      </View>
+      </ScrollView>
     </View>
   );
 };

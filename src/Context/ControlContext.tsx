@@ -11,6 +11,7 @@ import React, {
 import { useMqtt } from '../Hooks/UseMqtt';
 import { useControlState } from '../Hooks/useControlState';
 import * as Paho from 'paho-mqtt';
+import { Block01ControlState, useBlock01Control } from '@Hooks/useBlock01Control';
 
 const TOPIC_CONFIG = {
   HOME_PREFIX: '1106200396',
@@ -19,6 +20,7 @@ const TOPIC_CONFIG = {
   BLOCK1_ROWWATER2_PREFIX: '/blok1/baris2air',
   BLOCK1_ROWFERTILIZER1_PREFIX: '/blok1/baris1pupuk',
   BLOCK1_ROWFERTILIZER2_PREFIX: '/blok1/baris2pupuk',
+  BLOCK01_FERTILIZER_PREFIX: '/blok01',
   BLOCK2_PREFIX: '/blok2',
   PORTABLE_PREFIX: 'data/portable',
 } as const;
@@ -80,6 +82,15 @@ const ALL_TOPICS = [
   `start/water${TOPIC_CONFIG.BLOCK2_PREFIX}`,
   `start/fertilizer${TOPIC_CONFIG.BLOCK2_PREFIX}`,
 
+  // Block01 Fertilizer topics
+  `control/fertilizer${TOPIC_CONFIG.BLOCK01_FERTILIZER_PREFIX}`,
+  `start/fertilizer/blok01/pupuktanah`,
+  `start/fertilizer/blok01/pupukdaun`,
+  `control/fertilizer/blok01/pupuktanah`,
+  `control/fertilizer/blok01/pupukdaun`,
+  `water/tank/TANK-001/event`,
+  `water/tank/TANK-001/telemetry`,
+
   // Portable topics
   `${TOPIC_CONFIG.PORTABLE_PREFIX}/+`,
 ] as const;
@@ -98,6 +109,7 @@ type ControlContextValue = {
   block1RowFertilizer2Control: ReturnType<typeof useControlState>;
   block2Control: ReturnType<typeof useControlState>;
   portableData: ReturnType<typeof useControlState>;
+  block01Control: Block01ControlState;
 };
 
 const ControlContext = createContext<ControlContextValue | undefined>(
@@ -182,6 +194,10 @@ export const ControlProvider: React.FC<ControlProviderProps> = ({children}) => {
     isActive: currentPage === 'block2',
   });
 
+  const block01Control = useBlock01Control({
+    publish: stablePublish,
+  });
+
   const portableData = useControlState({
     topicPrefix: TOPIC_CONFIG.PORTABLE_PREFIX,
     publish: stablePublish,
@@ -208,6 +224,10 @@ export const ControlProvider: React.FC<ControlProviderProps> = ({children}) => {
         block2Control.handleMqttMessage(topic, payload);
       else if (topic.includes(TOPIC_CONFIG.PORTABLE_PREFIX))
         portableData.handleMqttMessage(topic, payload);
+      else if (topic.includes('TANK-001'))
+        block01Control.handleMqttMessage(topic, payload);
+      else if (topic.includes('blok01'))
+        block01Control.handleMqttMessage(topic, payload);
     },
     [
       homeControl,
@@ -218,6 +238,7 @@ export const ControlProvider: React.FC<ControlProviderProps> = ({children}) => {
       block1RowFertilizer2Control,
       block2Control,
       portableData,
+      block01Control,
     ],
   );
 
@@ -292,6 +313,7 @@ export const ControlProvider: React.FC<ControlProviderProps> = ({children}) => {
       block1RowFertilizer2Control,
       block2Control,
       portableData,
+      block01Control,
     }),
     [
       isConnected,
@@ -306,6 +328,7 @@ export const ControlProvider: React.FC<ControlProviderProps> = ({children}) => {
       block1RowFertilizer2Control,
       block2Control,
       portableData,
+      block01Control,
     ],
   );
 

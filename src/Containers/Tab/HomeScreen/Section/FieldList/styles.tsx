@@ -30,12 +30,12 @@ export const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#B4DC45',
   },
-  containerBlock: {
-    height: 175,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    flex: 1,
-  },
+  scrollContent: {
+  flexDirection: 'row',
+  gap: 10,          // jarak antar card
+  paddingRight: 16, // breathing room di ujung kanan
+  alignItems: 'center',
+},
   cardBlockContent: {
     flex: 1,
     position: 'relative',

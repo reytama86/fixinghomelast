@@ -1,12 +1,9 @@
 import {StyleSheet} from 'react-native';
 
 export const styles = StyleSheet.create({
+  // FIXED: pakai absoluteFillObject + justifyContent center
   modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -16,7 +13,7 @@ export const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 10,
     width: 343,
-    minHeight: 168,
+    // FIXED: hapus minHeight, biarkan content menentukan height
   },
   titleContainer: {
     marginBottom: 10,

@@ -1,12 +1,12 @@
-import React, {useState, useMemo, useEffect} from 'react';
-import {View, Text, Dimensions} from 'react-native';
-import {LineChart} from 'react-native-gifted-charts';
+import React, { useState, useMemo, useEffect } from 'react';
+import { View, Text, Dimensions, ActivityIndicator } from 'react-native';
+import { LineChart } from 'react-native-gifted-charts';
 import SegmentedControl from '@react-native-segmented-control/segmented-control';
-import {Sensor, Blok, RangeType, SensorType} from '@Types/Chart/Chart.data';
+import { Sensor, Blok, RangeType, SensorType } from '@Types/Chart/Chart.data';
 import styles from './styles';
-import {fetchBlokList, fetchSensorList, useChartData} from '../../useChartData';
+import { fetchBlokList, fetchSensorList, useChartData } from '../../useChartData';
 
-const {width: SCREEN_W} = Dimensions.get('window');
+const { width: SCREEN_W } = Dimensions.get('window');
 const PADDING = 16;
 const CARD_WIDTH = SCREEN_W - PADDING * 2;
 
@@ -39,10 +39,12 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   useEffect(() => {
     fetchBlokList().then(setBlokList).catch(console.error);
   }, []);
+
   useEffect(() => {
     fetchSensorList().then(setSensorList).catch(console.error);
   }, []);
 
+  // FIX: Deduplikasi sensor
   const uniqueSensors = useMemo(() => {
     const map = new Map<string, Sensor>();
     sensorList.forEach(s => {
@@ -51,10 +53,24 @@ export const ChartCard: React.FC<ChartCardProps> = ({
     return Array.from(map.values());
   }, [sensorList]);
 
-  const selectedSensor = uniqueSensors[selectedSensorIndex];
-  const selectedBlok = blokList[selectedBlokIndex];
+  // FIX: Sort blokList sekali di sini pakai useMemo agar index selalu konsisten
+  // dan tidak berubah-ubah saat re-render
+  const sortedBlokList = useMemo(() => {
+    return [...blokList].sort((a, b) => {
+      const numA = parseInt(a.nama_blok.replace(/\D/g, ''), 10);
+      const numB = parseInt(b.nama_blok.replace(/\D/g, ''), 10);
+      return numA - numB;
+    });
+  }, [blokList]);
 
-  const {data: barData} = useChartData(
+  // FIX: Clamp index agar tidak out of bounds saat list berubah
+  const safeBlokIndex = Math.min(selectedBlokIndex, sortedBlokList.length - 1);
+  const safeSensorIndex = Math.min(selectedSensorIndex, uniqueSensors.length - 1);
+
+  const selectedSensor = uniqueSensors[safeSensorIndex];
+  const selectedBlok = sortedBlokList[safeBlokIndex];
+
+  const { data: barData, loading } = useChartData(
     sensorType,
     range,
     selectedSensor,
@@ -68,32 +84,25 @@ export const ChartCard: React.FC<ChartCardProps> = ({
     const total = allDates.length;
 
     if (range === '1M') {
-      const idxFirst = 0;
-      const idxQuarter = Math.floor(total * 0.25);
-      const idxHalf = Math.floor(total * 0.5);
-      const idxLast = total - 1;
       return [
-        allDates[idxFirst],
-        allDates[idxQuarter],
-        allDates[idxHalf],
-        allDates[idxLast],
+        allDates[0],
+        allDates[Math.floor(total * 0.25)],
+        allDates[Math.floor(total * 0.5)],
+        allDates[total - 1],
       ];
     } else if (range === '1Y' || range === 'Max') {
-      const idxFirst = 0;
-      const idxQuarter = Math.floor(total * 0.33);
-      const idxHalf = Math.floor(total * 0.66);
-      const idxLast = total - 1;
       return [
-        allDates[idxFirst],
-        allDates[idxQuarter],
-        allDates[idxHalf],
-        allDates[idxLast],
+        allDates[0],
+        allDates[Math.floor(total * 0.33)],
+        allDates[Math.floor(total * 0.66)],
+        allDates[total - 1],
       ];
     } else {
-      const idxFirst = 0;
-      const idxMid = Math.floor((total - 1) / 2);
-      const idxLast = total - 1;
-      return [allDates[idxFirst], allDates[idxMid], allDates[idxLast]];
+      return [
+        allDates[0],
+        allDates[Math.floor((total - 1) / 2)],
+        allDates[total - 1],
+      ];
     }
   }, [barData, range]);
 
@@ -130,14 +139,21 @@ export const ChartCard: React.FC<ChartCardProps> = ({
           spacing: CARD_WIDTH / (dataLength - 1),
           initialSpacing: 0,
           showVerticalLines: false,
+          chartWidth: 315.5,
+          rulesLength: 309,
         };
     }
   }, [range, barData.length]);
+
+  // FIX: Tampilkan loading state saat list belum siap
+  // agar SegmentedControl tidak render dengan data kosong
+  const isListReady = sortedBlokList.length > 0 && uniqueSensors.length > 0;
 
   return (
     <View style={styles.card}>
       <Text style={styles.title}>{title}</Text>
 
+      {/* Range selector */}
       <View style={styles.rangeContainer}>
         <SegmentedControl
           values={rangeOptions}
@@ -164,26 +180,18 @@ export const ChartCard: React.FC<ChartCardProps> = ({
         />
       </View>
 
+      {/* Blok & Sensor selector */}
       <View style={styles.selectorRow}>
         <View style={styles.selectorWrapper}>
-          {blokList.length > 0 ? (
+          {sortedBlokList.length > 0 ? (
             <SegmentedControl
-              values={[...blokList]
-                .sort((a, b) => {
-                  const numA = parseInt(a.nama_blok.replace(/\D/g, ''), 10);
-                  const numB = parseInt(b.nama_blok.replace(/\D/g, ''), 10);
-                  return numA - numB;
-                })
-                .map(b => b.nama_blok)}
-              selectedIndex={selectedBlokIndex}
+              values={sortedBlokList.map(b => b.nama_blok)}
+              selectedIndex={safeBlokIndex}
               onChange={e =>
                 setSelectedBlokIndex(e.nativeEvent.selectedSegmentIndex)
               }
               style={styles.selectorControl}
-              fontStyle={{
-                fontFamily: 'SpaceGrotesk-Regular',
-                fontSize: 12,
-              }}
+              fontStyle={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 12 }}
               activeFontStyle={{
                 fontFamily: 'SpaceGrotesk-Regular',
                 fontSize: 12,
@@ -191,7 +199,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               }}
             />
           ) : (
-            <Text style={{color: 'gray', textAlign: 'center'}}>
+            <Text style={{ color: 'gray', textAlign: 'center' }}>
               Memuat daftar blok…
             </Text>
           )}
@@ -201,15 +209,12 @@ export const ChartCard: React.FC<ChartCardProps> = ({
           {uniqueSensors.length > 0 ? (
             <SegmentedControl
               values={uniqueSensors.map(s => s.esp_id)}
-              selectedIndex={selectedSensorIndex}
+              selectedIndex={safeSensorIndex}
               onChange={e =>
                 setSelectedSensorIndex(e.nativeEvent.selectedSegmentIndex)
               }
               style={styles.selectorControl}
-              fontStyle={{
-                fontFamily: 'SpaceGrotesk-Regular',
-                fontSize: 12,
-              }}
+              fontStyle={{ fontFamily: 'SpaceGrotesk-Regular', fontSize: 12 }}
               activeFontStyle={{
                 fontFamily: 'SpaceGrotesk-Regular',
                 fontSize: 12,
@@ -217,92 +222,115 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               }}
             />
           ) : (
-            <Text style={{color: 'gray', textAlign: 'center'}}>
+            <Text style={{ color: 'gray', textAlign: 'center' }}>
               Memuat sensor…
             </Text>
           )}
         </View>
       </View>
 
+      {/* Chart area */}
       <View style={styles.chartWrapper}>
-        <LineChart
-          data={barData}
-          width={chartConfig.chartWidth}
-          height={220}
-          initialSpacing={chartConfig.initialSpacing}
-          spacing={chartConfig.spacing}
-          areaChart
-          curved={false}
-          color="#B4DC45"
-          hideDataPoints
-          maxValue={maxValue}
-          yAxisTextStyle={styles.yAxisText}
-          xAxisColor="transparent"
-          yAxisColor="transparent"
-          noOfSections={4}
-          rulesType="solid"
-          rulesLength={chartConfig.rulesLength}
-          rulesColor="#eee"
-          showVerticalLines={chartConfig.showVerticalLines}
-          startFillColor="#B4DC45"
-          endFillColor="#B4DC45"
-          startOpacity={0.5}
-          endOpacity={0}
-          pointerConfig={{
-            pointerStripHeight: 270,
-            pointerStripColor: '#DEE2E7',
-            pointerStripWidth: 1.5,
-            strokeDashArray: [4, 4],
-            pointerColor: '#B4DC45',
-            radius: 6,
-            activatePointersOnLongPress: false,
-            activatePointersDelay: 150,
-            stripOverPointer: false,
-            autoAdjustPointerLabelPosition: true,
-            pointerLabelWidth: 100,
-            persistPointer: false,
-            hidePointer1: false,
-            hidePointer2: false,
-            hidePointer3: false,
-            hidePointer4: false,
-            hidePointer5: false,
-            pointerLabelComponent: (items: any[]) => {
-              if (!items || !items[0]) return null;
-              const item = items[0];
-              const value = item.value;
-              const date = item.date || '';
+        {/* FIX: Tampilkan loading overlay di atas chart saat fetching */}
+        {loading && (
+          <View
+            style={{
+              position: 'absolute',
+              top: 0, left: 0, right: 0, bottom: 0,
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 10,
+              backgroundColor: 'rgba(255,255,255,0.6)',
+            }}>
+            <ActivityIndicator size="small" color="#B4DC45" />
+          </View>
+        )}
 
-              if (typeof value !== 'number' || isNaN(value)) {
-                console.log('❌ Invalid value:', value);
-                return null;
-              }
+        {/* FIX: Hanya render LineChart kalau ada data, 
+            hindari crash saat barData kosong */}
+        {barData.length > 0 ? (
+          <LineChart
+            data={barData}
+            width={chartConfig.chartWidth}
+            height={220}
+            initialSpacing={chartConfig.initialSpacing}
+            spacing={chartConfig.spacing}
+            areaChart
+            curved={false}
+            color="#B4DC45"
+            hideDataPoints
+            maxValue={maxValue}
+            yAxisTextStyle={styles.yAxisText}
+            xAxisColor="transparent"
+            yAxisColor="transparent"
+            noOfSections={4}
+            rulesType="solid"
+            rulesLength={chartConfig.rulesLength}
+            rulesColor="#eee"
+            showVerticalLines={chartConfig.showVerticalLines}
+            startFillColor="#B4DC45"
+            endFillColor="#B4DC45"
+            startOpacity={0.5}
+            endOpacity={0}
+            pointerConfig={{
+              pointerStripHeight: 270,
+              pointerStripColor: '#DEE2E7',
+              pointerStripWidth: 1.5,
+              strokeDashArray: [4, 4],
+              pointerColor: '#B4DC45',
+              radius: 6,
+              activatePointersOnLongPress: false,
+              activatePointersDelay: 150,
+              stripOverPointer: false,
+              autoAdjustPointerLabelPosition: true,
+              pointerLabelWidth: 100,
+              persistPointer: false,
+              hidePointer1: false,
+              hidePointer2: false,
+              hidePointer3: false,
+              hidePointer4: false,
+              hidePointer5: false,
+              pointerLabelComponent: (items: any[]) => {
+                if (!items || !items[0]) return null;
+                const item = items[0];
+                const value = item.value;
+                const date = item.date || '';
 
-              const [d, t] = date.split('\n');
-              const isAboveThreshold = value > tooltipThreshold;
+                if (typeof value !== 'number' || isNaN(value)) return null;
 
-              return (
-                <View
-                  style={[
-                    styles.tooltip,
-                    isAboveThreshold && {marginTop: 100},
-                  ]}>
-                  {isAboveThreshold && <View style={styles.tooltipArrowUp} />}
-                  {!isAboveThreshold && (
-                    <View style={styles.tooltipArrowDown} />
-                  )}
-                  <Text style={styles.tooltipText}>
-                    {formatValue(value)} {unit}
-                  </Text>
-                  <View style={styles.tooltipDivider} />
-                  <View style={styles.tooltipDateRow}>
-                    <Text style={styles.tooltipSub}>{d || ''}</Text>
-                    <Text style={styles.tooltipSub}>{t || ''}</Text>
+                const [d, t] = date.split('\n');
+                const isAboveThreshold = value > tooltipThreshold;
+
+                return (
+                  <View
+                    style={[
+                      styles.tooltip,
+                      isAboveThreshold && { marginTop: 100 },
+                    ]}>
+                    {isAboveThreshold && <View style={styles.tooltipArrowUp} />}
+                    {!isAboveThreshold && <View style={styles.tooltipArrowDown} />}
+                    <Text style={styles.tooltipText}>
+                      {formatValue(value)} {unit}
+                    </Text>
+                    <View style={styles.tooltipDivider} />
+                    <View style={styles.tooltipDateRow}>
+                      <Text style={styles.tooltipSub}>{d || ''}</Text>
+                      <Text style={styles.tooltipSub}>{t || ''}</Text>
+                    </View>
                   </View>
-                </View>
-              );
-            },
-          }}
-        />
+                );
+              },
+            }}
+          />
+        ) : (
+          !loading && (
+            <View style={{ height: 220, justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={{ color: '#aaa', fontSize: 13, fontFamily: 'SpaceGrotesk-Regular' }}>
+                Tidak ada data
+              </Text>
+            </View>
+          )
+        )}
       </View>
 
       <View style={styles.xLabels}>

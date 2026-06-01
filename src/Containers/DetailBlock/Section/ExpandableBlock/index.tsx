@@ -77,23 +77,23 @@ export const ExpandableBlock: React.FC<ExpandableBlockProps> = ({
     }
   }, [mainState.isActive, row1State, row2State]);
 
-  const toggleExpand = useCallback(() => {
-    Animated.parallel([
-      Animated.timing(heightAnim, {
-        toValue: expanded ? 88 : 215,
-        duration: 300,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: false,
-      }),
-      Animated.timing(rotateAnim, {
-        toValue: expanded ? 0 : 1,
-        duration: 300,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: true,
-      }),
-    ]).start();
-    setExpanded(prev => !prev);
-  }, [expanded, heightAnim, rotateAnim]);
+  // const toggleExpand = useCallback(() => {
+  //   Animated.parallel([
+  //     Animated.timing(heightAnim, {
+  //       toValue: expanded ? 88 : 215,
+  //       duration: 300,
+  //       easing: Easing.out(Easing.quad),
+  //       useNativeDriver: false,
+  //     }),
+  //     Animated.timing(rotateAnim, {
+  //       toValue: expanded ? 0 : 1,
+  //       duration: 300,
+  //       easing: Easing.out(Easing.quad),
+  //       useNativeDriver: true,
+  //     }),
+  //   ]).start();
+  //   setExpanded(prev => !prev);
+  // }, [expanded, heightAnim, rotateAnim]);
 
   const isAnyRowActive = useMemo(() => {
     if (!row1Control || !row2Control) return false;
@@ -181,6 +181,38 @@ export const ExpandableBlock: React.FC<ExpandableBlockProps> = ({
     ],
     [row1State, row2State],
   );
+
+  // Di dalam ExpandableBlock, ganti toggleExpand dan tambahkan useEffect reset:
+
+// FIXED: Tambahkan ini untuk sync animation state kalau component re-render
+useEffect(() => {
+  // Reset ke collapsed state kalau block type berubah
+  setExpanded(false);
+  heightAnim.setValue(88);
+  rotateAnim.setValue(0);
+}, [blockType]); // reset saat blockType berubah
+
+const toggleExpand = useCallback(() => {
+  const toHeight = expanded ? 88 : 215;
+  const toRotate = expanded ? 0 : 1;
+  
+  setExpanded(prev => !prev); // FIXED: update state SEBELUM animation mulai
+  
+  Animated.parallel([
+    Animated.timing(heightAnim, {
+      toValue: toHeight,
+      duration: 300,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: false,
+    }),
+    Animated.timing(rotateAnim, {
+      toValue: toRotate,
+      duration: 300,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }),
+  ]).start();
+}, [expanded, heightAnim, rotateAnim]);
 
   return (
     <Animated.View style={[styles.container, {height: heightAnim}]}>

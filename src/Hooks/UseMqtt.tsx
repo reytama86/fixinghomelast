@@ -134,7 +134,7 @@ export function useMqtt(): UseMqttResult {
     };
 
     const connectOptions = {
-      useSSL: true,
+      useSSL: false,
       cleanSession: true,
       // clientId: clientId,
       userName: 'superAdmNyamuk1',

@@ -123,7 +123,7 @@ const DetailBlock: React.FC = () => {
         back={true}
         title={blockTitle}
         animated={true}
-        mode={headerMode}
+        mode='normal'
       />
       <View
         style={[
@@ -136,7 +136,7 @@ const DetailBlock: React.FC = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           bounces={true}
-          onScroll={handleScroll}
+          // onScroll={handleScroll}
           scrollEventThrottle={16}
           refreshControl={
             <RefreshControl

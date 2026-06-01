@@ -1,62 +1,19 @@
-import { StyleSheet, Platform } from 'react-native';
+import {StyleSheet, Platform} from 'react-native';
 
 export default StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  footerWrapper: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 50,
-  },
-  footerBox: {
-    height: 84,
-    backgroundColor: '#fff',
-    marginHorizontal: 0,
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  downloadButton: {
-    width: 351,
-    height: 36,
-    backgroundColor: '#B4DC45',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  downloadButtonDisabled: {
-    backgroundColor: '#cccccc',
-  },
-  downloadText: {
-    color: 'black',
-    fontWeight: '600',
-    fontFamily: 'SpaceGrotesk-Regular',
-  },
-
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
   },
-  modalKeyboardWrap: {
+  keyboardWrap: {
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modalContainer: {
+  container: {
     backgroundColor: '#fff',
     borderRadius: 12,
     width: '95%',
@@ -64,99 +21,62 @@ export default StyleSheet.create({
     maxHeight: '90%',
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 8,
   },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+  header: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
     backgroundColor: '#f8f9fa',
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
+    alignItems: 'center',
   },
-  modalTitle: {
+  headerTitle: {
     fontSize: 16,
     fontWeight: '600',
     fontFamily: 'SpaceGrotesk-Medium',
     color: '#000',
   },
-  modalContent: {
+  scrollView: {
     flexGrow: 0,
   },
-  modalContentContainer: {
+  scrollContent: {
     paddingHorizontal: 16,
     paddingVertical: 16,
-    paddingBottom: 60,
+    paddingBottom: 24,
   },
-
-  formRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-    gap: 8,
-  },
-  halfWidth: {
-    flex: 1,
-  },
-  inputContainer: {
+  inputGroup: {
     marginBottom: 12,
   },
-  inputLabel: {
+  label: {
     fontSize: 12,
     fontWeight: '500',
     color: '#333',
     marginBottom: 6,
     fontFamily: 'SpaceGrotesk-Medium',
   },
-  dateInputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    backgroundColor: '#fff',
-    minHeight: 36,
-  },
-  dateDisplayText: {
-    flex: 1,
-    marginLeft: 6,
-    fontSize: 13,
-    color: '#333',
-    fontFamily: 'SpaceGrotesk-Regular',
-  },
-  placeholderText: {
-    color: '#999',
-    fontFamily: 'SpaceGrotesk-Regular',
-  },
-
-  dropdownWrapper: {
+  dropdownTrigger: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
     backgroundColor: '#fff',
-    minHeight: 36,
+    minHeight: 38,
   },
-  dropdownText: {
+  dropdownTriggerText: {
     flex: 1,
     fontSize: 13,
     color: '#333',
     fontFamily: 'SpaceGrotesk-Regular',
   },
-  dropdownContainer: {
+  dropdown: {
     position: 'absolute',
     top: '100%',
     left: 0,
@@ -168,13 +88,13 @@ export default StyleSheet.create({
     marginTop: 4,
     maxHeight: 200,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.15,
     shadowRadius: 4,
-    elevation: 6,
+    elevation: 10,
     zIndex: 1000,
   },
-  dropdownScrollView: {
+  dropdownScroll: {
     maxHeight: 200,
   },
   dropdownItem: {
@@ -188,12 +108,31 @@ export default StyleSheet.create({
     color: '#333',
     fontFamily: 'SpaceGrotesk-Regular',
   },
-
-  inlinePickerContainer: {
+  dateTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+    backgroundColor: '#fff',
+    minHeight: 38,
+  },
+  dateTriggerText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#333',
+    fontFamily: 'SpaceGrotesk-Regular',
+  },
+  placeholder: {
+    color: '#999',
+  },
+  inlinePicker: {
     backgroundColor: '#f8f9fa',
     borderRadius: 8,
     padding: 12,
-    marginVertical: 8,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#e9ecef',
   },
@@ -209,7 +148,7 @@ export default StyleSheet.create({
     color: '#333',
     fontFamily: 'SpaceGrotesk-Medium',
   },
-  pickerCloseButton: {
+  pickerClose: {
     padding: 4,
     borderRadius: 4,
     backgroundColor: '#e9ecef',
@@ -219,40 +158,35 @@ export default StyleSheet.create({
     fontWeight: '600',
     color: '#666',
   },
-  inlinePicker: {
-    backgroundColor: 'transparent',
-    height: Platform.OS === 'ios' ? 100 : 'auto',
-  },
-
-  modalButtonContainer: {
+  buttonRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 10,
     marginTop: 16,
-    gap: 8,
+    marginBottom: 30,
   },
   cancelButton: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 9,
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#B4DC45',
     backgroundColor: '#fff',
     alignItems: 'center',
   },
-  cancelButtonText: {
+  cancelText: {
     fontSize: 14,
     fontWeight: '500',
-    color: 'black',
+    color: '#333',
     fontFamily: 'SpaceGrotesk-Medium',
   },
   confirmButton: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 9,
     borderRadius: 6,
     backgroundColor: '#B4DC45',
     alignItems: 'center',
   },
-  confirmButtonText: {
+  confirmText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#000',

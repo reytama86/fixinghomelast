@@ -51,8 +51,11 @@ export const fetchReportData = async (
   blockName: string
 ): Promise<any[]> => {
   try {
-    const daysDiff = calculateDaysDiff(`${startDateStr} 00:00:00`, `${endDateStr} 23:59:59`);
-    const endpoint = getEndpointByDays(daysDiff); 
+    const daysDiff = calculateDaysDiff(
+      `${startDateStr} 00:00:00`,
+      `${endDateStr} 23:59:59`
+    );
+    const endpoint = getEndpointByDays(daysDiff);
     const params = new URLSearchParams({
       startDate: `${startDateStr} 00:00:00`,
       endDate: `${endDateStr} 23:59:59`,
@@ -86,7 +89,11 @@ export const useChartData = (
     if (!selectedSensor || !selectedBlok) return;
 
     const abortController = new AbortController();
+
+    // FIX: Reset data dan set loading sebelum fetch baru dimulai
+    // agar tidak ada stale data dari request sebelumnya
     setLoading(true);
+    setData([]);
     setError(null);
 
     const fetchData = async () => {
@@ -134,6 +141,7 @@ export const useChartData = (
         if (!resp.ok) throw new Error(`HTTP error! status: ${resp.status}`);
         const raw = await resp.json();
 
+        // FIX: Cek abort setelah setiap await
         if (abortController.signal.aborted) return;
 
         let points: DataPoint[] = [];
@@ -141,7 +149,10 @@ export const useChartData = (
         if (range === '1Y') {
           points = raw.map((item: any) => {
             const [year, month] = item.periode.split('-');
-            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            const monthNames = [
+              'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+              'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+            ];
             const monthName = monthNames[parseInt(month, 10) - 1];
             return { value: item.median_value, date: `${monthName} ${year}` };
           });
@@ -162,8 +173,10 @@ export const useChartData = (
           }));
         }
 
-        setData(points);
-        setLoading(false);
+        if (!abortController.signal.aborted) {
+          setData(points);
+          setLoading(false);
+        }
       } catch (err: any) {
         if (err.name !== 'AbortError') {
           setError(err);
@@ -173,7 +186,10 @@ export const useChartData = (
     };
 
     fetchData();
-    return () => abortController.abort();
+
+    return () => {
+      abortController.abort();
+    };
   }, [range, selectedSensor, selectedBlok, sensorType]);
 
   return { data, loading, error };

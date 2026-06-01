@@ -21,6 +21,7 @@ import {PortableItem} from './Section/PortableItem';
 import {styles} from './styles';
 import DownloadReportModal from '@Containers/Tab/ChartScreen/Section/DownloadReportModal';
 import {AuthContext} from '@Context/AuthContext';
+import PortableDownloadModal from './Section/PortableDownloadModal';
 
 type Props = NativeStackScreenProps<
   RootStackParamList,
@@ -61,7 +62,7 @@ const PortableListScreen: React.FC<Props> = ({navigation}) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <HeaderBack title="Portable Tools" back animated mode={headerMode} />
+      <HeaderBack title="Portable Tools" back animated mode='normal'/>
 
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -96,7 +97,7 @@ const PortableListScreen: React.FC<Props> = ({navigation}) => {
             offset: 156 * index,
             index,
           })}
-          onScroll={handleScroll}
+          // onScroll={handleScroll}
           scrollEventThrottle={16}
         />
       )}
@@ -116,11 +117,11 @@ const PortableListScreen: React.FC<Props> = ({navigation}) => {
         </View>
       )}
 
-      <DownloadReportModal
+      <PortableDownloadModal
         visible={modalVisible}
-        onClose={handleCloseModal}
-        onScreen="Portable"
-      />
+        onClose={()=>setModalVisible(false)}
+        />
+
     </SafeAreaView>
   );
 };

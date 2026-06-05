@@ -76,35 +76,48 @@ const DetailBlock: React.FC = () => {
 
 
   const expandableBlocks =
-    blockId === 4
-      ? [
-          {
-            title: 'Water',
-            animationSource: require('@Assets/videos/air.mp4.lottie.json'),
-            blockCount: 2,
-            blockType: 'water' as const,
-            mainControl: blockControls.main,
-            row1Control: blockControls.row1Water,
-            row2Control: blockControls.row2Water,
-            isDisabled: blockControls.main?.isFertilizerOn,
-          },
-          {
-            title: 'Fertilizer',
-            animationSource: require('@Assets/videos/pupuk.mp4.lottie.json'),
-            blockCount: 2,
-            blockType: 'fertilizer' as const,
-            mainControl: blockControls.main,
-            row1Control: blockControls.row1Fertilizer,
-            row2Control: blockControls.row2Fertilizer,
-            isDisabled: blockControls.main?.isWaterOn,
-          },
-        ]
-      : [];
+  blockId === 4
+    ? [
+        {
+          title: 'Water',
+          animationSource: require('@Assets/videos/air.mp4.lottie.json'),
+          blockCount: 2,
+          blockType: 'water' as const,
+          mainControl: blockControls.main,
+          row1Control: blockControls.row1Water,
+          row2Control: blockControls.row2Water,
+          isDisabled: blockControls.main?.isFertilizerOn,
+        },
+        // {
+        //   title: 'Fertilizer',
+        //   animationSource: require('@Assets/videos/pupuk.mp4.lottie.json'),
+        //   blockCount: 2,
+        //   blockType: 'fertilizer' as const,
+        //   mainControl: blockControls.main,
+        //   row1Control: blockControls.row1Fertilizer,
+        //   row2Control: blockControls.row2Fertilizer,
+        //   isDisabled: blockControls.main?.isWaterOn,
+        // },
+      ]
+    : blockId === 3  
+    ? [
+        {
+          title: 'Water',                    
+          animationSource: require('@Assets/videos/air.mp4.lottie.json'), 
+          blockCount: 2,
+          blockType: 'fertilizer' as const,       
+          mainControl: blockControls.main,
+          row1Control: blockControls.row1Water,
+          row2Control: blockControls.row2Water,
+          isDisabled: false,
+        },
+      ]
+    : [];
 
   const renderControl = () => {
     if (!canControl || !hasControl) return null;
 
-    if (blockId === 4) {
+    if (blockId === 4 || blockId === 3) {
       return expandableBlocks.map((block, index) => (
         <ExpandableBlock key={index} {...block} onToggle={handleToggle} />
       ));

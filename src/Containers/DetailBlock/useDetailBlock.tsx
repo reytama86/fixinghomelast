@@ -31,7 +31,7 @@ const BLOCK_CONFIGS: Record<1 | 3 | 4, BlockConfig> = {
     blockTitle: 'Block 3',
     apiEndpoint: 'https://iot-vanili-api.permataindonesia.com/api/latest-sensor-block2',
     devices: [1, 2, 3],
-    hasControl: false,
+    hasControl: true,
   },
 };
 
@@ -78,8 +78,18 @@ export const useDetailBlock = (blockIdParam?: number) => {
       devices: config.devices,
     };
   }
+  if (blockId === 3) {
   return {
     type: 'block3' as const,
+    main: controls.block2Control,
+    // Pakai controls fertilizer block 4 untuk ditampilkan sebagai "Water" block 3
+    row1Water: controls.block1RowFertilizer1Control,
+    row2Water: controls.block1RowFertilizer2Control,
+    devices: config.devices,
+  };
+}
+  return {
+    type: 'block9' as const,
     main: controls.block2Control,
     devices: config.devices,
   };
@@ -153,6 +163,11 @@ export const useDetailBlock = (blockIdParam?: number) => {
             : blockControls.row2Fertilizer;
         }
       }
+      if (blockId === 3) {
+      return target === 'row1'
+        ? blockControls.row1Water
+        : blockControls.row2Water;
+    }
 
       return blockControls.main;
     },

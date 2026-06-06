@@ -102,12 +102,13 @@ export function useMqtt(): UseMqttResult {
       }
     }
 
-    const clientId = `clientId_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const clientId = `vanili-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     const client = new Paho.Client(
       'mqtt.permataindonesia.com',
       8038,
       '/ws',
+      clientId, // ← tambahkan ini
     );
 
     clientRef.current = client;

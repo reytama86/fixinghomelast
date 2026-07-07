@@ -6,18 +6,22 @@ import {useControl, usePageControl} from '@Context/ControlContext';
 interface BlockConfig {
   blockNumber: number;
   blockTitle: string;
-  apiEndpoint: string;
+  apiEndpoint: string | null;
   devices: number[];
   hasControl: boolean;
+  hasSensor: boolean;
+  hasSchedule: boolean;
 }
 
-const BLOCK_CONFIGS: Record<1 | 3 | 4, BlockConfig> = {
+const BLOCK_CONFIGS: Record<1 | 2 | 3 | 4, BlockConfig> = {
   1: {
     blockNumber: 0,
     blockTitle: 'Block 1',
     apiEndpoint: 'https://iot-vanili-api.permataindonesia.com/api/latest-sensor-block01',
     devices: [1, 2, 3],
     hasControl: true,
+    hasSensor: true,
+    hasSchedule: false,
   },
   4: {
     blockNumber: 1,
@@ -25,6 +29,8 @@ const BLOCK_CONFIGS: Record<1 | 3 | 4, BlockConfig> = {
     apiEndpoint: 'https://iot-vanili-api.permataindonesia.com/api/latest-sensor-block1',
     devices: [1, 2, 3],
     hasControl: true,
+    hasSensor: true,
+    hasSchedule: true,
   },
   3: {
     blockNumber: 2,
@@ -32,11 +38,41 @@ const BLOCK_CONFIGS: Record<1 | 3 | 4, BlockConfig> = {
     apiEndpoint: 'https://iot-vanili-api.permataindonesia.com/api/latest-sensor-block2',
     devices: [1, 2, 3],
     hasControl: true,
+    hasSensor: true,
+    hasSchedule: true,
+  },
+  2: {
+    blockNumber: 3,
+    blockTitle: 'Block 2',
+    apiEndpoint: null,
+    devices: [],
+    hasControl: true,
+    hasSensor: false,
+    hasSchedule: true,
   },
 };
 
+type SimpleBlockControls = {
+  type: 'simple';
+  main: ReturnType<typeof useControl>['block4Control'];
+  schedule: ReturnType<typeof useControl>['block4Schedule'] | null;
+  devices: number[];
+};
+
+type Block01Controls = {
+  type: 'block01';
+  block01: ReturnType<typeof useControl>['block01Control'];
+  devices: number[];
+};
+
+type BlockControls = SimpleBlockControls | Block01Controls;
+
 export const useDetailBlock = (blockIdParam?: number) => {
-  const blockId = blockIdParam === 3 ? 3 : blockIdParam === 1 ? 1 : 4;
+  const blockId: 1 | 2 | 3 | 4 =
+    blockIdParam === 1 || blockIdParam === 2 || blockIdParam === 3
+      ? blockIdParam
+      : 4;
+
   const config = BLOCK_CONFIGS[blockId];
   const {setActivePage} = usePageControl();
   const controls = useControl();
@@ -45,57 +81,50 @@ export const useDetailBlock = (blockIdParam?: number) => {
   const [loading, setLoading] = useState(true);
   const [showDurationModal, setShowDurationModal] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-
-  const [currentProcess, setCurrentProcess] = useState<{
-    type: 'water' | 'fertilizer';
-    target: 'main' | 'row1' | 'row2';
-  } | null>(null);
-
-  const [confirmProcess, setConfirmProcess] = useState<{
-    type: 'water' | 'fertilizer';
-    target: 'main' | 'row1' | 'row2';
-  } | null>(null);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   const [inputMinutes, setInputMinutes] = useState('1');
   const [inputSeconds, setInputSeconds] = useState('0');
 
-  const blockControls = useMemo(() => {
-  if (blockId === 4) {
+  const blockControls: BlockControls = useMemo(() => {
+    if (blockId === 1) {
+      return {
+        type: 'block01',
+        block01: controls.block01Control,
+        devices: config.devices,
+      };
+    }
+
+    const main =
+      blockId === 4
+        ? controls.block4Control
+        : blockId === 3
+        ? controls.block3Control
+        : controls.block2Control;
+
+    const schedule =
+      blockId === 4
+        ? controls.block4Schedule
+        : blockId === 3
+        ? controls.block3Schedule
+        : blockId === 2
+        ? controls.block2Schedule
+        : null;
+
     return {
-      type: 'block4' as const,
-      main: controls.block1Control,
-      row1Water: controls.block1RowWater1Control,
-      row2Water: controls.block1RowWater2Control,
-      row1Fertilizer: controls.block1RowFertilizer1Control,
-      row2Fertilizer: controls.block1RowFertilizer2Control,
+      type: 'simple',
+      main,
+      schedule,
       devices: config.devices,
     };
-  }
-  if (blockId === 1) {
-    return {
-      type: 'block01' as const,
-      block01: controls.block01Control,
-      devices: config.devices,
-    };
-  }
-  if (blockId === 3) {
-  return {
-    type: 'block3' as const,
-    main: controls.block2Control,
-    // Pakai controls fertilizer block 4 untuk ditampilkan sebagai "Water" block 3
-    row1Water: controls.block1RowFertilizer1Control,
-    row2Water: controls.block1RowFertilizer2Control,
-    devices: config.devices,
-  };
-}
-  return {
-    type: 'block9' as const,
-    main: controls.block2Control,
-    devices: config.devices,
-  };
-}, [blockId, config, controls]);
+  }, [blockId, config, controls]);
 
   const fetchSensorData = useCallback(async () => {
+    if (!config.apiEndpoint) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await fetch(config.apiEndpoint);
@@ -105,7 +134,6 @@ export const useDetailBlock = (blockIdParam?: number) => {
       }
 
       const result = await response.json();
-      // console.log('Fetched sensor data:', result);
 
       if (result.success) {
         setSensorData(result.data);
@@ -121,6 +149,8 @@ export const useDetailBlock = (blockIdParam?: number) => {
   }, [config.apiEndpoint]);
 
   const refreshData = useCallback(async () => {
+    if (!config.apiEndpoint) return;
+
     try {
       const response = await fetch(config.apiEndpoint);
 
@@ -140,56 +170,28 @@ export const useDetailBlock = (blockIdParam?: number) => {
 
   useFocusEffect(
     useCallback(() => {
-      const page = blockId === 4 ? 'block1' : blockId === 1 ? 'block01' : 'block2';
+      const page =
+        blockId === 4
+          ? 'block4'
+          : blockId === 3
+          ? 'block3'
+          : blockId === 2
+          ? 'block2'
+          : 'block01';
       setActivePage(page);
       fetchSensorData();
     }, [blockId, fetchSensorData, setActivePage]),
   );
 
-  const getControl = useCallback(
-    (type: 'water' | 'fertilizer', target: 'main' | 'row1' | 'row2') => {
-      if (target === 'main') {
-        return blockControls.main;
-      }
+  const handleToggle = useCallback(() => {
+    if (blockControls.type !== 'simple') return;
 
-      if (blockId === 4) {
-        if (type === 'water') {
-          return target === 'row1'
-            ? blockControls.row1Water
-            : blockControls.row2Water;
-        } else {
-          return target === 'row1'
-            ? blockControls.row1Fertilizer
-            : blockControls.row2Fertilizer;
-        }
-      }
-      if (blockId === 3) {
-      return target === 'row1'
-        ? blockControls.row1Water
-        : blockControls.row2Water;
+    if (blockControls.main.isWaterOn) {
+      setShowConfirm(true);
+    } else {
+      setShowDurationModal(true);
     }
-
-      return blockControls.main;
-    },
-    [blockId, blockControls],
-  );
-
-  const handleToggle = useCallback(
-    (type: 'water' | 'fertilizer', target: 'main' | 'row1' | 'row2') => {
-      const control = getControl(type, target);
-      const isCurrentlyActive =
-        type === 'water' ? control.isWaterOn : control.isFertilizerOn;
-
-      if (isCurrentlyActive) {
-        setConfirmProcess({type, target});
-        setShowConfirm(true);
-      } else {
-        setCurrentProcess({type, target});
-        setShowDurationModal(true);
-      }
-    },
-    [getControl],
-  );
+  }, [blockControls]);
 
   const handleMinutesChange = useCallback((text: string) => {
     const numericValue = text.replace(/[^0-9]/g, '');
@@ -201,37 +203,45 @@ export const useDetailBlock = (blockIdParam?: number) => {
     setInputSeconds(numericValue);
   }, []);
 
-  const validateTimeInput = (value: string, max: number): string => {
-    const numValue = parseInt(value);
-    if (isNaN(numValue) || numValue < 0) return '0';
-    if (numValue > max) return max.toString();
-    return numValue.toString();
-  };
-
   const handleStartProcess = useCallback(
     (totalSeconds: number) => {
-      if (!currentProcess) return;
+      if (blockControls.type !== 'simple') return;
 
-      const control = getControl(currentProcess.type, currentProcess.target);
-      control.startProcess(currentProcess.type, totalSeconds);
+      blockControls.main.startProcess('water', totalSeconds);
 
       setShowDurationModal(false);
       setInputMinutes('1');
       setInputSeconds('0');
-      setCurrentProcess(null);
     },
-    [currentProcess, getControl],
+    [blockControls],
   );
 
   const handleConfirmStop = useCallback(() => {
-    if (!confirmProcess) return;
+    if (blockControls.type !== 'simple') return;
 
-    const control = getControl(confirmProcess.type, confirmProcess.target);
-    control.stopProcess(confirmProcess.type);
-
+    blockControls.main.stopProcess('water');
     setShowConfirm(false);
-    setConfirmProcess(null);
-  }, [confirmProcess, getControl]);
+  }, [blockControls]);
+
+  const handleOpenSchedule = useCallback(() => {
+    if (blockControls.type !== 'simple' || !blockControls.schedule) return;
+    setShowScheduleModal(true);
+  }, [blockControls]);
+
+  const handleSaveSchedule = useCallback(
+    (config: {dayOfMonth: number; hour: number; minute: number; durationSec: number}) => {
+      if (blockControls.type !== 'simple' || !blockControls.schedule) return;
+      blockControls.schedule.setScheduleConfig(config);
+      setShowScheduleModal(false);
+    },
+    [blockControls],
+  );
+
+  const handleDeleteSchedule = useCallback(() => {
+    if (blockControls.type !== 'simple' || !blockControls.schedule) return;
+    blockControls.schedule.deleteSchedule();
+    setShowScheduleModal(false);
+  }, [blockControls]);
 
   return {
     blockNumber: config.blockNumber,
@@ -245,13 +255,19 @@ export const useDetailBlock = (blockIdParam?: number) => {
 
     showDurationModal,
     showConfirm,
-    currentProcess,
-    confirmProcess,
     inputMinutes,
     inputSeconds,
 
     blockControls,
     hasControl: config.hasControl,
+    hasSensor: config.hasSensor,
+    hasSchedule: config.hasSchedule,
+
+    showScheduleModal,
+    handleOpenSchedule,
+    handleSaveSchedule,
+    handleDeleteSchedule,
+    setShowScheduleModal,
 
     handleToggle,
     handleStartProcess,

@@ -13,6 +13,8 @@ export interface BlockData {
 }
 
 interface SensorDataBlocks {
+  block1: {temp: string; humidity: string};
+  block2: {temp: string; humidity: string};
   block3: {temp: string; humidity: string};
   block4: {temp: string; humidity: string};
   block6: {temp: string; humidity: string};
@@ -22,6 +24,8 @@ interface SensorDataBlocks {
 
 export const useBlockList = () => {
   const [sensorDataBlocks, setSensorDataBlocks] = useState<SensorDataBlocks>({
+    block1: {temp: '--', humidity: '--'},
+    block2: {temp: '--', humidity: '--'},
     block3: {temp: '--', humidity: '--'},
     block4: {temp: '--', humidity: '--'},
     block6: {temp: '--', humidity: '--'},
@@ -40,6 +44,7 @@ export const useBlockList = () => {
         const data = result.data;
 
         const blockSensorMap: Record<number, keyof SensorDataBlocks> = {
+          9: 'block1',
           5: 'block3',
           2: 'block4',
           6: 'block6',
@@ -82,6 +87,30 @@ export const useBlockList = () => {
 
   const blocks: BlockCardData[] = [
     {
+      id: 1,
+      name: 'Block 1',
+      temperature: isNaN(Number(sensorDataBlocks.block1.temp))
+        ? '0'
+        : Math.round(Number(sensorDataBlocks.block1.temp)).toString(),
+      humidity: isNaN(Number(sensorDataBlocks.block1.humidity))
+        ? '0'
+        : Math.round(Number(sensorDataBlocks.block1.humidity)).toString(),
+      navigationEnabled: true,
+      svgPath: 'block7',
+    },
+    {
+      id: 2,
+      name: 'Block 2',
+      temperature: isNaN(Number(sensorDataBlocks.block2.temp))
+        ? '0'
+        : Math.round(Number(sensorDataBlocks.block2.temp)).toString(),
+      humidity: isNaN(Number(sensorDataBlocks.block2.humidity))
+        ? '0'
+        : Math.round(Number(sensorDataBlocks.block2.humidity)).toString(),
+      navigationEnabled: true,
+      svgPath: 'block8',
+    },
+    {
       id: 3,
       name: 'Block 3',
       temperature: isNaN(Number(sensorDataBlocks.block3.temp))
@@ -105,40 +134,40 @@ export const useBlockList = () => {
       navigationEnabled: true,
       svgPath: 'block1',
     },
-    {
-      id: 6,
-      name: 'Block 6',
-      temperature: isNaN(Number(sensorDataBlocks.block6.temp))
-        ? '0'
-        : Math.round(Number(sensorDataBlocks.block6.temp)).toString(),
-      humidity: isNaN(Number(sensorDataBlocks.block6.humidity))
-        ? '0'
-        : Math.round(Number(sensorDataBlocks.block6.humidity)).toString(),
-      svgPath: 'block7',
-    },
-    {
-      id: 7,
-      name: 'Block 7',
-      temperature: isNaN(Number(sensorDataBlocks.block7.temp))
-        ? '0'
-        : Math.round(Number(sensorDataBlocks.block7.temp)).toString(),
-      humidity: isNaN(Number(sensorDataBlocks.block7.humidity))
-        ? '0'
-        : Math.round(Number(sensorDataBlocks.block7.humidity)).toString(),
-      // navigationTarget: 'DetailBlockTwo',
-      svgPath: 'block3',
-    },
-    {
-      id: 8,
-      name: 'Block 8',
-      temperature: isNaN(Number(sensorDataBlocks.block8.temp))
-        ? '0'
-        : Math.round(Number(sensorDataBlocks.block8.temp)).toString(),
-      humidity: isNaN(Number(sensorDataBlocks.block8.humidity))
-        ? '0'
-        : Math.round(Number(sensorDataBlocks.block8.humidity)).toString(),
-      svgPath: 'block8',
-    },
+    // {
+    //   id: 6,
+    //   name: 'Block 6',
+    //   temperature: isNaN(Number(sensorDataBlocks.block6.temp))
+    //     ? '0'
+    //     : Math.round(Number(sensorDataBlocks.block6.temp)).toString(),
+    //   humidity: isNaN(Number(sensorDataBlocks.block6.humidity))
+    //     ? '0'
+    //     : Math.round(Number(sensorDataBlocks.block6.humidity)).toString(),
+    //   svgPath: 'block7',
+    // },
+    // {
+    //   id: 7,
+    //   name: 'Block 7',
+    //   temperature: isNaN(Number(sensorDataBlocks.block7.temp))
+    //     ? '0'
+    //     : Math.round(Number(sensorDataBlocks.block7.temp)).toString(),
+    //   humidity: isNaN(Number(sensorDataBlocks.block7.humidity))
+    //     ? '0'
+    //     : Math.round(Number(sensorDataBlocks.block7.humidity)).toString(),
+    //   // navigationTarget: 'DetailBlockTwo',
+    //   svgPath: 'block3',
+    // },
+    // {
+    //   id: 8,
+    //   name: 'Block 8',
+    //   temperature: isNaN(Number(sensorDataBlocks.block8.temp))
+    //     ? '0'
+    //     : Math.round(Number(sensorDataBlocks.block8.temp)).toString(),
+    //   humidity: isNaN(Number(sensorDataBlocks.block8.humidity))
+    //     ? '0'
+    //     : Math.round(Number(sensorDataBlocks.block8.humidity)).toString(),
+    //   svgPath: 'block8',
+    // },
   ];
 
   return {blocks};

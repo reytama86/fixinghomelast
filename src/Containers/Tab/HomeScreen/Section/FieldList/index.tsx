@@ -27,7 +27,15 @@ const FieldList: React.FC<FieldListProps> = ({sensorDataBlock, navigation}) => {
       temperature: Math.round(Number(sensorDataBlock.block01.temp)).toString(),
       humidity: Math.round(Number(sensorDataBlock.block01.humidity)).toString(),
       navigationEnabled: true,
-      svgPath: 'block1' as const,
+      svgPath: 'block8' as const,
+    },
+    {
+      id: 2,
+      name: 'Block 2',
+      temperature: 0,
+      humidity: 0,
+      navigationEnabled: true,
+      svgPath: 'block2' as const,
     },
     {
       id: 3,
@@ -35,7 +43,7 @@ const FieldList: React.FC<FieldListProps> = ({sensorDataBlock, navigation}) => {
       temperature: Math.round(Number(sensorDataBlock.block2.temp)).toString(),
       humidity: Math.round(Number(sensorDataBlock.block2.humidity)).toString(),
       navigationEnabled: true,
-      svgPath: 'block2' as const,
+      svgPath: 'block3' as const,
     },
     {
       id: 4,

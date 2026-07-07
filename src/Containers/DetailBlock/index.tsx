@@ -9,7 +9,9 @@ import {
   Platform,
 } from 'react-native';
 import {useDetailBlock} from './useDetailBlock';
-import {ExpandableBlock} from './Section/ExpandableBlock';
+import {WaterControlCard} from './Section/WaterControlCard';
+import ScheduleCard from '@Atom/ScheduleCard';
+import ScheduleEditModal from '@Organism/ScheduleEditModal';
 import {DeviceCard} from './Section/DeviceCard';
 import DurationModal from '@Organism/DurationModal';
 import ConfirmModal from '@Containers/Tab/HomeScreen/Modal/ConfirmModal';
@@ -37,19 +39,24 @@ const DetailBlock: React.FC = () => {
     blockTitle,
     blockControls,
     hasControl,
+    hasSensor,
+    hasSchedule,
     sensorData,
     loading,
     showDurationModal,
     showConfirm,
-    currentProcess,
-    confirmProcess,
+    showScheduleModal,
     inputMinutes,
     inputSeconds,
     handleToggle,
     handleStartProcess,
     handleConfirmStop,
+    handleOpenSchedule,
+    handleSaveSchedule,
+    handleDeleteSchedule,
     setShowDurationModal,
     setShowConfirm,
+    setShowScheduleModal,
     handleMinutesChange,
     handleSecondsChange,
     refreshData,
@@ -74,60 +81,32 @@ const DetailBlock: React.FC = () => {
   const canControl = user?.role !== 'farmer';
   const isFarmer = user?.role === 'farmer';
 
-
-  const expandableBlocks =
-  blockId === 4
-    ? [
-        {
-          title: 'Water',
-          animationSource: require('@Assets/videos/air.mp4.lottie.json'),
-          blockCount: 2,
-          blockType: 'water' as const,
-          mainControl: blockControls.main,
-          row1Control: blockControls.row1Water,
-          row2Control: blockControls.row2Water,
-          isDisabled: blockControls.main?.isFertilizerOn,
-        },
-        // {
-        //   title: 'Fertilizer',
-        //   animationSource: require('@Assets/videos/pupuk.mp4.lottie.json'),
-        //   blockCount: 2,
-        //   blockType: 'fertilizer' as const,
-        //   mainControl: blockControls.main,
-        //   row1Control: blockControls.row1Fertilizer,
-        //   row2Control: blockControls.row2Fertilizer,
-        //   isDisabled: blockControls.main?.isWaterOn,
-        // },
-      ]
-    : blockId === 3  
-    ? [
-        {
-          title: 'Water',                    
-          animationSource: require('@Assets/videos/air.mp4.lottie.json'), 
-          blockCount: 2,
-          blockType: 'fertilizer' as const,       
-          mainControl: blockControls.main,
-          row1Control: blockControls.row1Water,
-          row2Control: blockControls.row2Water,
-          isDisabled: false,
-        },
-      ]
-    : [];
-
   const renderControl = () => {
     if (!canControl || !hasControl) return null;
 
-    if (blockId === 4 || blockId === 3) {
-      return expandableBlocks.map((block, index) => (
-        <ExpandableBlock key={index} {...block} onToggle={handleToggle} />
-      ));
-    }
-
-    if (blockId === 1 && blockControls.type === 'block01') {
+    if (blockControls.type === 'block01') {
       return <FertilizerBlock01 control={blockControls.block01} />;
     }
 
-    return null;
+    // blockControls.type === 'simple' -> berlaku untuk Block 4, 3, dan 2
+    return (
+      <>
+        <WaterControlCard
+          title="Water"
+          animationSource={require('@Assets/videos/air.mp4.lottie.json')}
+          isActive={blockControls.main.isWaterOn}
+          remaining={blockControls.main.remainingWaterTime}
+          lastAction={blockControls.main.lastWaterAction}
+          onToggle={handleToggle}
+        />
+        {hasSchedule && blockControls.schedule && (
+          <ScheduleCard
+            schedule={blockControls.schedule.schedule}
+            onPress={handleOpenSchedule}
+          />
+        )}
+      </>
+    );
   };
 
   return (
@@ -149,7 +128,6 @@ const DetailBlock: React.FC = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           bounces={true}
-          // onScroll={handleScroll}
           scrollEventThrottle={16}
           refreshControl={
             <RefreshControl
@@ -164,20 +142,21 @@ const DetailBlock: React.FC = () => {
 
           {renderControl()}
 
-          {blockControls.devices?.map((device, index) => (
-            <DeviceCard
-              key={index}
-              deviceNumber={device}
-              sensorData={sensorData}
-              isFarmer={isFarmer}
-            />
-          ))}
+          {hasSensor &&
+            blockControls.devices?.map((device, index) => (
+              <DeviceCard
+                key={index}
+                deviceNumber={device}
+                sensorData={sensorData}
+                isFarmer={isFarmer}
+              />
+            ))}
         </ScrollView>
       </View>
 
       <DurationModal
         visible={showDurationModal}
-        currentProcess={currentProcess?.type || null}
+        currentProcess="water"
         inputMinutes={inputMinutes}
         inputSeconds={inputSeconds}
         onMinutesChange={handleMinutesChange}
@@ -188,10 +167,22 @@ const DetailBlock: React.FC = () => {
 
       <ConfirmModal
         visible={showConfirm}
-        type={confirmProcess?.type || 'water'}
+        type="water"
         onCancel={() => setShowConfirm(false)}
         onConfirm={handleConfirmStop}
       />
+
+      {hasSchedule &&
+        blockControls.type === 'simple' &&
+        blockControls.schedule && (
+          <ScheduleEditModal
+            visible={showScheduleModal}
+            schedule={blockControls.schedule.schedule}
+            onCancel={() => setShowScheduleModal(false)}
+            onSave={handleSaveSchedule}
+            onDelete={handleDeleteSchedule}
+          />
+        )}
     </SafeAreaView>
   );
 };

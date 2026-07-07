@@ -26,11 +26,11 @@ const HomeScreen: React.FC = ({}) => {
   const {user}= useContext(AuthContext);
   const {
     homeControl,
-    block1Control,
-    block1RowWater1Control,
-    block1RowWater2Control,
-    block1RowFertilizer1Control,
-    block1RowFertilizer2Control,
+    // block1Control,
+    // block1RowWater1Control,
+    // block1RowWater2Control,
+    // block1RowFertilizer1Control,
+    // block1RowFertilizer2Control,
   } = useControl();
 
   const [showDurationModal, setShowDurationModal] = useState(false);
@@ -99,17 +99,18 @@ const HomeScreen: React.FC = ({}) => {
     [currentProcess, homeControl]
   );
 
-  const isBlock1WaterActive =
-    block1Control.isWaterOn ||
-    block1RowWater1Control.isWaterOn ||
-    block1RowWater2Control.isWaterOn;
+  // const isBlock1WaterActive =
+  //   block1Control.isWaterOn ||
+  //   block1RowWater1Control.isWaterOn ||
+  //   block1RowWater2Control.isWaterOn;
 
-  const isBlock1FertilizerActive =
-    block1Control.isFertilizerOn ||
-    block1RowFertilizer1Control.isFertilizerOn ||
-    block1RowFertilizer2Control.isFertilizerOn;
+  // const isBlock1FertilizerActive =
+  //   block1Control.isFertilizerOn ||
+  //   block1RowFertilizer1Control.isFertilizerOn ||
+  //   block1RowFertilizer2Control.isFertilizerOn;
 
-  const isBlock1AnyActive = isBlock1WaterActive || isBlock1FertilizerActive;
+  // const isBlock1AnyActive = isBlock1WaterActive || isBlock1FertilizerActive;
+  const isBlock1AnyActive = false
 
   return (
     <SafeAreaView style={{flex: 1}}>

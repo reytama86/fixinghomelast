@@ -10,23 +10,21 @@ import React, {
 } from 'react';
 import { useMqtt } from '../Hooks/UseMqtt';
 import { useControlState } from '../Hooks/useControlState';
+import { useScheduleState } from '../Hooks/useScheduleState';
 import * as Paho from 'paho-mqtt';
 import { Block01ControlState, useBlock01Control } from '@Hooks/useBlock01Control';
 
 const TOPIC_CONFIG = {
   HOME_PREFIX: '1106200396',
-  BLOCK1_PREFIX: '/blok1',
-  BLOCK1_ROWWATER1_PREFIX: '/blok1/baris1air',
-  BLOCK1_ROWWATER2_PREFIX: '/blok1/baris2air',
-  BLOCK1_ROWFERTILIZER1_PREFIX: '/blok1/baris1pupuk',
-  BLOCK1_ROWFERTILIZER2_PREFIX: '/blok1/baris2pupuk',
   BLOCK01_FERTILIZER_PREFIX: '/blok01',
-  BLOCK2_PREFIX: '/blok2',
+  BLOCK4_PREFIX: '/block04',
+  BLOCK3_PREFIX: '/block03',
+  BLOCK2_PREFIX: '/block02',
   PORTABLE_PREFIX: 'data/portable',
 } as const;
 
 const ALL_TOPICS = [
-  // Home topics
+  // Home
   `control/water${TOPIC_CONFIG.HOME_PREFIX}`,
   `control/fertilizer${TOPIC_CONFIG.HOME_PREFIX}`,
   `time/water${TOPIC_CONFIG.HOME_PREFIX}`,
@@ -34,55 +32,25 @@ const ALL_TOPICS = [
   `start/water${TOPIC_CONFIG.HOME_PREFIX}`,
   `start/fertilizer${TOPIC_CONFIG.HOME_PREFIX}`,
 
-  // Block1 main topics
-  `control/water${TOPIC_CONFIG.BLOCK1_PREFIX}`,
-  `control/fertilizer${TOPIC_CONFIG.BLOCK1_PREFIX}`,
-  `time/water${TOPIC_CONFIG.BLOCK1_PREFIX}`,
-  `time/fertilizer${TOPIC_CONFIG.BLOCK1_PREFIX}`,
-  `start/water${TOPIC_CONFIG.BLOCK1_PREFIX}`,
-  `start/fertilizer${TOPIC_CONFIG.BLOCK1_PREFIX}`,
+  // Block 4
+  `control/water${TOPIC_CONFIG.BLOCK4_PREFIX}`,
+  `time/water${TOPIC_CONFIG.BLOCK4_PREFIX}`,
+  `start/water${TOPIC_CONFIG.BLOCK4_PREFIX}`,
+  `schedule/water${TOPIC_CONFIG.BLOCK4_PREFIX}/status`,
 
-  // Block1 Row1 Water topics
-  `control/water${TOPIC_CONFIG.BLOCK1_ROWWATER1_PREFIX}`,
-  `control/fertilizer${TOPIC_CONFIG.BLOCK1_ROWWATER1_PREFIX}`,
-  `time/water${TOPIC_CONFIG.BLOCK1_ROWWATER1_PREFIX}`,
-  `time/fertilizer${TOPIC_CONFIG.BLOCK1_ROWWATER1_PREFIX}`,
-  `start/water${TOPIC_CONFIG.BLOCK1_ROWWATER1_PREFIX}`,
-  `start/fertilizer${TOPIC_CONFIG.BLOCK1_ROWWATER1_PREFIX}`,
+  // Block 3
+  `control/water${TOPIC_CONFIG.BLOCK3_PREFIX}`,
+  `time/water${TOPIC_CONFIG.BLOCK3_PREFIX}`,
+  `start/water${TOPIC_CONFIG.BLOCK3_PREFIX}`,
+  `schedule/water${TOPIC_CONFIG.BLOCK3_PREFIX}/status`,
 
-  // Block1 Row2 Water topics
-  `control/water${TOPIC_CONFIG.BLOCK1_ROWWATER2_PREFIX}`,
-  `control/fertilizer${TOPIC_CONFIG.BLOCK1_ROWWATER2_PREFIX}`,
-  `time/water${TOPIC_CONFIG.BLOCK1_ROWWATER2_PREFIX}`,
-  `time/fertilizer${TOPIC_CONFIG.BLOCK1_ROWWATER2_PREFIX}`,
-  `start/water${TOPIC_CONFIG.BLOCK1_ROWWATER2_PREFIX}`,
-  `start/fertilizer${TOPIC_CONFIG.BLOCK1_ROWWATER2_PREFIX}`,
-
-  // Block1 Row1 Fertilizer topics
-  `control/water${TOPIC_CONFIG.BLOCK1_ROWFERTILIZER1_PREFIX}`,
-  `control/fertilizer${TOPIC_CONFIG.BLOCK1_ROWFERTILIZER1_PREFIX}`,
-  `time/water${TOPIC_CONFIG.BLOCK1_ROWFERTILIZER1_PREFIX}`,
-  `time/fertilizer${TOPIC_CONFIG.BLOCK1_ROWFERTILIZER1_PREFIX}`,
-  `start/water${TOPIC_CONFIG.BLOCK1_ROWFERTILIZER1_PREFIX}`,
-  `start/fertilizer${TOPIC_CONFIG.BLOCK1_ROWFERTILIZER1_PREFIX}`,
-
-  // Block1 Row2 Fertilizer topics
-  `control/water${TOPIC_CONFIG.BLOCK1_ROWFERTILIZER2_PREFIX}`,
-  `control/fertilizer${TOPIC_CONFIG.BLOCK1_ROWFERTILIZER2_PREFIX}`,
-  `time/water${TOPIC_CONFIG.BLOCK1_ROWFERTILIZER2_PREFIX}`,
-  `time/fertilizer${TOPIC_CONFIG.BLOCK1_ROWFERTILIZER2_PREFIX}`,
-  `start/water${TOPIC_CONFIG.BLOCK1_ROWFERTILIZER2_PREFIX}`,
-  `start/fertilizer${TOPIC_CONFIG.BLOCK1_ROWFERTILIZER2_PREFIX}`,
-
-  // Block2 topics
+  // Block 2
   `control/water${TOPIC_CONFIG.BLOCK2_PREFIX}`,
-  `control/fertilizer${TOPIC_CONFIG.BLOCK2_PREFIX}`,
   `time/water${TOPIC_CONFIG.BLOCK2_PREFIX}`,
-  `time/fertilizer${TOPIC_CONFIG.BLOCK2_PREFIX}`,
   `start/water${TOPIC_CONFIG.BLOCK2_PREFIX}`,
-  `start/fertilizer${TOPIC_CONFIG.BLOCK2_PREFIX}`,
+  `schedule/water${TOPIC_CONFIG.BLOCK2_PREFIX}/status`,
 
-  // Block01 Fertilizer topics
+  // Block01 Fertilizer topics (tidak diubah)
   `control/fertilizer${TOPIC_CONFIG.BLOCK01_FERTILIZER_PREFIX}`,
   `start/fertilizer/blok01/pupuktanah`,
   `start/fertilizer/blok01/pupukdaun`,
@@ -102,12 +70,12 @@ type ControlContextValue = {
   setActivePage: (pageId: string) => void;
   getCurrentPage: () => string;
   homeControl: ReturnType<typeof useControlState>;
-  block1Control: ReturnType<typeof useControlState>;
-  block1RowWater1Control: ReturnType<typeof useControlState>;
-  block1RowWater2Control: ReturnType<typeof useControlState>;
-  block1RowFertilizer1Control: ReturnType<typeof useControlState>;
-  block1RowFertilizer2Control: ReturnType<typeof useControlState>;
+  block4Control: ReturnType<typeof useControlState>;
+  block3Control: ReturnType<typeof useControlState>;
   block2Control: ReturnType<typeof useControlState>;
+  block4Schedule: ReturnType<typeof useScheduleState>;
+  block3Schedule: ReturnType<typeof useScheduleState>;
+  block2Schedule: ReturnType<typeof useScheduleState>;
   portableData: ReturnType<typeof useControlState>;
   block01Control: Block01ControlState;
 };
@@ -152,39 +120,18 @@ export const ControlProvider: React.FC<ControlProviderProps> = ({children}) => {
     isActive: currentPage === 'home',
   });
 
-  const block1Control = useControlState({
-    topicPrefix: TOPIC_CONFIG.BLOCK1_PREFIX,
+  const block4Control = useControlState({
+    topicPrefix: TOPIC_CONFIG.BLOCK4_PREFIX,
     publish: stablePublish,
-    pageId: 'block1',
-    isActive: currentPage === 'block1',
+    pageId: 'block4',
+    isActive: currentPage === 'block4',
   });
 
-  const block1RowWater1Control = useControlState({
-    topicPrefix: TOPIC_CONFIG.BLOCK1_ROWWATER1_PREFIX,
+  const block3Control = useControlState({
+    topicPrefix: TOPIC_CONFIG.BLOCK3_PREFIX,
     publish: stablePublish,
-    pageId: 'block1-baris1air',
-    isActive: currentPage === 'block1',
-  });
-
-  const block1RowWater2Control = useControlState({
-    topicPrefix: TOPIC_CONFIG.BLOCK1_ROWWATER2_PREFIX,
-    publish: stablePublish,
-    pageId: 'block1-baris2air',
-    isActive: currentPage === 'block1',
-  });
-
-  const block1RowFertilizer1Control = useControlState({
-    topicPrefix: TOPIC_CONFIG.BLOCK1_ROWFERTILIZER1_PREFIX,
-    publish: stablePublish,
-    pageId: 'block1-baris1pupuk',
-    isActive: currentPage === 'block1',
-  });
-
-  const block1RowFertilizer2Control = useControlState({
-    topicPrefix: TOPIC_CONFIG.BLOCK1_ROWFERTILIZER2_PREFIX,
-    publish: stablePublish,
-    pageId: 'block1-baris2pupuk',
-    isActive: currentPage === 'block1',
+    pageId: 'block3',
+    isActive: currentPage === 'block3',
   });
 
   const block2Control = useControlState({
@@ -192,6 +139,22 @@ export const ControlProvider: React.FC<ControlProviderProps> = ({children}) => {
     publish: stablePublish,
     pageId: 'block2',
     isActive: currentPage === 'block2',
+  });
+
+  // Schedule instances — satu per block yang punya relay (4, 3, 2)
+  const block4Schedule = useScheduleState({
+    topicPrefix: TOPIC_CONFIG.BLOCK4_PREFIX,
+    publish: stablePublish,
+  });
+
+  const block3Schedule = useScheduleState({
+    topicPrefix: TOPIC_CONFIG.BLOCK3_PREFIX,
+    publish: stablePublish,
+  });
+
+  const block2Schedule = useScheduleState({
+    topicPrefix: TOPIC_CONFIG.BLOCK2_PREFIX,
+    publish: stablePublish,
   });
 
   const block01Control = useBlock01Control({
@@ -205,38 +168,48 @@ export const ControlProvider: React.FC<ControlProviderProps> = ({children}) => {
     isActive: currentPage === 'portable',
   });
 
-  // Routing logic
   const routeMessage = useCallback(
     (topic: string, payload: any) => {
-      if (topic.includes(TOPIC_CONFIG.HOME_PREFIX))
+      if (topic.includes(TOPIC_CONFIG.HOME_PREFIX)) {
         homeControl.handleMqttMessage(topic, payload);
-      else if (topic.includes(TOPIC_CONFIG.BLOCK1_ROWWATER1_PREFIX))
-        block1RowWater1Control.handleMqttMessage(topic, payload);
-      else if (topic.includes(TOPIC_CONFIG.BLOCK1_ROWWATER2_PREFIX))
-        block1RowWater2Control.handleMqttMessage(topic, payload);
-      else if (topic.includes(TOPIC_CONFIG.BLOCK1_ROWFERTILIZER1_PREFIX))
-        block1RowFertilizer1Control.handleMqttMessage(topic, payload);
-      else if (topic.includes(TOPIC_CONFIG.BLOCK1_ROWFERTILIZER2_PREFIX))
-        block1RowFertilizer2Control.handleMqttMessage(topic, payload);
-      else if (topic.includes(TOPIC_CONFIG.BLOCK1_PREFIX))
-        block1Control.handleMqttMessage(topic, payload);
-      else if (topic.includes(TOPIC_CONFIG.BLOCK2_PREFIX))
+        return;
+      }
+
+      if (topic.includes(TOPIC_CONFIG.BLOCK4_PREFIX)) {
+        block4Control.handleMqttMessage(topic, payload);
+        block4Schedule.handleMqttMessage(topic, payload);
+        return;
+      }
+
+      if (topic.includes(TOPIC_CONFIG.BLOCK3_PREFIX)) {
+        block3Control.handleMqttMessage(topic, payload);
+        block3Schedule.handleMqttMessage(topic, payload);
+        return;
+      }
+
+      if (topic.includes(TOPIC_CONFIG.BLOCK2_PREFIX)) {
         block2Control.handleMqttMessage(topic, payload);
-      else if (topic.includes(TOPIC_CONFIG.PORTABLE_PREFIX))
+        block2Schedule.handleMqttMessage(topic, payload);
+        return;
+      }
+
+      if (topic.includes(TOPIC_CONFIG.PORTABLE_PREFIX)) {
         portableData.handleMqttMessage(topic, payload);
-      else if (topic.includes('TANK-001'))
+        return;
+      }
+
+      if (topic.includes('TANK-001') || topic.includes('blok01')) {
         block01Control.handleMqttMessage(topic, payload);
-      else if (topic.includes('blok01'))
-        block01Control.handleMqttMessage(topic, payload);
+      }
     },
     [
       homeControl,
-      block1Control,
-      block1RowWater1Control,
-      block1RowWater2Control,
-      block1RowFertilizer1Control,
-      block1RowFertilizer2Control,
+      block4Control,
+      block3Control,
       block2Control,
+      block4Schedule,
+      block3Schedule,
+      block2Schedule,
       portableData,
       block01Control,
     ],
@@ -306,12 +279,12 @@ export const ControlProvider: React.FC<ControlProviderProps> = ({children}) => {
       setActivePage,
       getCurrentPage,
       homeControl,
-      block1Control,
-      block1RowWater1Control,
-      block1RowWater2Control,
-      block1RowFertilizer1Control,
-      block1RowFertilizer2Control,
+      block4Control,
+      block3Control,
       block2Control,
+      block4Schedule,
+      block3Schedule,
+      block2Schedule,
       portableData,
       block01Control,
     }),
@@ -321,12 +294,12 @@ export const ControlProvider: React.FC<ControlProviderProps> = ({children}) => {
       setActivePage,
       getCurrentPage,
       homeControl,
-      block1Control,
-      block1RowWater1Control,
-      block1RowWater2Control,
-      block1RowFertilizer1Control,
-      block1RowFertilizer2Control,
+      block4Control,
+      block3Control,
       block2Control,
+      block4Schedule,
+      block3Schedule,
+      block2Schedule,
       portableData,
       block01Control,
     ],
